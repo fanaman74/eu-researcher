@@ -689,33 +689,52 @@ export default function ChatPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {latestDocs.map((doc, idx) => (
-              <div 
-                key={idx}
-                className="bg-slate-900/40 backdrop-blur-md p-5 rounded-2xl border border-slate-800 flex flex-col justify-between hover:border-emerald-500/30 transition-all hover:scale-[1.02] duration-300 group shadow-lg shadow-slate-950/20 relative overflow-hidden"
-              >
-                {/* Visual subtle card glow */}
-                <span className="absolute -right-12 -top-12 w-24 h-24 rounded-full bg-gradient-to-br from-teal-500/5 to-emerald-500/0 blur-xl pointer-events-none group-hover:from-teal-500/10 transition-all duration-300" />
-                
-                <div>
-                  {/* Category Header */}
-                  <div className="flex items-center justify-between border-b border-slate-850/50 pb-2">
-                    <span className="text-[10px] font-mono font-bold bg-slate-950 px-2.5 py-0.5 border border-slate-800 rounded-md text-teal-400 tracking-wide">
-                      {doc.celex}
-                    </span>
-                    <span className="text-[9px] font-bold text-slate-400 font-sans uppercase tracking-wider">
-                      {doc.sector}
-                    </span>
-                  </div>
+            {latestDocs.map((doc, idx) => {
+              // Color coding based on CELEX prefix
+              let celexColor = "bg-slate-950 border-slate-800 text-slate-400";
+              let sectorColor = "text-slate-500";
+              
+              if (doc.celex.startsWith("6")) {
+                celexColor = "bg-emerald-950/30 border-emerald-500/20 text-emerald-400";
+                sectorColor = "text-emerald-500";
+              } else if (doc.celex.startsWith("3")) {
+                celexColor = "bg-cyan-950/30 border-cyan-500/20 text-cyan-400";
+                sectorColor = "text-cyan-500";
+              } else if (doc.celex.startsWith("5")) {
+                celexColor = "bg-indigo-950/30 border-indigo-500/20 text-indigo-400";
+                sectorColor = "text-indigo-400";
+              } else if (doc.celex.startsWith("1")) {
+                celexColor = "bg-amber-950/30 border-amber-500/20 text-amber-400";
+                sectorColor = "text-amber-550";
+              }
 
-                  {/* Document Title */}
-                  <h4 
-                    title={doc.title}
-                    className="text-xs font-bold text-slate-200 line-clamp-3 leading-snug my-3 group-hover:text-white transition-colors cursor-help"
-                  >
-                    {doc.title}
-                  </h4>
-                </div>
+              return (
+                <div 
+                  key={idx}
+                  className="bg-slate-900/40 backdrop-blur-md p-5 rounded-2xl border border-slate-800 flex flex-col justify-between hover:border-emerald-500/30 transition-all hover:scale-[1.02] duration-300 group shadow-lg shadow-slate-950/20 relative overflow-hidden"
+                >
+                  {/* Visual subtle card glow */}
+                  <span className="absolute -right-12 -top-12 w-24 h-24 rounded-full bg-gradient-to-br from-teal-500/5 to-emerald-500/0 blur-xl pointer-events-none group-hover:from-teal-500/10 transition-all duration-300" />
+                  
+                  <div>
+                    {/* Category Header */}
+                    <div className="flex flex-col items-start gap-1 border-b border-slate-850/50 pb-2">
+                      <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 border rounded-md tracking-wide ${celexColor}`}>
+                        {doc.celex}
+                      </span>
+                      <span className={`text-[9px] font-bold font-sans uppercase tracking-wider ${sectorColor}`}>
+                        {doc.sector}
+                      </span>
+                    </div>
+
+                    {/* Document Title */}
+                    <h4 
+                      title={doc.title}
+                      className="text-xs font-bold text-slate-200 line-clamp-3 leading-snug my-3 group-hover:text-white transition-colors cursor-help"
+                    >
+                      {doc.title}
+                    </h4>
+                  </div>
 
                 {/* Footer Controls */}
                 <div className="border-t border-slate-850/50 pt-2.5 flex items-center justify-between mt-auto">
@@ -741,7 +760,8 @@ export default function ChatPage() {
                   </div>
                 </div>
               </div>
-            ))}
+            );
+          })}
           </div>
         </div>
 
