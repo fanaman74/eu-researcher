@@ -54,7 +54,8 @@ export default function ChatPage() {
 
   // Summarizer Modal States
   const [modalOpen, setModalOpen] = useState(false);
-  const [activeSummaryDoc, setActiveSummaryDoc] = useState<{ title: string; snippet: string; namespace: string } | null>(null);
+  const [activeSummaryDoc, setActiveSummaryDoc] = useState<{ title: string; snippet: string; namespace: string; celex: string } | null>(null);
+  const [isDetailedSummary, setIsDetailedSummary] = useState(false);
   const [summaryText, setSummaryText] = useState("");
   const [summarizing, setSummarizing] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -120,8 +121,9 @@ export default function ChatPage() {
     dashboardRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleSummarize = async (title: string, snippet: string, docNamespace: string, celex: string) => {
-    setActiveSummaryDoc({ title, snippet, namespace: docNamespace });
+  const handleSummarize = async (title: string, snippet: string, docNamespace: string, celex: string, detailed: boolean = false) => {
+    setActiveSummaryDoc({ title, snippet, namespace: docNamespace, celex });
+    setIsDetailedSummary(detailed);
     setModalOpen(true);
     setSummarizing(true);
     setSummaryText("");
@@ -131,7 +133,7 @@ export default function ChatPage() {
       const res = await fetch("/api/summarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, snippet, namespace: docNamespace, celex })
+        body: JSON.stringify({ title, snippet, namespace: docNamespace, celex, detailed })
       });
 
       if (!res.ok) {
@@ -794,7 +796,7 @@ export default function ChatPage() {
               <Scale className="text-emerald-400 w-6 h-6 animate-pulse" />
               <div>
                 <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                  Senior EU Lawyer Case Analysis <Sparkles className="w-4 h-4 text-teal-400" />
+                  {isDetailedSummary ? "Senior EU Lawyer Detailed Case Analysis" : "Senior EU Lawyer Quick Overview"} <Sparkles className="w-4 h-4 text-teal-400" />
                 </h3>
                 <p className="text-xs text-slate-400 truncate max-w-lg">Doc: {activeSummaryDoc.title}</p>
               </div>
@@ -818,8 +820,14 @@ export default function ChatPage() {
                   <span className="absolute inset-0 w-12 h-12 rounded-xl border-t border-emerald-400 animate-ping opacity-75" />
                 </div>
                 <div className="text-center space-y-1.5">
-                  <p className="text-sm font-semibold text-slate-300">Drafting Expert Case Summary...</p>
-                  <p className="text-xs text-slate-500 max-w-md">Acting as a Senior EU Counsel to construct a thorough ~1000-word legal analysis including citations, dispute facts, directive holdings, and strategic precedents.</p>
+                  <p className="text-sm font-semibold text-slate-300">
+                    {isDetailedSummary ? "Drafting Comprehensive Case Analysis..." : "Drafting Concise Legal Overview..."}
+                  </p>
+                  <p className="text-xs text-slate-500 max-w-md">
+                    {isDetailedSummary 
+                      ? "Acting as a Senior EU Counsel to construct a thorough ~1000-word legal analysis including citations, dispute facts, directive holdings, and strategic precedents."
+                      : "Acting as a Senior EU Counsel to draft a quick 250-word legal overview covering the factual core and primary holding."}
+                  </p>
                 </div>
               </div>
             ) : (
@@ -831,6 +839,16 @@ export default function ChatPage() {
 
           {/* Footer Controls */}
           <div className="border-t border-slate-800 pt-4 flex gap-3 justify-end flex-wrap">
+            {!isDetailedSummary && (
+              <button
+                onClick={() => handleSummarize(activeSummaryDoc.title, activeSummaryDoc.snippet, activeSummaryDoc.namespace, activeSummaryDoc.celex, true)}
+                disabled={summarizing || !summaryText}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-100 text-xs font-bold flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer shadow-lg shadow-emerald-500/20 mr-auto border border-emerald-500/30 animate-pulse"
+              >
+                <Sparkles className="w-4 h-4 text-teal-200" />
+                Detailed Case Analysis (1000 words)
+              </button>
+            )}
             <button
               onClick={copyToClipboard}
               disabled={summarizing || !summaryText}

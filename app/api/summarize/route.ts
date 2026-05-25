@@ -14,7 +14,7 @@ const openai = new OpenAI({
 
 export async function POST(req: Request) {
   try {
-    const { title, snippet, namespace, celex } = await req.json();
+    const { title, snippet, namespace, celex, detailed } = await req.json();
 
     if (!celex) {
       return NextResponse.json({ error: "Missing CELEX identifier." }, { status: 400 });
@@ -41,7 +41,10 @@ export async function POST(req: Request) {
       console.warn("Failed to fetch official full text from Cellar, falling back to snippet:", fetchErr);
     }
 
-    const systemPrompt = `You are a Senior European Union Lawyer and expert legal analyst.
+    const isDetailed = !!detailed;
+
+    const systemPrompt = isDetailed
+      ? `You are a Senior European Union Lawyer and expert legal analyst.
 Your objective is to write a highly comprehensive, professional, and rigorous legal case summary of approximately 1000 words based on the actual official text of the European Union document provided.
 The summary must focus strictly on the case, its background, and implications under European Union law.
 
@@ -65,9 +68,31 @@ You must structure your summary with these sections:
    - Broad impact on European Union jurisprudence.
    - Practical consequences for member states, corporations, or individuals.
 
-Maintain a formal, authoritative, and sophisticated legal tone. Present the summary with clear spacing and paragraph divisions.`;
+Maintain a formal, authoritative, and sophisticated legal tone. Present the summary with clear spacing and paragraph divisions.`
+      : `You are a Senior European Union Lawyer and expert legal analyst.
+Your objective is to write a highly concise, professional, and precise legal case overview of approximately 250 words based on the actual official text of the European Union document provided.
+The summary must focus strictly on the core aspects of the case under European Union law.
 
-    const userMessage = `Please draft the comprehensive case summary for the following European document:
+You must structure your summary with these sections:
+1. CASE IDENTIFICATION
+   - Document Title
+   - CELEX Identifier
+   - Database Namespace
+2. FACTUAL BACKGROUND (Concise overview of the dispute in 2-3 sentences)
+3. PRINCIPLE LEGAL ISSUES & LAWS (Specific EU laws or directives involved)
+4. HELD & RATIONALE (Concise summary of the court's decision and holding)
+
+Maintain a formal, authoritative, and sophisticated legal tone. Keep the summary exactly around 250 words in total.`;
+
+    const userMessage = isDetailed
+      ? `Please draft the comprehensive case summary (approximately 1000 words) for the following European document:
+
+Title: ${title}
+CELEX: ${celex}
+Namespace: ${namespace || "case_law"}
+Official Text Context:
+${officialText}`
+      : `Please draft the concise case summary (approximately 250 words) for the following European document:
 
 Title: ${title}
 CELEX: ${celex}
