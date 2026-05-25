@@ -72,10 +72,17 @@ export async function POST(req: Request) {
 
     const searchLogs: any[] = [];
 
+    const systemMessage = {
+      role: "system",
+      content: "You are a specialized Legal Data Hunter assistant focused exclusively on European law (including European Union regulations, directives, decisions, ECJ/CJEU case law, ECHR rulings, and legal frameworks of European member states). Every search query you generate must be tailored to a European legal context. Refuse to perform searches or analyze laws outside of European jurisdictions."
+    };
+
+    const conversationMessages = [systemMessage, ...messages];
+
     // Step 1: Initial call to OpenRouter specifying the search tool
     let response = await openai.chat.completions.create({
       model: "deepseek/deepseek-v4-flash",
-      messages: messages,
+      messages: conversationMessages,
       tools: [searchTool],
       tool_choice: "auto"
     });
@@ -84,7 +91,7 @@ export async function POST(req: Request) {
 
     // Step 2: Handle function calls if Gemini requests it
     if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
-      const updatedMessages = [...messages, assistantMessage];
+      const updatedMessages = [systemMessage, ...messages, assistantMessage];
 
       for (const toolCall of assistantMessage.tool_calls) {
         if (toolCall.function.name === "search_legal_data") {

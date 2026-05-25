@@ -35,16 +35,16 @@ interface Message {
 
 const PRESETS = [
   {
-    title: "Employment Discrimination",
-    query: "Analyze cases regarding gender discrimination and constructive discharge in California corporations."
+    title: "Employment Rights",
+    query: "Analyze European Court of Justice precedents regarding gender pay discrimination and constructive dismissal."
   },
   {
     title: "Environmental Liability",
-    query: "What are the regulatory disclosure requirements and precedents regarding offshore oil spillage liability?"
+    query: "What are the EU regulatory disclosure requirements and ECHR precedents regarding offshore industrial pollution liability?"
   },
   {
-    title: "Data Privacy Protection",
-    query: "Find precedents concerning class action lawsuits for consumer biometric data leaks without consent."
+    title: "GDPR Data Protection",
+    query: "Find European precedents concerning biometric data processing violations and class action claims under GDPR."
   }
 ];
 
