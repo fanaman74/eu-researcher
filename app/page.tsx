@@ -52,7 +52,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Greetings. I am your Legal Data Hunter AI agent. I can perform active research on global case law, statutes, and regulatory documents to assist your inquiry. What legal concepts would you like to search today?"
+      content: "Greetings. I am your EU Legal Data Hunter AI agent. I can perform active research on European Union regulations, directives, decisions, CJEU/ECJ case law, and member state jurisdictions to assist your inquiry. What EU legal concepts would you like to search today?"
     }
   ]);
   const [input, setInput] = useState("");
@@ -145,14 +145,14 @@ export default function ChatPage() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight">
-            Global Legal Search <br />
+            EU Legal Search <br />
             <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 bg-clip-text text-transparent drop-shadow-sm">
               Redefined by AI
             </span>
           </h1>
 
           <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed font-light">
-            Connect to global statutory codes, regulatory directives, and historical case law precedents. Query complex schemas instantly in pure natural language.
+            Connect to European Union statutory codes, regulatory directives, and historical case law precedents. Query complex schemas instantly in pure natural language.
           </p>
 
           <div className="flex gap-4 justify-center pt-4">
@@ -431,7 +431,7 @@ export default function ChatPage() {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about global cases, precedents, or statutory definitions..."
+                placeholder="Ask about European cases, EU directives, precedents, or statutory definitions..."
                 className="flex-1 bg-transparent px-4 py-3 text-sm focus:outline-none text-slate-100 placeholder-slate-500"
               />
               <button
