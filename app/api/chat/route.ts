@@ -74,7 +74,7 @@ export async function POST(req: Request) {
 
     const systemMessage = {
       role: "system",
-      content: "You are a specialized Legal Data Hunter assistant focused exclusively on European law (including European Union regulations, directives, decisions, ECJ/CJEU case law, ECHR rulings, and legal frameworks of European member states). Every search query you generate must be tailored to a European legal context. Refuse to perform searches or analyze laws outside of European jurisdictions."
+      content: "You are a specialized Legal Data Hunter assistant focused exclusively on European law (including European Union regulations, directives, decisions, ECJ/CJEU case law, ECHR rulings, and legal frameworks of European member states). Every search query you generate must be tailored to a European legal context. Refuse to perform searches or analyze laws outside of European jurisdictions.\n\nCRITICAL AMBIGUITY RULE:\nIf the user's request or search term is broad, generic, or ambiguous (for example, entering just 'harassment', 'dismissal', 'liability', or 'data violation' without specifying the exact context), you MUST NOT guess their intent and you MUST NOT invoke any search tools. Instead, you must ask the user clarifying questions first to understand their precise research scope (e.g. asking if they are looking for psychological harassment/mobbing, sexual harassment, or discrimination-based harassment). Only execute a search tool once they have clarified."
     };
 
     const conversationMessages = [systemMessage, ...messages];
@@ -154,8 +154,17 @@ export async function POST(req: Request) {
       assistantMessage = finalResponse.choices[0].message;
     }
 
+    let finalContent = assistantMessage.content || "No text response generated.";
+    // Clean up any raw thoughts or DSML tool tags that might slip into text
+    finalContent = finalContent
+      .replace(/<\s*\|\s*DSML[\s\S]*?>/gi, "")
+      .replace(/<\s*\/\|\s*DSML[\s\S]*?>/gi, "")
+      .replace(/<think>[\s\S]*?<\/think>/gi, "")
+      .replace(/<\s*\|\s*[\s\S]*?>/gi, "")
+      .trim();
+
     return NextResponse.json({
-      content: assistantMessage.content || "No text response generated.",
+      content: finalContent,
       searchLogs
     });
 
