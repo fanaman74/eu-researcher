@@ -100,13 +100,32 @@ export async function POST(req: Request) {
           const namespace = args.namespace || defaultNamespace;
           const top_k = args.top_k || defaultTopK;
 
+          // Apply query biasing to focus database search on Europe/EU
+          let finalQuery = query;
+          const lowerQ = query.toLowerCase();
+          const hasEuropeanKeyword = ["europe", "eu", "european", "echr", "ecj", "cjeu", "uk", "germany", "france", "romania", "belgium", "italy", "spain", "netherlands", "sweden", "switzerland"].some(kw => lowerQ.includes(kw));
+          
+          if (!hasEuropeanKeyword) {
+            finalQuery = `${query} Europe EU`;
+          }
+
           // Execute the backend API request
-          const searchResult = await callLegalDataHunterAPI(query, namespace, top_k);
+          const searchResult = await callLegalDataHunterAPI(finalQuery, namespace, top_k);
 
           // The live API returns results nested in a "hits" array
-          const hits = (searchResult && Array.isArray(searchResult.hits))
+          let hits = (searchResult && Array.isArray(searchResult.hits))
             ? searchResult.hits
             : (Array.isArray(searchResult) ? searchResult : []);
+
+          // Post-filter to strictly exclude known non-European country codes
+          const NON_EUROPEAN_COUNTRIES = ["US", "PK", "IN", "CN", "JP", "AU", "CA", "ZA", "BR", "MX", "NZ", "SG", "KR", "RU"];
+          hits = hits.filter((hit: any) => {
+            if (hit && hit.country) {
+              const countryUpper = hit.country.toUpperCase();
+              return !NON_EUROPEAN_COUNTRIES.includes(countryUpper);
+            }
+            return true;
+          });
 
           searchLogs.push({
             q: query,
@@ -117,7 +136,7 @@ export async function POST(req: Request) {
             results: hits
           });
 
-          // Append the tool result to the conversation
+          // Append the filtered tool result to the conversation
           updatedMessages.push({
             role: "tool",
             tool_call_id: toolCall.id,
