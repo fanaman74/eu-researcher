@@ -74,7 +74,7 @@ export async function POST(req: Request) {
 
     // Step 1: Initial call to OpenRouter specifying the search tool
     let response = await openai.chat.completions.create({
-      model: "google/gemini-flash-1.5",
+      model: "deepseek/deepseek-v4-flash",
       messages: messages,
       tools: [searchTool],
       tool_choice: "auto"
@@ -116,7 +116,7 @@ export async function POST(req: Request) {
 
       // Step 3: Call OpenRouter again with the search results
       const finalResponse = await openai.chat.completions.create({
-        model: "google/gemini-flash-1.5",
+        model: "deepseek/deepseek-v4-flash",
         messages: updatedMessages
       });
 
