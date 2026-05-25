@@ -690,18 +690,17 @@ export default function ChatPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {latestDocs.map((doc, idx) => {
-              // Color coding based on CELEX prefix - only Category (Sector) is color-coded
-              const celexColor = "bg-slate-950 border-slate-850 text-teal-400";
-              let sectorColor = "text-slate-400";
+              // Color-coded Category pill badges (border and background), neutral plain CELEX text
+              let sectorBadgeStyle = "border border-slate-800 bg-slate-950/30 text-slate-400 px-2 py-0.5 rounded-md";
               
               if (doc.celex.startsWith("6")) {
-                sectorColor = "text-emerald-400";
+                sectorBadgeStyle = "border border-emerald-500/20 bg-emerald-950/20 text-emerald-400 px-2 py-0.5 rounded-md";
               } else if (doc.celex.startsWith("3")) {
-                sectorColor = "text-cyan-400";
+                sectorBadgeStyle = "border border-cyan-500/20 bg-cyan-950/20 text-cyan-400 px-2 py-0.5 rounded-md";
               } else if (doc.celex.startsWith("5")) {
-                sectorColor = "text-indigo-450";
+                sectorBadgeStyle = "border border-indigo-500/20 bg-indigo-950/20 text-indigo-400 px-2 py-0.5 rounded-md";
               } else if (doc.celex.startsWith("1")) {
-                sectorColor = "text-amber-400";
+                sectorBadgeStyle = "border border-amber-500/20 bg-amber-950/20 text-amber-400 px-2 py-0.5 rounded-md";
               }
 
               return (
@@ -714,11 +713,11 @@ export default function ChatPage() {
                   
                   <div>
                     {/* Category Header */}
-                    <div className="flex flex-col items-start gap-1 border-b border-slate-850/50 pb-2">
-                      <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 border rounded-md tracking-wide ${celexColor}`}>
+                    <div className="flex flex-col items-start gap-1.5 border-b border-slate-850/50 pb-2.5">
+                      <span className="text-[10px] font-mono font-bold text-teal-400 tracking-wide">
                         {doc.celex}
                       </span>
-                      <span className={`text-[9px] font-bold font-sans uppercase tracking-wider ${sectorColor}`}>
+                      <span className={`text-[9px] font-bold font-sans uppercase tracking-wider ${sectorBadgeStyle}`}>
                         {doc.sector}
                       </span>
                     </div>
