@@ -39,26 +39,73 @@ const searchTool: OpenAI.Chat.Completions.ChatCompletionTool = {
   }
 };
 
-async function callLegalDataHunterAPI(q: string, namespace: string = "case_law", top_k: number = 5) {
-  const apiKey = process.env.LDH_API_KEY || "";
-  try {
-    const response = await fetch("https://legaldatahunter.com/v1/search", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ q, namespace, top_k })
-    });
+async function callEURpxSPARQL(q: string, namespace: string = "case_law", top_k: number = 5) {
+  const stopWords = new Set(["the", "a", "an", "and", "or", "of", "in", "on", "at", "to", "for", "with", "by", "about", "against", "eu", "europe", "european", "court", "case", "law", "precedent", "precedents", "ruling", "rulings", "judgement", "judgment", "judgments"]);
+  const keywords = q.toLowerCase()
+    .split(/[\s,.\-\/]+/)
+    .filter(word => word.length > 2 && !stopWords.has(word));
 
-    if (!response.ok) {
-      throw new Error(`LDH API error: ${response.statusText}`);
+  if (keywords.length === 0) {
+    keywords.push(q.toLowerCase());
+  }
+
+  // Filter by CELEX sectors: Sector 6 = Case Law, Sector 3 = Statutes/Legislation/Regulations
+  let sectorFilter = "";
+  if (namespace === "case_law") {
+    sectorFilter = 'FILTER(STRSTARTS(?celex, "6"))';
+  } else if (namespace === "statutes" || namespace === "regulatory") {
+    sectorFilter = 'FILTER(STRSTARTS(?celex, "3"))';
+  }
+
+  // Build SPARQL filters for case-insensitive contains on all keywords
+  const keywordFilters = keywords.map(kw => `CONTAINS(LCASE(?title), "${kw}")`).join(" || ");
+
+  const sparqlQuery = `
+    PREFIX cdm: <http://publications.europa.eu/ontology/cdm#>
+
+    SELECT DISTINCT ?work ?celex ?title ?date
+    WHERE {
+      ?work cdm:resource_legal_id_celex ?celex .
+      ?expr cdm:expression_belongs_to_work ?work .
+      ?expr cdm:expression_uses_language <http://publications.europa.eu/resource/authority/language/ENG> .
+      ?expr cdm:expression_title ?title .
+      
+      OPTIONAL { ?work cdm:work_date_document ?date . }
+      
+      ${sectorFilter}
+      FILTER(${keywordFilters})
+      FILTER NOT EXISTS { ?work cdm:do_not_index "true"^^<http://www.w3.org/2001/XMLSchema#boolean> }
     }
+    ORDER BY DESC(?date)
+    LIMIT ${top_k}
+  `;
 
-    return await response.json();
+  const endpoint = 'https://publications.europa.eu/webapi/rdf/sparql';
+  const url = `${endpoint}?query=${encodeURIComponent(sparqlQuery)}&format=application%2Fsparql-results%2Bjson`;
+
+  try {
+    const response = await fetch(url, {
+      headers: { 'Accept': 'application/sparql-results+json' }
+    });
+    if (!response.ok) {
+      throw new Error(`SPARQL endpoint returned status: ${response.status}`);
+    }
+    const data = await response.json();
+    
+    // Parse SPARQL bindings to search result array
+    const hits = data.results.bindings.map((b: any, idx: number) => ({
+      id: b.celex.value,
+      title: b.title.value,
+      score: 0.98 - idx * 0.05,
+      country: "EU",
+      url: `https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:${b.celex.value}`,
+      snippet: `EUR-Lex official record. CELEX identifier: ${b.celex.value}. Document Date: ${b.date ? b.date.value : "N/A"}. Work Cellar URI: ${b.work.value}.`
+    }));
+
+    return { hits };
   } catch (error: any) {
-    console.error("Legal Data Hunter Fetch Error:", error);
-    return { error: error.message || "Failed to contact LDH database." };
+    console.error("SPARQL Query Fetch Error:", error);
+    return { error: error.message || "Failed to contact EUR-Lex database." };
   }
 }
 
@@ -100,32 +147,10 @@ export async function POST(req: Request) {
           const namespace = args.namespace || defaultNamespace;
           const top_k = args.top_k || defaultTopK;
 
-          // Apply query biasing to focus database search on Europe/EU
-          let finalQuery = query;
-          const lowerQ = query.toLowerCase();
-          const hasEuropeanKeyword = ["europe", "eu", "european", "echr", "ecj", "cjeu", "uk", "germany", "france", "romania", "belgium", "italy", "spain", "netherlands", "sweden", "switzerland"].some(kw => lowerQ.includes(kw));
-          
-          if (!hasEuropeanKeyword) {
-            finalQuery = `${query} Europe EU`;
-          }
+          // Execute the live EUR-Lex SPARQL database query
+          const searchResult = await callEURpxSPARQL(query, namespace, top_k);
 
-          // Execute the backend API request
-          const searchResult = await callLegalDataHunterAPI(finalQuery, namespace, top_k);
-
-          // The live API returns results nested in a "hits" array
-          let hits = (searchResult && Array.isArray(searchResult.hits))
-            ? searchResult.hits
-            : (Array.isArray(searchResult) ? searchResult : []);
-
-          // Post-filter to strictly exclude known non-European country codes
-          const NON_EUROPEAN_COUNTRIES = ["US", "PK", "IN", "CN", "JP", "AU", "CA", "ZA", "BR", "MX", "NZ", "SG", "KR", "RU"];
-          hits = hits.filter((hit: any) => {
-            if (hit && hit.country) {
-              const countryUpper = hit.country.toUpperCase();
-              return !NON_EUROPEAN_COUNTRIES.includes(countryUpper);
-            }
-            return true;
-          });
+          const hits = (searchResult && Array.isArray(searchResult.hits)) ? searchResult.hits : [];
 
           searchLogs.push({
             q: query,
@@ -136,7 +161,7 @@ export async function POST(req: Request) {
             results: hits
           });
 
-          // Append the filtered tool result to the conversation
+          // Append the live tool result to the conversation
           updatedMessages.push({
             role: "tool",
             tool_call_id: toolCall.id,

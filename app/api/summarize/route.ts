@@ -14,21 +14,43 @@ const openai = new OpenAI({
 
 export async function POST(req: Request) {
   try {
-    const { title, snippet, namespace } = await req.json();
+    const { title, snippet, namespace, celex } = await req.json();
 
-    if (!title || !snippet) {
-      return NextResponse.json({ error: "Missing title or snippet." }, { status: 400 });
+    if (!celex) {
+      return NextResponse.json({ error: "Missing CELEX identifier." }, { status: 400 });
+    }
+
+    // Fetch the actual official document from the EUR-Lex Cellar RESTful web service
+    let officialText = snippet || "";
+    try {
+      const cellarUrl = `https://publications.europa.eu/resource/celex/${celex}?language=ENG&format=HTML`;
+      const res = await fetch(cellarUrl);
+      if (res.ok) {
+        const htmlContent = await res.text();
+        // Strip HTML tags and normalize spacing
+        const stripped = htmlContent
+          .replace(/<[^>]*?>/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+        
+        if (stripped.length > 500) {
+          officialText = stripped.substring(0, 16000); // Extract first 16,000 characters
+        }
+      }
+    } catch (fetchErr) {
+      console.warn("Failed to fetch official full text from Cellar, falling back to snippet:", fetchErr);
     }
 
     const systemPrompt = `You are a Senior European Union Lawyer and expert legal analyst.
-Your objective is to write a highly comprehensive, professional, and rigorous legal case summary of approximately 1000 words based on the legal document provided.
+Your objective is to write a highly comprehensive, professional, and rigorous legal case summary of approximately 1000 words based on the actual official text of the European Union document provided.
 The summary must focus strictly on the case, its background, and implications under European Union law.
 
 You must structure your summary with these sections:
 1. CASE CITATION & IDENTIFICATION
    - Document Title
    - Database Namespace (e.g. case_law, statutes, regulatory)
-   - Source context.
+   - CELEX Identifier (e.g. 62021CJ0300)
+   - Official Resource URI
 2. CORE FACTS OF THE DISPUTE
    - Complete factual background and timelines of the dispute.
    - The primary parties involved and their legal contentions.
@@ -48,8 +70,10 @@ Maintain a formal, authoritative, and sophisticated legal tone. Present the summ
     const userMessage = `Please draft the comprehensive case summary for the following European document:
 
 Title: ${title}
+CELEX: ${celex}
 Namespace: ${namespace || "case_law"}
-Content/Snippet: ${snippet}`;
+Official Text Context:
+${officialText}`;
 
     const response = await openai.chat.completions.create({
       model: "deepseek/deepseek-v4-flash",

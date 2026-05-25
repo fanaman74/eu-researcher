@@ -120,7 +120,7 @@ export default function ChatPage() {
     dashboardRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleSummarize = async (title: string, snippet: string, docNamespace: string) => {
+  const handleSummarize = async (title: string, snippet: string, docNamespace: string, celex: string) => {
     setActiveSummaryDoc({ title, snippet, namespace: docNamespace });
     setModalOpen(true);
     setSummarizing(true);
@@ -131,7 +131,7 @@ export default function ChatPage() {
       const res = await fetch("/api/summarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, snippet, namespace: docNamespace })
+        body: JSON.stringify({ title, snippet, namespace: docNamespace, celex })
       });
 
       if (!res.ok) {
@@ -700,7 +700,7 @@ export default function ChatPage() {
                                               Link <ExternalLink className="w-3.5 h-3.5" />
                                             </a>
                                             <button 
-                                              onClick={() => handleSummarize(doc.title, doc.snippet, log.namespace)}
+                                              onClick={() => handleSummarize(doc.title, doc.snippet, log.namespace, doc.id)}
                                               className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-teal-450 hover:underline transition-colors font-medium cursor-pointer"
                                             >
                                               Summarise <Sparkles className="w-3.5 h-3.5" />
