@@ -49,12 +49,17 @@ async function callEURpxSPARQL(q: string, namespace: string = "case_law", top_k:
     keywords.push(q.toLowerCase());
   }
 
-  // Filter by CELEX sectors: Sector 6 = Case Law, Sector 3 = Statutes/Legislation/Regulations
+  // Filter by CELEX sectors: 
+  // Sector 6 = Case Law, Sector 3 = Secondary Legislation, Sector 5 = Preparatory Acts, Sector 1 = Primary Law/Treaties
   let sectorFilter = "";
   if (namespace === "case_law") {
     sectorFilter = 'FILTER(STRSTARTS(?celex, "6"))';
-  } else if (namespace === "statutes" || namespace === "regulatory") {
+  } else if (namespace === "statutes") {
     sectorFilter = 'FILTER(STRSTARTS(?celex, "3"))';
+  } else if (namespace === "regulatory") {
+    sectorFilter = 'FILTER(STRSTARTS(?celex, "5"))';
+  } else if (namespace === "international") {
+    sectorFilter = 'FILTER(STRSTARTS(?celex, "1"))';
   }
 
   // Build SPARQL filters for case-insensitive contains on all keywords

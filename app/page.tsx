@@ -507,7 +507,7 @@ export default function ChatPage() {
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">LDH Search Database</span>
+                <span className="text-slate-400">EUR-Lex SPARQL Endpoint</span>
                 <span className="text-emerald-400 text-xs font-semibold flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500" /> Secured
                 </span>
@@ -531,10 +531,10 @@ export default function ChatPage() {
                   onChange={(e) => setNamespace(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 focus:border-teal-500 focus:outline-none transition-colors"
                 >
-                  <option value="case_law">Case Law Documents</option>
-                  <option value="statutes">Legislative Statutes</option>
-                  <option value="regulatory">Regulatory Guidelines</option>
-                  <option value="international">International Treaties</option>
+                  <option value="case_law">Case Law (Sector 6)</option>
+                  <option value="statutes">Secondary Legislation (Sector 3)</option>
+                  <option value="regulatory">Preparatory Acts (Sector 5)</option>
+                  <option value="international">Primary Law & Treaties (Sector 1)</option>
                 </select>
               </div>
               <div className="space-y-1.5">
