@@ -65,6 +65,13 @@ export default function ChatPage() {
   // Accordion search states
   const [expandedLog, setExpandedLog] = useState<{ [key: number]: boolean }>({});
 
+  // Summarizer Modal States
+  const [modalOpen, setModalOpen] = useState(false);
+  const [activeSummaryDoc, setActiveSummaryDoc] = useState<{ title: string; snippet: string; namespace: string } | null>(null);
+  const [summaryText, setSummaryText] = useState("");
+  const [summarizing, setSummarizing] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+
   const chatEndRef = useRef<HTMLDivElement>(null);
   const dashboardRef = useRef<HTMLDivElement>(null);
 
@@ -74,6 +81,52 @@ export default function ChatPage() {
 
   const scrollToDashboard = () => {
     dashboardRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleSummarize = async (title: string, snippet: string, docNamespace: string) => {
+    setActiveSummaryDoc({ title, snippet, namespace: docNamespace });
+    setModalOpen(true);
+    setSummarizing(true);
+    setSummaryText("");
+    setCopySuccess(false);
+
+    try {
+      const res = await fetch("/api/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, snippet, namespace: docNamespace })
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to generate summary.");
+      }
+
+      const data = await res.json();
+      setSummaryText(data.summary);
+    } catch (err: any) {
+      setSummaryText(`⚠️ Failed to draft summary: ${err.message || "An error occurred."}`);
+    } finally {
+      setSummarizing(false);
+    }
+  };
+
+  const downloadSummary = () => {
+    if (!activeSummaryDoc || !summaryText) return;
+    const blob = new Blob([summaryText], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${activeSummaryDoc.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_summary.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const copyToClipboard = () => {
+    if (!summaryText) return;
+    navigator.clipboard.writeText(summaryText);
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 2000);
   };
 
   const handleSend = async (textToSend?: string) => {
@@ -370,14 +423,22 @@ export default function ChatPage() {
                                           {doc.snippet || doc.content || "Context content payload loaded securely."}
                                         </td>
                                         <td className="p-4 align-top text-center">
-                                          <a 
-                                            href={targetLink}
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-1.5 text-xs text-teal-400 hover:text-emerald-400 hover:underline transition-colors font-medium cursor-pointer"
-                                          >
-                                            Link <ExternalLink className="w-3.5 h-3.5" />
-                                          </a>
+                                          <div className="flex items-center justify-center gap-3">
+                                            <a 
+                                              href={targetLink}
+                                              target="_blank" 
+                                              rel="noopener noreferrer"
+                                              className="inline-flex items-center gap-1.5 text-xs text-teal-400 hover:text-emerald-400 hover:underline transition-colors font-medium cursor-pointer"
+                                            >
+                                              Link <ExternalLink className="w-3.5 h-3.5" />
+                                            </a>
+                                            <button 
+                                              onClick={() => handleSummarize(doc.title, doc.snippet, log.namespace)}
+                                              className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-teal-450 hover:underline transition-colors font-medium cursor-pointer"
+                                            >
+                                              Summarise <Sparkles className="w-3.5 h-3.5" />
+                                            </button>
+                                          </div>
                                         </td>
                                       </tr>
                                     );
@@ -446,6 +507,80 @@ export default function ChatPage() {
 
         </div>
       </section>
+
+    {/* 4. SENIOR EU LAWYER CASE SUMMARIZER POPUP MODAL */}
+    {modalOpen && activeSummaryDoc && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-fade-in">
+        <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 md:p-8 max-w-4xl w-full max-h-[90vh] flex flex-col justify-between shadow-2xl glass-card relative z-50">
+          
+          {/* Header */}
+          <div className="border-b border-slate-800 pb-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Scale className="text-emerald-400 w-6 h-6 animate-pulse" />
+              <div>
+                <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                  Senior EU Lawyer Case Analysis <Sparkles className="w-4 h-4 text-teal-400" />
+                </h3>
+                <p className="text-xs text-slate-400 truncate max-w-lg">Doc: {activeSummaryDoc.title}</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setModalOpen(false)}
+              className="p-2 rounded-lg bg-slate-955 border border-slate-800 hover:border-emerald-500/50 text-slate-400 hover:text-slate-100 transition-all cursor-pointer text-xs"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Scrollable Body Content */}
+          <div className="flex-1 overflow-y-auto my-6 pr-2 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-slate-950">
+            {summarizing ? (
+              <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                <div className="relative">
+                  <div className="w-12 h-12 rounded-xl border border-slate-800 bg-slate-955 flex items-center justify-center text-emerald-400 animate-spin">
+                    <Scale className="w-6 h-6" />
+                  </div>
+                  <span className="absolute inset-0 w-12 h-12 rounded-xl border-t border-emerald-400 animate-ping opacity-75" />
+                </div>
+                <div className="text-center space-y-1.5">
+                  <p className="text-sm font-semibold text-slate-300">Drafting Expert Case Summary...</p>
+                  <p className="text-xs text-slate-500 max-w-md">Acting as a Senior EU Counsel to construct a thorough ~1000-word legal analysis including citations, dispute facts, directive holdings, and strategic precedents.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-slate-300 leading-relaxed font-sans whitespace-pre-line space-y-4 pr-1">
+                {summaryText}
+              </div>
+            )}
+          </div>
+
+          {/* Footer Controls */}
+          <div className="border-t border-slate-800 pt-4 flex gap-3 justify-end flex-wrap">
+            <button
+              onClick={copyToClipboard}
+              disabled={summarizing || !summaryText}
+              className="px-5 py-2.5 rounded-xl bg-slate-955 border border-slate-800 hover:border-teal-500/50 text-slate-300 hover:text-slate-100 text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+            >
+              {copySuccess ? "✓ Copied!" : "Copy Summary"}
+            </button>
+            <button
+              onClick={downloadSummary}
+              disabled={summarizing || !summaryText}
+              className="px-5 py-2.5 rounded-xl bg-slate-955 border border-slate-800 hover:border-emerald-500/50 text-slate-300 hover:text-slate-100 text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+            >
+              Save Summary (.txt)
+            </button>
+            <button
+              onClick={() => setModalOpen(false)}
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-450 hover:to-cyan-450 text-white text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            >
+              Close Panel
+            </button>
+          </div>
+
+        </div>
+      </div>
+    )}
 
       {/* Footer */}
       <footer className="p-8 border-t border-slate-900 bg-slate-950 text-center text-xs text-slate-500 space-y-2 mt-auto">
