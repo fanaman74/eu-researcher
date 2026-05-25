@@ -193,27 +193,30 @@ export default function ChatPage() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-25" />
         
         {/* Stylized animated neural-network vector map of Europe */}
-        <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none opacity-25 md:opacity-35 select-none max-w-5xl mx-auto">
+        <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none opacity-30 md:opacity-40 select-none max-w-5xl mx-auto">
           <svg 
             viewBox="0 0 800 600" 
-            className="w-full h-full max-h-[85vh] text-emerald-500/20 fill-none stroke-current animate-float-1"
+            className="w-full h-full max-h-[85vh] fill-none animate-float-1"
           >
             {/* Stylized background grid representing Europe */}
-            <g strokeWidth="0.5" strokeDasharray="3 6">
-              <circle cx="360" cy="225" r="150" className="opacity-10" />
-              <circle cx="360" cy="225" r="280" className="opacity-5" />
-              <circle cx="360" cy="225" r="400" className="opacity-5" />
+            <g stroke="#059669" strokeWidth="0.5" strokeOpacity="0.25" strokeDasharray="3 6">
+              <circle cx="360" cy="225" r="150" />
+              <circle cx="360" cy="225" r="280" />
+              <circle cx="360" cy="225" r="400" />
             </g>
 
             {/* Stylized Abstract Silhouette of Europe */}
             <path 
               d="M120 120 C180 80, 240 100, 260 120 C280 140, 320 140, 340 110 C360 80, 420 50, 480 40 C540 30, 560 60, 530 110 C500 160, 520 200, 560 210 C600 220, 680 180, 720 240 C750 280, 700 360, 640 400 C580 440, 540 460, 520 480 C500 500, 440 520, 420 480 C400 440, 360 420, 320 460 C280 500, 240 480, 220 440 C200 400, 160 410, 140 380 C120 350, 80 340, 90 300 C100 260, 130 250, 150 200 C170 150, 140 140, 120 120 Z" 
-              strokeWidth="1.5" 
-              className="stroke-teal-500/10 fill-teal-500/[0.01]" 
+              stroke="#14b8a6" 
+              strokeWidth="2" 
+              strokeOpacity="0.45"
+              fill="#14b8a6"
+              fillOpacity="0.02" 
             />
 
             {/* Dynamic Glowing Data Paths (Neural streams of legal data) */}
-            <g strokeWidth="1" className="stroke-teal-400/40">
+            <g stroke="#2dd4bf" strokeWidth="1" strokeOpacity="0.5">
               {/* Brussels to Strasbourg */}
               <path d="M320 200 L360 225">
                 <animate attributeName="stroke-dasharray" values="0 100; 100 0" dur="4s" repeatCount="indefinite" />
@@ -255,7 +258,7 @@ export default function ChatPage() {
             </g>
 
             {/* Major Capital Nodes (Legal Hubs) */}
-            <g className="fill-emerald-400 stroke-slate-950" strokeWidth="1.5">
+            <g fill="#10b981" stroke="#020617" strokeWidth="1.5">
               <circle cx="320" cy="200" r="5" className="fill-teal-300 drop-shadow-[0_0_8px_rgba(20,184,166,0.8)]" />
               <circle cx="340" cy="210" r="4.5" className="fill-teal-400" />
               <circle cx="360" cy="225" r="4.5" className="fill-teal-400 animate-pulse" />
