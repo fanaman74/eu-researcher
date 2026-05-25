@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
   body {
-    background-color: #020617; /* slate-950 */
+    background-color: #020617; /* slate-955 */
     color: #f8fafc; /* slate-50 */
     font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
   }
@@ -19,8 +22,34 @@
   }
 }
 
+@keyframes floatBg {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-20px) scale(1.05);
+  }
+}
+
+@keyframes floatReverse {
+  0%, 100% {
+    transform: translateY(0px) scale(1.05);
+  }
+  50% {
+    transform: translateY(20px) scale(1);
+  }
+}
+
 .pulse-emerald {
   animation: pulseGlow 2s infinite ease-in-out;
+}
+
+.animate-float-1 {
+  animation: floatBg 8s infinite ease-in-out;
+}
+
+.animate-float-2 {
+  animation: floatReverse 10s infinite ease-in-out;
 }
 
 /* Custom glassmorphism variables */
