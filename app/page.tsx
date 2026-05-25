@@ -690,22 +690,18 @@ export default function ChatPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {latestDocs.map((doc, idx) => {
-              // Color coding based on CELEX prefix
-              let celexColor = "bg-slate-950 border-slate-800 text-slate-400";
-              let sectorColor = "text-slate-500";
+              // Color coding based on CELEX prefix - only Category (Sector) is color-coded
+              const celexColor = "bg-slate-950 border-slate-850 text-teal-400";
+              let sectorColor = "text-slate-400";
               
               if (doc.celex.startsWith("6")) {
-                celexColor = "bg-emerald-950/30 border-emerald-500/20 text-emerald-400";
-                sectorColor = "text-emerald-500";
+                sectorColor = "text-emerald-400";
               } else if (doc.celex.startsWith("3")) {
-                celexColor = "bg-cyan-950/30 border-cyan-500/20 text-cyan-400";
-                sectorColor = "text-cyan-500";
+                sectorColor = "text-cyan-400";
               } else if (doc.celex.startsWith("5")) {
-                celexColor = "bg-indigo-950/30 border-indigo-500/20 text-indigo-400";
-                sectorColor = "text-indigo-400";
+                sectorColor = "text-indigo-450";
               } else if (doc.celex.startsWith("1")) {
-                celexColor = "bg-amber-950/30 border-amber-500/20 text-amber-400";
-                sectorColor = "text-amber-550";
+                sectorColor = "text-amber-400";
               }
 
               return (
