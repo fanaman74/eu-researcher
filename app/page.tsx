@@ -192,6 +192,96 @@ export default function ChatPage() {
         {/* Subtle grid pattern inside hero */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-25" />
         
+        {/* Stylized animated neural-network vector map of Europe */}
+        <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none opacity-25 md:opacity-35 select-none max-w-5xl mx-auto">
+          <svg 
+            viewBox="0 0 800 600" 
+            className="w-full h-full max-h-[85vh] text-emerald-500/20 fill-none stroke-current animate-float-1"
+          >
+            {/* Stylized background grid representing Europe */}
+            <g strokeWidth="0.5" strokeDasharray="3 6">
+              <circle cx="360" cy="225" r="150" className="opacity-10" />
+              <circle cx="360" cy="225" r="280" className="opacity-5" />
+              <circle cx="360" cy="225" r="400" className="opacity-5" />
+            </g>
+
+            {/* Stylized Abstract Silhouette of Europe */}
+            <path 
+              d="M120 120 C180 80, 240 100, 260 120 C280 140, 320 140, 340 110 C360 80, 420 50, 480 40 C540 30, 560 60, 530 110 C500 160, 520 200, 560 210 C600 220, 680 180, 720 240 C750 280, 700 360, 640 400 C580 440, 540 460, 520 480 C500 500, 440 520, 420 480 C400 440, 360 420, 320 460 C280 500, 240 480, 220 440 C200 400, 160 410, 140 380 C120 350, 80 340, 90 300 C100 260, 130 250, 150 200 C170 150, 140 140, 120 120 Z" 
+              strokeWidth="1.5" 
+              className="stroke-teal-500/10 fill-teal-500/[0.01]" 
+            />
+
+            {/* Dynamic Glowing Data Paths (Neural streams of legal data) */}
+            <g strokeWidth="1" className="stroke-teal-400/40">
+              {/* Brussels to Strasbourg */}
+              <path d="M320 200 L360 225">
+                <animate attributeName="stroke-dasharray" values="0 100; 100 0" dur="4s" repeatCount="indefinite" />
+              </path>
+              {/* Luxembourg to Brussels */}
+              <path d="M340 210 L320 200" />
+              {/* Paris to Brussels */}
+              <path d="M260 230 L320 200" />
+              {/* London to Paris */}
+              <path d="M220 140 L260 230">
+                <animate attributeName="stroke-dasharray" values="0 50; 50 0" dur="3s" repeatCount="indefinite" />
+              </path>
+              {/* Dublin to London */}
+              <path d="M120 120 L220 140" />
+              {/* Paris to Madrid */}
+              <path d="M260 230 L140 360">
+                <animate attributeName="stroke-dasharray" values="0 150; 150 0" dur="6s" repeatCount="indefinite" />
+              </path>
+              {/* Madrid to Lisbon */}
+              <path d="M140 360 L80 380" />
+              {/* Rome to Strasbourg */}
+              <path d="M450 340 L360 225">
+                <animate attributeName="stroke-dasharray" values="0 120; 120 0" dur="5s" repeatCount="indefinite" />
+              </path>
+              {/* Berlin to Brussels */}
+              <path d="M440 160 L320 200" />
+              {/* Berlin to Warsaw */}
+              <path d="M440 160 L560 160" />
+              {/* Berlin to Stockholm */}
+              <path d="M440 160 L520 60" />
+              {/* Vienna to Prague */}
+              <path d="M480 230 L460 200" />
+              {/* Prague to Berlin */}
+              <path d="M460 200 L440 160" />
+              {/* Rome to Athens */}
+              <path d="M450 340 L620 380" />
+              {/* Warsaw to Vienna */}
+              <path d="M560 160 L480 230" />
+            </g>
+
+            {/* Major Capital Nodes (Legal Hubs) */}
+            <g className="fill-emerald-400 stroke-slate-950" strokeWidth="1.5">
+              <circle cx="320" cy="200" r="5" className="fill-teal-300 drop-shadow-[0_0_8px_rgba(20,184,166,0.8)]" />
+              <circle cx="340" cy="210" r="4.5" className="fill-teal-400" />
+              <circle cx="360" cy="225" r="4.5" className="fill-teal-400 animate-pulse" />
+              <circle cx="260" cy="230" r="4" />
+              <circle cx="220" cy="140" r="4" />
+              <circle cx="120" cy="120" r="4" />
+              <circle cx="140" cy="360" r="4" />
+              <circle cx="80" cy="380" r="3.5" />
+              <circle cx="450" cy="340" r="4" />
+              <circle cx="440" cy="160" r="4.5" className="fill-teal-400" />
+              <circle cx="480" cy="230" r="4" />
+              <circle cx="460" cy="200" r="4" />
+              <circle cx="560" cy="160" r="4" />
+              <circle cx="520" cy="60" r="4" className="animate-pulse" />
+              <circle cx="620" cy="380" r="4" />
+            </g>
+
+            {/* Glowing Outer Pulses on key nodes */}
+            <g className="stroke-teal-400/60 fill-none" strokeWidth="0.5">
+              <circle cx="320" cy="200" r="12" className="animate-ping [animation-duration:3s]" />
+              <circle cx="360" cy="225" r="10" className="animate-ping [animation-duration:4s]" />
+              <circle cx="440" cy="160" r="10" className="animate-ping [animation-duration:5s]" />
+            </g>
+          </svg>
+        </div>
+        
         <div className="max-w-4xl mx-auto space-y-8 relative z-10">
           <div className="inline-flex items-center gap-2 bg-slate-900/80 px-4 py-2 rounded-full border border-slate-800 text-teal-400 text-xs font-semibold uppercase tracking-wider pulse-emerald">
             <Sparkles className="w-4 h-4 text-emerald-400" /> Powered by DeepSeek-V4-Flash
