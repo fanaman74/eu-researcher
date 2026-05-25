@@ -578,21 +578,51 @@ export default function ChatPage() {
           
           {/* Chat Messages Log */}
           <div className="space-y-8 min-h-[350px] max-h-[600px] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-slate-950">
-            {messages.map((message, index) => (
-              <div 
-                key={index}
-                className={`flex gap-4 max-w-6xl ${message.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"}`}
-              >
-                {/* Avatar Icon */}
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${message.role === "user" ? "bg-gradient-to-tr from-emerald-500 to-cyan-500 border-cyan-400 text-white" : "bg-slate-900 border-slate-800 text-teal-400"}`}>
-                  {message.role === "user" ? <MessageSquare className="w-4.5 h-4.5" /> : <Scale className="w-4.5 h-4.5" />}
-                </div>
+            {messages.map((message, index) => {
+              // Parse options for assistant messages dynamically
+              let displayContent = message.content;
+              const messageOptions = [];
+              
+              if (message.role === "assistant") {
+                const optionRegex = /\[Option:\s*(.*?)\]/gi;
+                let match;
+                while ((match = optionRegex.exec(message.content)) !== null) {
+                  messageOptions.push(match[1].trim());
+                }
+                displayContent = message.content.replace(/\[Option:\s*(.*?)\]/gi, '').trim();
+              }
 
-                {/* Message Container */}
-                <div className="space-y-4 w-[90%]">
-                  <div className={`p-5 rounded-2xl border text-sm leading-relaxed ${message.role === "user" ? "bg-gradient-to-br from-emerald-950/40 to-teal-900/40 border-teal-800/80 text-teal-55" : "bg-slate-900/50 border-slate-800 backdrop-blur-md text-slate-100"}`}>
-                    {message.content}
+              return (
+                <div 
+                  key={index}
+                  className={`flex gap-4 max-w-6xl ${message.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"}`}
+                >
+                  {/* Avatar Icon */}
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${message.role === "user" ? "bg-gradient-to-tr from-emerald-500 to-cyan-500 border-cyan-400 text-white" : "bg-slate-900 border-slate-800 text-teal-400"}`}>
+                    {message.role === "user" ? <MessageSquare className="w-4.5 h-4.5" /> : <Scale className="w-4.5 h-4.5" />}
                   </div>
+
+                  {/* Message Container */}
+                  <div className="space-y-4 w-[90%]">
+                    <div className={`p-5 rounded-2xl border text-sm leading-relaxed whitespace-pre-wrap ${message.role === "user" ? "bg-gradient-to-br from-emerald-950/40 to-teal-900/40 border-teal-800/80 text-teal-55" : "bg-slate-900/50 border-slate-800 backdrop-blur-md text-slate-100"}`}>
+                      {displayContent}
+                    </div>
+
+                    {/* Interactive Clickable Option Buttons */}
+                    {messageOptions.length > 0 && (
+                      <div className="flex flex-wrap gap-2.5 pt-2">
+                        {messageOptions.map((opt, optIdx) => (
+                          <button
+                            key={optIdx}
+                            onClick={() => handleSend(opt)}
+                            className="px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-teal-500 hover:bg-teal-950/40 text-teal-400 hover:text-teal-200 text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-lg flex items-center gap-2 group animate-fade-in"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-teal-500 group-hover:bg-emerald-400 animate-pulse" />
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
                   {/* RENDER DYNAMIC COLORED DATABASE TABLE FOR SEARCH RESULTS */}
                   {message.searchLogs && message.searchLogs.length > 0 && (
@@ -694,9 +724,10 @@ export default function ChatPage() {
                       ))}
                     </div>
                   )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {/* Loading thinking bubble */}
             {loading && (
