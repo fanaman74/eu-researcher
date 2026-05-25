@@ -533,8 +533,14 @@ export default function ChatPage() {
                 >
                   <option value="case_law">Case Law (Sector 6)</option>
                   <option value="statutes">Secondary Legislation (Sector 3)</option>
-                  <option value="regulatory">Preparatory Acts (Sector 5)</option>
+                  <option value="regulatory">Preparatory Documents (Sector 5)</option>
                   <option value="international">Primary Law & Treaties (Sector 1)</option>
+                  <option value="consolidated">Consolidated Texts (Sector 0)</option>
+                  <option value="agreements">International Agreements (Sector 2)</option>
+                  <option value="complementary">Complementary Legislation (Sector 4)</option>
+                  <option value="transposition">National Transposition (Sector 7)</option>
+                  <option value="national_case_law">National Case-Law (Sector 8)</option>
+                  <option value="parliamentary">Parliamentary Questions (Sector 9)</option>
                 </select>
               </div>
               <div className="space-y-1.5">

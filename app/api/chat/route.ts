@@ -50,7 +50,6 @@ async function callEURpxSPARQL(q: string, namespace: string = "case_law", top_k:
   }
 
   // Filter by CELEX sectors: 
-  // Sector 6 = Case Law, Sector 3 = Secondary Legislation, Sector 5 = Preparatory Acts, Sector 1 = Primary Law/Treaties
   let sectorFilter = "";
   if (namespace === "case_law") {
     sectorFilter = 'FILTER(STRSTARTS(?celex, "6"))';
@@ -60,6 +59,18 @@ async function callEURpxSPARQL(q: string, namespace: string = "case_law", top_k:
     sectorFilter = 'FILTER(STRSTARTS(?celex, "5"))';
   } else if (namespace === "international") {
     sectorFilter = 'FILTER(STRSTARTS(?celex, "1"))';
+  } else if (namespace === "consolidated") {
+    sectorFilter = 'FILTER(STRSTARTS(?celex, "0"))';
+  } else if (namespace === "agreements") {
+    sectorFilter = 'FILTER(STRSTARTS(?celex, "2"))';
+  } else if (namespace === "complementary") {
+    sectorFilter = 'FILTER(STRSTARTS(?celex, "4"))';
+  } else if (namespace === "transposition") {
+    sectorFilter = 'FILTER(STRSTARTS(?celex, "7"))';
+  } else if (namespace === "national_case_law") {
+    sectorFilter = 'FILTER(STRSTARTS(?celex, "8"))';
+  } else if (namespace === "parliamentary") {
+    sectorFilter = 'FILTER(STRSTARTS(?celex, "9"))';
   }
 
   // Build SPARQL filters for case-insensitive contains on all keywords
