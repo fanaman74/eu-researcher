@@ -103,20 +103,25 @@ export async function POST(req: Request) {
           // Execute the backend API request
           const searchResult = await callLegalDataHunterAPI(query, namespace, top_k);
 
+          // The live API returns results nested in a "hits" array
+          const hits = (searchResult && Array.isArray(searchResult.hits))
+            ? searchResult.hits
+            : (Array.isArray(searchResult) ? searchResult : []);
+
           searchLogs.push({
             q: query,
             namespace,
             top_k,
             success: !searchResult.error,
-            resultsCount: Array.isArray(searchResult) ? searchResult.length : 0,
-            results: searchResult
+            resultsCount: hits.length,
+            results: hits
           });
 
           // Append the tool result to the conversation
           updatedMessages.push({
             role: "tool",
             tool_call_id: toolCall.id,
-            content: JSON.stringify(searchResult)
+            content: JSON.stringify(hits)
           });
         }
       }
