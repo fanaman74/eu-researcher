@@ -751,7 +751,12 @@ export default function ChatPage() {
         {/* ========================================================= */}
         {/* SECTION 3: INTERACTIVE QUERY CONSOLE (SEARCH & CHAT)      */}
         {/* ========================================================= */}
-        <div className="bg-slate-900/20 border border-slate-800/80 rounded-3xl p-6 md:p-8 space-y-6 shadow-xl backdrop-blur-md relative overflow-hidden">
+        <div className="bg-slate-900/20 border border-slate-800/80 border-t-4 border-t-purple-500 rounded-3xl p-6 md:p-8 space-y-6 shadow-[0_0_50px_-12px_rgba(168,85,247,0.15)] backdrop-blur-md relative overflow-hidden">
+          {/* Floating glass badge */}
+          <div className="absolute top-4 right-4 md:top-6 md:right-8 bg-purple-500/10 border border-purple-500/20 text-purple-400 font-mono text-[9px] font-bold uppercase tracking-widest px-3 py-1 rounded-full backdrop-blur-md pointer-events-none z-10">
+            [03 / Search & Config Console]
+          </div>
+
           {/* Subtle purple ambient light glow in the bottom-left */}
           <span className="absolute -left-32 -bottom-32 w-64 h-64 rounded-full bg-gradient-to-tr from-purple-500/5 to-transparent blur-3xl pointer-events-none" />
 
@@ -768,6 +773,87 @@ export default function ChatPage() {
                 <p className="text-xs text-slate-400">Query EU case precedents, directive mandates, and regulations in pure natural language</p>
               </div>
             </div>
+          </div>
+
+          {/* Interactive Category/Sector Selector Bubbles & Config Toolbar */}
+          <div className="space-y-6 border-b border-slate-850 pb-6 relative z-10">
+            
+            {/* Sector Pills */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold font-sans text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" /> Targeted Legal Sectors & Domains
+              </label>
+              <div className="flex flex-wrap gap-2.5">
+                {[
+                  { id: "case_law", label: "Case Law (Sector 6)", color: "emerald" },
+                  { id: "statutes", label: "Secondary Legislation (Sector 3)", color: "cyan" },
+                  { id: "regulatory", label: "Preparatory Documents (Sector 5)", color: "indigo" },
+                  { id: "international", label: "Primary Law & Treaties (Sector 1)", color: "amber" },
+                  { id: "consolidated", label: "Consolidated Texts (Sector 0)", color: "rose" },
+                  { id: "agreements", label: "International Agreements (Sector 2)", color: "violet" },
+                  { id: "complementary", label: "Complementary Legislation (Sector 4)", color: "blue" },
+                  { id: "transposition", label: "National Transposition (Sector 7)", color: "yellow" },
+                  { id: "national_case_law", label: "National Case-Law (Sector 8)", color: "teal" },
+                  { id: "parliamentary", label: "Parliamentary Questions (Sector 9)", color: "fuchsia" }
+                ].map((item) => {
+                  const isActive = namespace === item.id;
+                  
+                  // Dynamic styles based on active/inactive states and sector colors
+                  let pillStyle = "bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200";
+                  
+                  if (isActive) {
+                    if (item.color === "emerald") pillStyle = "border-emerald-500 bg-emerald-500/10 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.1)]";
+                    else if (item.color === "cyan") pillStyle = "border-cyan-500 bg-cyan-500/10 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.1)]";
+                    else if (item.color === "indigo") pillStyle = "border-indigo-500 bg-indigo-500/10 text-indigo-300 shadow-[0_0_15px_rgba(99,102,241,0.1)]";
+                    else if (item.color === "amber") pillStyle = "border-amber-500 bg-amber-500/10 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.1)]";
+                    else if (item.color === "rose") pillStyle = "border-rose-500 bg-rose-500/10 text-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.1)]";
+                    else if (item.color === "violet") pillStyle = "border-violet-500 bg-violet-500/10 text-violet-300 shadow-[0_0_15px_rgba(139,92,246,0.1)]";
+                    else if (item.color === "blue") pillStyle = "border-blue-500 bg-blue-500/10 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.1)]";
+                    else if (item.color === "yellow") pillStyle = "border-yellow-500 bg-yellow-500/10 text-yellow-300 shadow-[0_0_15px_rgba(234,179,8,0.1)]";
+                    else if (item.color === "teal") pillStyle = "border-teal-500 bg-teal-500/10 text-teal-300 shadow-[0_0_15px_rgba(20,184,166,0.1)]";
+                    else if (item.color === "fuchsia") pillStyle = "border-fuchsia-500 bg-fuchsia-500/10 text-fuchsia-300 shadow-[0_0_15px_rgba(217,70,239,0.1)]";
+                  }
+
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setNamespace(item.id)}
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-xl border backdrop-blur-sm transition-all duration-350 cursor-pointer active:scale-95 flex items-center gap-1.5 ${pillStyle}`}
+                    >
+                      {isActive && (
+                        <span className={`w-1.5 h-1.5 rounded-full animate-pulse bg-current`} />
+                      )}
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Range Slider for depth (Sleek full-width control) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 bg-slate-950/40 p-4 border border-slate-850 rounded-2xl">
+              <div className="flex flex-col gap-1 col-span-1">
+                <label className="text-[10px] font-bold font-sans text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Database Search Depth (top_k)
+                </label>
+                <p className="text-[10px] text-slate-500 leading-none">Max matching documents to retrieve for reasoning</p>
+              </div>
+              <div className="flex items-center gap-4 col-span-2">
+                <input 
+                  type="range"
+                  min="1"
+                  max="15"
+                  value={topK}
+                  onChange={(e) => setTopK(parseInt(e.target.value))}
+                  className="flex-1 h-1.5 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                />
+                <span className="text-emerald-400 font-mono font-bold text-xs bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-lg">
+                  {topK} Documents
+                </span>
+              </div>
+            </div>
+
           </div>
 
           {/* Chat Messages Log */}
