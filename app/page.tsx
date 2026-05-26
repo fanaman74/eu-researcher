@@ -785,13 +785,13 @@ export default function ChatPage() {
               </label>
               <div className="flex flex-wrap gap-2.5">
                 {[
-                  { id: "case_law", label: "Case Law (Sector 6)", color: "emerald" },
-                  { id: "statutes", label: "Secondary Legislation (Sector 3)", color: "cyan" },
-                  { id: "regulatory", label: "Preparatory Documents (Sector 5)", color: "indigo" },
-                  { id: "international", label: "Primary Law & Treaties (Sector 1)", color: "amber" },
                   { id: "consolidated", label: "Consolidated Texts (Sector 0)", color: "rose" },
+                  { id: "international", label: "Primary Law & Treaties (Sector 1)", color: "amber" },
                   { id: "agreements", label: "International Agreements (Sector 2)", color: "violet" },
+                  { id: "statutes", label: "Secondary Legislation (Sector 3)", color: "cyan" },
                   { id: "complementary", label: "Complementary Legislation (Sector 4)", color: "blue" },
+                  { id: "regulatory", label: "Preparatory Documents (Sector 5)", color: "indigo" },
+                  { id: "case_law", label: "Case Law (Sector 6)", color: "emerald" },
                   { id: "transposition", label: "National Transposition (Sector 7)", color: "yellow" },
                   { id: "national_case_law", label: "National Case-Law (Sector 8)", color: "teal" },
                   { id: "parliamentary", label: "Parliamentary Questions (Sector 9)", color: "fuchsia" }
