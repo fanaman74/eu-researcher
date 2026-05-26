@@ -566,7 +566,12 @@ export default function ChatPage() {
         {/* ========================================================= */}
         {/* SECTION 1: LUXEMBOURG LIVE FEED (8 LATEST DOCUMENTS)      */}
         {/* ========================================================= */}
-        <div className="bg-slate-900/20 border border-slate-800/80 rounded-3xl p-6 md:p-8 space-y-6 shadow-xl backdrop-blur-md relative overflow-hidden">
+        <div className="bg-slate-900/20 border border-slate-800/80 border-t-4 border-t-emerald-500 rounded-3xl p-6 md:p-8 space-y-6 shadow-[0_0_50px_-12px_rgba(16,185,129,0.15)] backdrop-blur-md relative overflow-hidden">
+          {/* Floating glass badge */}
+          <div className="absolute top-4 right-4 md:top-6 md:right-8 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[9px] font-bold uppercase tracking-widest px-3 py-1 rounded-full backdrop-blur-md pointer-events-none z-10">
+            [01 / Luxembourg Live Feed]
+          </div>
+
           {/* Subtle green ambient light glow in the top-left */}
           <span className="absolute -left-32 -top-32 w-64 h-64 rounded-full bg-gradient-to-br from-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
 
