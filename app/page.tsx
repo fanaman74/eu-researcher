@@ -673,7 +673,12 @@ export default function ChatPage() {
         {/* ========================================================= */}
         {/* SECTION 2: RESEARCH CONSOLE CONFIGURATION (SETTINGS)     */}
         {/* ========================================================= */}
-        <div className="bg-slate-900/20 border border-slate-800/80 rounded-3xl p-6 md:p-8 space-y-6 shadow-xl backdrop-blur-md relative overflow-hidden">
+        <div className="bg-slate-900/20 border border-slate-800/80 border-t-4 border-t-cyan-500 rounded-3xl p-6 md:p-8 space-y-6 shadow-[0_0_50px_-12px_rgba(6,182,212,0.15)] backdrop-blur-md relative overflow-hidden">
+          {/* Floating glass badge */}
+          <div className="absolute top-4 right-4 md:top-6 md:right-8 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-mono text-[9px] font-bold uppercase tracking-widest px-3 py-1 rounded-full backdrop-blur-md pointer-events-none z-10">
+            [02 / System & Presets]
+          </div>
+
           {/* Subtle cyan ambient light glow in the top-right */}
           <span className="absolute -right-32 -top-32 w-64 h-64 rounded-full bg-gradient-to-br from-cyan-500/5 to-transparent blur-3xl pointer-events-none" />
 
@@ -685,9 +690,9 @@ export default function ChatPage() {
               </div>
               <div>
                 <h2 className="text-xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
-                  Research Parameters <span className="text-[10px] font-mono tracking-wider bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 px-2.5 py-0.5 rounded-full">Target Config</span>
+                  System Status & Presets <span className="text-[10px] font-mono tracking-wider bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 px-2.5 py-0.5 rounded-full">Dashboard Info</span>
                 </h2>
-                <p className="text-xs text-slate-400">Establish target filters, select search depth, and execute preset queries before starting search</p>
+                <p className="text-xs text-slate-400">Confirm database network sockets, launch quick search presets, and view server status</p>
               </div>
             </div>
             <div className="flex items-center gap-3 relative z-10">
@@ -698,7 +703,7 @@ export default function ChatPage() {
 
           {/* Settings Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
-            {/* Status Panel Card */}
+            {/* Status Panel Card (1 Column) */}
             <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-6">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold tracking-wider uppercase text-slate-400 flex items-center gap-2">
@@ -722,57 +727,12 @@ export default function ChatPage() {
               </div>
             </div>
 
-            {/* Target Settings Card */}
-            <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-850 pb-2">
-                <span className="text-sm font-semibold tracking-wider uppercase text-slate-400 flex items-center gap-2">
-                  <Sliders className="w-4 h-4 text-teal-400" /> Target Configuration
-                </span>
-                <Settings className="w-4 h-4 text-slate-500" />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Target Namespace</label>
-                  <select 
-                    value={namespace}
-                    onChange={(e) => setNamespace(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 focus:border-teal-500 focus:outline-none transition-colors cursor-pointer"
-                  >
-                    <option value="case_law">Case Law (Sector 6)</option>
-                    <option value="statutes">Secondary Legislation (Sector 3)</option>
-                    <option value="regulatory">Preparatory Documents (Sector 5)</option>
-                    <option value="international">Primary Law & Treaties (Sector 1)</option>
-                    <option value="consolidated">Consolidated Texts (Sector 0)</option>
-                    <option value="agreements">International Agreements (Sector 2)</option>
-                    <option value="complementary">Complementary Legislation (Sector 4)</option>
-                    <option value="transposition">National Transposition (Sector 7)</option>
-                    <option value="national_case_law">National Case-Law (Sector 8)</option>
-                    <option value="parliamentary">Parliamentary Questions (Sector 9)</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                    <span>Depth (top_k)</span>
-                    <span className="text-emerald-400 font-bold">{topK} Docs</span>
-                  </div>
-                  <input 
-                    type="range"
-                    min="1"
-                    max="15"
-                    value={topK}
-                    onChange={(e) => setTopK(parseInt(e.target.value))}
-                    className="w-full h-1 mt-3.5 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Presets Card */}
-            <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-4">
+            {/* Presets Card (Spans 2 Columns) */}
+            <div className="lg:col-span-2 bg-slate-900/40 backdrop-blur-md p-6 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-4">
               <span className="text-sm font-semibold tracking-wider uppercase text-slate-400 flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-cyan-400" /> Quick Search Presets
               </span>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {activePresets.map((preset, idx) => (
                   <button
                     key={idx}
