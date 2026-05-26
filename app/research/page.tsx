@@ -311,62 +311,77 @@ export default function ResearchPage() {
                               </div>
                             )}
 
-                            <div className="overflow-x-auto">
-                              <table className="w-full text-left text-xs border-collapse">
-                                <thead>
-                                  <tr className="bg-slate-900/80 border-b border-slate-850 text-slate-400 font-medium">
-                                    <th className="p-4 w-1/4">📜 Document Name</th>
-                                    <th className="p-4 w-[12%] text-center">🎯 Relevance</th>
-                                    <th className="p-4">🔍 Context Preview Snippet</th>
-                                    <th className="p-4 w-[10%] text-center">🔗 Action</th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-850">
-                                  {Array.isArray(log.results) && log.results.length > 0 ? (
-                                    log.results.map((doc: any, docIdx: number) => {
-                                      const score = doc.score || (0.95 - docIdx * 0.08);
-                                      const scorePercent = (score * 100).toFixed(0);
-                                      let scoreColor = "text-emerald-400 bg-emerald-950/40 border-emerald-800/80";
-                                      if (score < 0.8) scoreColor = "text-cyan-400 bg-cyan-950/40 border-cyan-800/80";
-                                      if (score < 0.6) scoreColor = "text-slate-400 bg-slate-900/40 border-slate-800/80";
-                                      const targetLink = doc.url || `https://legaldatahunter.com/doc/${encodeURIComponent(doc.id || doc.title || "document")}`;
+                            <div className="divide-y divide-slate-850/50 bg-slate-950/20">
+                              {Array.isArray(log.results) && log.results.length > 0 ? (
+                                log.results.map((doc: any, docIdx: number) => {
+                                  const score = doc.score || (0.95 - docIdx * 0.08);
+                                  const scorePercent = (score * 100).toFixed(0);
+                                  let scoreColor = "text-emerald-400 bg-emerald-950/20 border-emerald-500/20";
+                                  if (score < 0.8) scoreColor = "text-cyan-400 bg-cyan-950/20 border-cyan-500/20";
+                                  if (score < 0.6) scoreColor = "text-slate-400 bg-slate-900/40 border-slate-800/80";
+                                  const targetLink = doc.url || `https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:${doc.id}`;
 
-                                      return (
-                                        <tr key={docIdx} className={`hover:bg-slate-900/40 transition-colors ${docIdx % 2 === 0 ? "bg-transparent" : "bg-slate-900/10"}`}>
-                                          <td className="p-4 font-semibold text-slate-200 align-top">
-                                            <div>{doc.title}</div>
-                                            {doc.sector && (
-                                              <span className="inline-block mt-1.5 px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-slate-900 border border-slate-800 text-slate-400">
-                                                {doc.sector}
-                                              </span>
-                                            )}
-                                          </td>
-                                          <td className="p-4 align-top text-center">
-                                            <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold border ${scoreColor}`}>
-                                              {scorePercent}% Match
+                                  return (
+                                    <div 
+                                      key={docIdx}
+                                      className="p-5 hover:bg-slate-900/30 transition-all duration-300 flex flex-col md:flex-row gap-5 items-start justify-between relative group"
+                                    >
+                                      {/* Document Main Block */}
+                                      <div className="flex-1 space-y-3">
+                                        
+                                        {/* Top Meta Line: CELEX & Sector & Score */}
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          <span className="text-[10px] font-mono font-bold text-slate-500">
+                                            #{docIdx + 1}
+                                          </span>
+                                          {doc.sector && (
+                                            <span className="px-2 py-0.5 rounded text-[8px] font-extrabold uppercase tracking-wider bg-slate-900 border border-slate-800 text-slate-400">
+                                              {doc.sector}
                                             </span>
-                                          </td>
-                                          <td className="p-4 align-top text-slate-400 leading-relaxed font-mono text-[11px] whitespace-pre-wrap">{doc.snippet}</td>
-                                          <td className="p-4 align-top text-center">
-                                            <div className="flex items-center justify-center gap-3">
-                                              <a href={targetLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-teal-400 hover:text-emerald-400 hover:underline transition-colors font-medium">
-                                                Link
-                                              </a>
-                                              <button onClick={() => handleSummarize(doc.title, doc.snippet, log.namespace, doc.id)} className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-teal-455 hover:underline transition-colors font-medium">
-                                                Summarise
-                                              </button>
-                                            </div>
-                                          </td>
-                                        </tr>
-                                      );
-                                    })
-                                  ) : (
-                                    <tr>
-                                      <td colSpan={4} className="p-8 text-center text-slate-500 italic">No snippets returned.</td>
-                                    </tr>
-                                  )}
-                                </tbody>
-                              </table>
+                                          )}
+                                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold border ${scoreColor}`}>
+                                            {scorePercent}% Match
+                                          </span>
+                                        </div>
+
+                                        {/* Document Title (Extremely readable full-width) */}
+                                        <h4 className="text-xs font-bold text-slate-200 leading-snug group-hover:text-white transition-colors">
+                                          {doc.title}
+                                        </h4>
+
+                                        {/* Document Preview Snippet (Mono, full-width) */}
+                                        <p className="text-[10px] text-slate-450 font-mono leading-relaxed bg-slate-950/50 p-3.5 rounded-xl border border-slate-900/80 whitespace-pre-wrap">
+                                          {doc.snippet}
+                                        </p>
+
+                                      </div>
+
+                                      {/* Side Actions Block */}
+                                      <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-3 shrink-0 w-full md:w-auto pt-3 md:pt-0 border-t md:border-t-0 border-slate-900">
+                                        <a 
+                                          href={targetLink} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer" 
+                                          className="px-3.5 py-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-teal-500/50 text-teal-400 hover:text-teal-350 text-[10px] font-bold transition-all flex items-center gap-1.5 w-full md:w-auto justify-center cursor-pointer"
+                                        >
+                                          View Source <ExternalLink className="w-3 h-3" />
+                                        </a>
+                                        <button 
+                                          onClick={() => handleSummarize(doc.title, doc.snippet, log.namespace, doc.id)} 
+                                          className="px-3.5 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-400 hover:text-emerald-350 text-[10px] font-extrabold transition-all flex items-center gap-1.5 w-full md:w-auto justify-center cursor-pointer"
+                                        >
+                                          Summarise <Sparkles className="w-3 h-3" />
+                                        </button>
+                                      </div>
+
+                                    </div>
+                                  );
+                                })
+                              ) : (
+                                <div className="p-8 text-center text-slate-500 italic text-xs">
+                                  No snippets returned.
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))}
