@@ -1,11 +1,42 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+const PREFIX_MAP: Record<string, string> = {
+  consolidated: "0",
+  international: "1",
+  agreements: "2",
+  statutes: "3",
+  complementary: "4",
+  regulatory: "5",
+  case_law: "6",
+  transposition: "7",
+  national_case_law: "8",
+  parliamentary: "9"
+};
+
+const SECTOR_NAMES: Record<string, string> = {
+  consolidated: "Consolidated Texts",
+  international: "Primary Law & Treaties",
+  agreements: "International Agreements",
+  statutes: "Secondary Legislation",
+  complementary: "Complementary Legislation",
+  regulatory: "Preparatory Documents",
+  case_law: "Case Law",
+  transposition: "National Transposition",
+  national_case_law: "National Case-Law",
+  parliamentary: "Parliamentary Questions"
+};
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const namespace = searchParams.get("namespace") || "case_law";
+  const sectorPrefix = PREFIX_MAP[namespace] || "6";
+  const sectorLabel = SECTOR_NAMES[namespace] || "Case Law";
+
   const currentYear = new Date().getFullYear();
-  // Query from start of last year to get fresh live documents
-  const dateLimit = `${currentYear - 1}-01-01`;
+  // Query from start of 3 years ago to guarantee high quality records even for sparser sectors
+  const dateLimit = `${currentYear - 3}-01-01`;
 
   const sparqlQuery = `
     PREFIX cdm: <http://publications.europa.eu/ontology/cdm#>
@@ -17,11 +48,11 @@ export async function GET() {
       ?expr cdm:expression_uses_language <http://publications.europa.eu/resource/authority/language/ENG> .
       ?expr cdm:expression_title ?title .
       ?work cdm:work_date_document ?date .
-      FILTER(STRSTARTS(?celex, "6") || STRSTARTS(?celex, "3"))
+      FILTER(STRSTARTS(?celex, "${sectorPrefix}"))
       FILTER(?date >= "${dateLimit}"^^<http://www.w3.org/2001/XMLSchema#date>)
     }
     ORDER BY DESC(?date)
-    LIMIT 8
+    LIMIT 10
   `;
 
   const endpoint = 'https://publications.europa.eu/webapi/rdf/sparql';
@@ -30,7 +61,7 @@ export async function GET() {
   try {
     const response = await fetch(url, {
       headers: { 'Accept': 'application/sparql-results+json' },
-      next: { revalidate: 3600 } // Cache for 1 hour
+      next: { revalidate: 1800 } // Cache for 30 minutes
     });
 
     if (!response.ok) {
@@ -40,20 +71,11 @@ export async function GET() {
     const data = await response.json();
     const documents = data.results.bindings.map((b: any) => {
       const celex = b.celex.value;
-      let sectorName = "Secondary Legislation";
-      if (celex.startsWith("6")) {
-        sectorName = "Case Law";
-      } else if (celex.startsWith("1")) {
-        sectorName = "Primary Law";
-      } else if (celex.startsWith("5")) {
-        sectorName = "Preparatory Document";
-      }
-
       return {
         celex,
         title: b.title.value,
         date: b.date ? b.date.value : "N/A",
-        sector: sectorName,
+        sector: sectorLabel,
         url: `https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:${celex}`,
         snippet: `EUR-Lex official record. CELEX identifier: ${celex}. Document Date: ${b.date ? b.date.value : "N/A"}. Work Cellar URI: ${b.work.value}.`
       };
