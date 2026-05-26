@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
   const sectorLabel = SECTOR_NAMES[namespace] || "Case Law";
 
   const currentYear = new Date().getFullYear();
-  // Query from start of 3 years ago to guarantee high quality records even for sparser sectors
-  const dateLimit = `${currentYear - 3}-01-01`;
+  // Query from start of 3 years ago, but relax for parliamentary questions since the database contains them up to 2014
+  const dateLimit = namespace === "parliamentary" ? "2010-01-01" : `${currentYear - 3}-01-01`;
 
   const sparqlQuery = `
     PREFIX cdm: <http://publications.europa.eu/ontology/cdm#>
