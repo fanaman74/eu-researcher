@@ -324,10 +324,10 @@ export default function ResearchPage() {
                                   return (
                                     <div 
                                       key={docIdx}
-                                      className="p-5 hover:bg-slate-900/30 transition-all duration-300 flex flex-col md:flex-row gap-5 items-start justify-between relative group"
+                                      className="p-5 hover:bg-slate-900/30 transition-all duration-300 flex flex-col gap-4 relative group"
                                     >
                                       {/* Document Main Block */}
-                                      <div className="flex-1 space-y-3">
+                                      <div className="space-y-3">
                                         
                                         {/* Top Meta Line: CELEX & Sector & Score */}
                                         <div className="flex flex-wrap items-center gap-2">
@@ -350,25 +350,25 @@ export default function ResearchPage() {
                                         </h4>
 
                                         {/* Document Preview Snippet (Mono, full-width) */}
-                                        <p className="text-[10px] text-slate-450 font-mono leading-relaxed bg-slate-950/50 p-3.5 rounded-xl border border-slate-900/80 whitespace-pre-wrap">
+                                        <p className="text-[10px] text-slate-455 font-mono leading-relaxed bg-slate-950/50 p-3.5 rounded-xl border border-slate-900/80 whitespace-pre-wrap">
                                           {doc.snippet}
                                         </p>
 
                                       </div>
 
-                                      {/* Side Actions Block */}
-                                      <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-3 shrink-0 w-full md:w-auto pt-3 md:pt-0 border-t md:border-t-0 border-slate-900">
+                                      {/* Bottom Actions Block */}
+                                      <div className="flex items-center justify-start gap-3 pt-2.5 border-t border-slate-900/50">
                                         <a 
                                           href={targetLink} 
                                           target="_blank" 
                                           rel="noopener noreferrer" 
-                                          className="px-3.5 py-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-teal-500/50 text-teal-400 hover:text-teal-350 text-[10px] font-bold transition-all flex items-center gap-1.5 w-full md:w-auto justify-center cursor-pointer"
+                                          className="px-3.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-teal-500/50 text-teal-400 hover:text-teal-350 text-[10px] font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                                         >
                                           View Source <ExternalLink className="w-3 h-3" />
                                         </a>
                                         <button 
                                           onClick={() => handleSummarize(doc.title, doc.snippet, log.namespace, doc.id)} 
-                                          className="px-3.5 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-400 hover:text-emerald-350 text-[10px] font-extrabold transition-all flex items-center gap-1.5 w-full md:w-auto justify-center cursor-pointer"
+                                          className="px-3.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-400 hover:text-emerald-350 text-[10px] font-extrabold transition-all flex items-center gap-1.5 cursor-pointer"
                                         >
                                           Summarise <Sparkles className="w-3 h-3" />
                                         </button>
