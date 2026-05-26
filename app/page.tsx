@@ -562,133 +562,38 @@ export default function ChatPage() {
         ref={dashboardRef}
         className="max-w-7xl mx-auto w-full px-6 py-16 scroll-mt-6 space-y-12 z-10"
       >
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-850 pb-6">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              Research Console <Scale className="text-emerald-400 w-6 h-6" />
-            </h2>
-            <p className="text-sm text-slate-400">Configure parameters and launch database queries below.</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 pulse-emerald" />
-            <span className="text-xs bg-slate-900 border border-slate-800 text-slate-300 px-3 py-1 rounded-full font-medium">Live Session Active</span>
-          </div>
-        </div>
+        
+        {/* ========================================================= */}
+        {/* SECTION 1: LUXEMBOURG LIVE FEED (8 LATEST DOCUMENTS)      */}
+        {/* ========================================================= */}
+        <div className="bg-slate-900/20 border border-slate-800/80 rounded-3xl p-6 md:p-8 space-y-6 shadow-xl backdrop-blur-md relative overflow-hidden">
+          {/* Subtle green ambient light glow in the top-left */}
+          <span className="absolute -left-32 -top-32 w-64 h-64 rounded-full bg-gradient-to-br from-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
 
-        {/* Screenshot-inspired Horizontal Settings Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Status Panel Card */}
-          <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-6">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold tracking-wider uppercase text-slate-400 flex items-center gap-2">
-                <Globe className="w-4 h-4 text-cyan-400" /> Connection Status
-              </span>
-              <span className="text-[10px] uppercase bg-cyan-950/50 border border-cyan-800/80 text-cyan-400 px-2 py-0.5 rounded-full">Secure</span>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">OpenRouter (DeepSeek)</span>
-                <span className="text-emerald-400 text-xs font-semibold flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" /> Connected
-                </span>
+          {/* Section Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-850 pb-4 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                <Activity className="w-5 h-5 animate-pulse" />
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">EUR-Lex SPARQL Endpoint</span>
-                <span className="text-emerald-400 text-xs font-semibold flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" /> Secured
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Target Settings Card */}
-          <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-850 pb-2">
-              <span className="text-sm font-semibold tracking-wider uppercase text-slate-400 flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-teal-400" /> Target Configuration
-              </span>
-              <Settings className="w-4 h-4 text-slate-500" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Target Namespace</label>
-                <select 
-                  value={namespace}
-                  onChange={(e) => setNamespace(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 focus:border-teal-500 focus:outline-none transition-colors"
-                >
-                  <option value="case_law">Case Law (Sector 6)</option>
-                  <option value="statutes">Secondary Legislation (Sector 3)</option>
-                  <option value="regulatory">Preparatory Documents (Sector 5)</option>
-                  <option value="international">Primary Law & Treaties (Sector 1)</option>
-                  <option value="consolidated">Consolidated Texts (Sector 0)</option>
-                  <option value="agreements">International Agreements (Sector 2)</option>
-                  <option value="complementary">Complementary Legislation (Sector 4)</option>
-                  <option value="transposition">National Transposition (Sector 7)</option>
-                  <option value="national_case_law">National Case-Law (Sector 8)</option>
-                  <option value="parliamentary">Parliamentary Questions (Sector 9)</option>
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                  <span>Depth (top_k)</span>
-                  <span className="text-emerald-400 font-bold">{topK} Docs</span>
-                </div>
-                <input 
-                  type="range"
-                  min="1"
-                  max="15"
-                  value={topK}
-                  onChange={(e) => setTopK(parseInt(e.target.value))}
-                  className="w-full h-1 mt-3.5 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Presets Card */}
-          <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-4">
-            <span className="text-sm font-semibold tracking-wider uppercase text-slate-400 flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-cyan-400" /> Quick Search Presets
-            </span>
-            <div className="grid grid-cols-2 gap-3">
-              {activePresets.map((preset, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleSend(preset.query)}
-                  className="text-left p-3.5 rounded-xl bg-slate-950/40 border border-slate-850 hover:border-teal-500 hover:bg-slate-900/60 transition-all duration-300 group cursor-pointer h-24 flex flex-col justify-between"
-                >
-                  <div className="text-[11px] font-bold text-teal-400 group-hover:text-emerald-400 transition-colors line-clamp-1">{preset.title}</div>
-                  <div className="text-[10px] text-slate-400 line-clamp-2 mt-1 leading-snug">{preset.query}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-        </div>
-
-        {/* LATEST DOCUMENTS SECTION (4 per row, total 8) */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-850 pb-3">
-            <div className="flex items-center gap-2.5">
-              <Activity className="w-5 h-5 text-emerald-400 animate-pulse" />
               <div>
-                <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                  EUR-Lex Official Feed <span className="text-[10px] font-mono tracking-wider bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">Luxembourg Live</span>
-                </h3>
-                <p className="text-xs text-slate-400">Discover and analyze the absolute latest documents published directly in the official triplestore</p>
+                <h2 className="text-xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
+                  Luxembourg Live Feed <span className="text-[10px] font-mono tracking-wider bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2.5 py-0.5 rounded-full">EUR-Lex Official</span>
+                </h2>
+                <p className="text-xs text-slate-400">Discover and analyze the absolute latest documents published in Luxembourg in real-time</p>
               </div>
             </div>
-            {loadingLatest && (
-              <span className="text-[10px] text-teal-400 flex items-center gap-1.5 animate-pulse font-semibold">
-                <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-ping" /> Synchronizing...
+            {loadingLatest ? (
+              <span className="text-xs text-teal-400 flex items-center gap-1.5 animate-pulse font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-ping" /> Synchronizing Live Feed...
               </span>
+            ) : (
+              <span className="text-[10px] bg-slate-950 border border-slate-800 text-slate-400 px-3 py-1 rounded-full font-medium">8 Fresh Records Loaded</span>
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Grid Layout (4 per row) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
             {latestDocs.map((doc, idx) => {
               // Color-coded Category pill badges (border and background), neutral plain CELEX text
               let sectorBadgeStyle = "border border-slate-800 bg-slate-950/30 text-slate-400 px-2 py-0.5 rounded-md";
@@ -731,40 +636,177 @@ export default function ChatPage() {
                     </h4>
                   </div>
 
-                {/* Footer Controls */}
-                <div className="border-t border-slate-850/50 pt-2.5 flex items-center justify-between mt-auto">
-                  <span className="text-[10px] font-semibold text-slate-500 flex items-center gap-1">
-                    🗓️ {doc.date}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <a 
-                      href={doc.url}
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="p-1.5 rounded-lg bg-slate-950 border border-slate-800 hover:border-teal-500/50 text-slate-400 hover:text-slate-100 transition-colors"
-                      title="View Official Portal document"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                    <button 
-                      onClick={() => handleSummarize(doc.title, doc.snippet || "", doc.sector.toLowerCase().replace(' ', '_'), doc.celex)}
-                      className="inline-flex items-center gap-1 text-[10px] px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-400 hover:text-emerald-300 font-semibold transition-all duration-300 cursor-pointer"
-                    >
-                      Summarise <Sparkles className="w-3" />
-                    </button>
+                  {/* Footer Controls */}
+                  <div className="border-t border-slate-850/50 pt-2.5 flex items-center justify-between mt-auto">
+                    <span className="text-[10px] font-semibold text-slate-500 flex items-center gap-1">
+                      🗓️ {doc.date}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <a 
+                        href={doc.url}
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded-lg bg-slate-950 border border-slate-800 hover:border-teal-500/50 text-slate-400 hover:text-slate-100 transition-colors"
+                        title="View Official Portal document"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                      <button 
+                        onClick={() => handleSummarize(doc.title, doc.snippet || "", doc.sector.toLowerCase().replace(' ', '_'), doc.celex)}
+                        className="inline-flex items-center gap-1 text-[10px] px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-400 hover:text-emerald-300 font-semibold transition-all duration-300 cursor-pointer"
+                      >
+                        Summarise <Sparkles className="w-3" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
           </div>
         </div>
 
-        {/* 3. SEARCH & CHAT AREA (Below Parameter Row) */}
-        <div className="bg-slate-900/20 border border-slate-850 rounded-3xl p-6 flex flex-col overflow-hidden glass-card">
-          
+        {/* ========================================================= */}
+        {/* SECTION 2: RESEARCH CONSOLE CONFIGURATION (SETTINGS)     */}
+        {/* ========================================================= */}
+        <div className="bg-slate-900/20 border border-slate-800/80 rounded-3xl p-6 md:p-8 space-y-6 shadow-xl backdrop-blur-md relative overflow-hidden">
+          {/* Subtle cyan ambient light glow in the top-right */}
+          <span className="absolute -right-32 -top-32 w-64 h-64 rounded-full bg-gradient-to-br from-cyan-500/5 to-transparent blur-3xl pointer-events-none" />
+
+          {/* Section Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-850 pb-4 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
+                <Sliders className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
+                  Research Parameters <span className="text-[10px] font-mono tracking-wider bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 px-2.5 py-0.5 rounded-full">Target Config</span>
+                </h2>
+                <p className="text-xs text-slate-400">Establish target filters, select search depth, and execute preset queries before starting search</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 relative z-10">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-emerald" />
+              <span className="text-xs bg-slate-900 border border-slate-800 text-slate-300 px-3 py-1 rounded-full font-medium">System Armed</span>
+            </div>
+          </div>
+
+          {/* Settings Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
+            {/* Status Panel Card */}
+            <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-6">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold tracking-wider uppercase text-slate-400 flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-cyan-400" /> Connection Status
+                </span>
+                <span className="text-[10px] uppercase bg-cyan-950/50 border border-cyan-800/80 text-cyan-400 px-2 py-0.5 rounded-full">Secure</span>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-400">OpenRouter (DeepSeek)</span>
+                  <span className="text-emerald-400 text-xs font-semibold flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" /> Connected
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-400">EUR-Lex SPARQL Endpoint</span>
+                  <span className="text-emerald-400 text-xs font-semibold flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" /> Secured
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Target Settings Card */}
+            <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-850 pb-2">
+                <span className="text-sm font-semibold tracking-wider uppercase text-slate-400 flex items-center gap-2">
+                  <Sliders className="w-4 h-4 text-teal-400" /> Target Configuration
+                </span>
+                <Settings className="w-4 h-4 text-slate-500" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Target Namespace</label>
+                  <select 
+                    value={namespace}
+                    onChange={(e) => setNamespace(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 focus:border-teal-500 focus:outline-none transition-colors cursor-pointer"
+                  >
+                    <option value="case_law">Case Law (Sector 6)</option>
+                    <option value="statutes">Secondary Legislation (Sector 3)</option>
+                    <option value="regulatory">Preparatory Documents (Sector 5)</option>
+                    <option value="international">Primary Law & Treaties (Sector 1)</option>
+                    <option value="consolidated">Consolidated Texts (Sector 0)</option>
+                    <option value="agreements">International Agreements (Sector 2)</option>
+                    <option value="complementary">Complementary Legislation (Sector 4)</option>
+                    <option value="transposition">National Transposition (Sector 7)</option>
+                    <option value="national_case_law">National Case-Law (Sector 8)</option>
+                    <option value="parliamentary">Parliamentary Questions (Sector 9)</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                    <span>Depth (top_k)</span>
+                    <span className="text-emerald-400 font-bold">{topK} Docs</span>
+                  </div>
+                  <input 
+                    type="range"
+                    min="1"
+                    max="15"
+                    value={topK}
+                    onChange={(e) => setTopK(parseInt(e.target.value))}
+                    className="w-full h-1 mt-3.5 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Presets Card */}
+            <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-4">
+              <span className="text-sm font-semibold tracking-wider uppercase text-slate-400 flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-cyan-400" /> Quick Search Presets
+              </span>
+              <div className="grid grid-cols-2 gap-3">
+                {activePresets.map((preset, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSend(preset.query)}
+                    className="text-left p-3.5 rounded-xl bg-slate-950/40 border border-slate-855 hover:border-teal-500 hover:bg-slate-900/60 transition-all duration-300 group cursor-pointer h-24 flex flex-col justify-between"
+                  >
+                    <div className="text-[11px] font-bold text-teal-400 group-hover:text-emerald-400 transition-colors line-clamp-1">{preset.title}</div>
+                    <div className="text-[10px] text-slate-400 line-clamp-2 mt-1 leading-snug">{preset.query}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================================= */}
+        {/* SECTION 3: INTERACTIVE QUERY CONSOLE (SEARCH & CHAT)      */}
+        {/* ========================================================= */}
+        <div className="bg-slate-900/20 border border-slate-800/80 rounded-3xl p-6 md:p-8 space-y-6 shadow-xl backdrop-blur-md relative overflow-hidden">
+          {/* Subtle purple ambient light glow in the bottom-left */}
+          <span className="absolute -left-32 -bottom-32 w-64 h-64 rounded-full bg-gradient-to-tr from-purple-500/5 to-transparent blur-3xl pointer-events-none" />
+
+          {/* Section Header */}
+          <div className="border-b border-slate-850 pb-4 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
+                <Scale className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
+                  Interactive Search Console <Sparkles className="w-4 h-4 text-teal-400 animate-pulse" />
+                </h2>
+                <p className="text-xs text-slate-400">Query EU case precedents, directive mandates, and regulations in pure natural language</p>
+              </div>
+            </div>
+          </div>
+
           {/* Chat Messages Log */}
-          <div className="space-y-8 min-h-[350px] max-h-[600px] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-slate-950">
+          <div className="space-y-8 min-h-[350px] max-h-[600px] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-slate-950 relative z-10">
             {messages.map((message, index) => {
               // Parse options for assistant messages dynamically
               let displayContent = message.content;
@@ -795,128 +837,154 @@ export default function ChatPage() {
                       {displayContent}
                     </div>
 
-                    {/* Interactive Clickable Option Buttons */}
-                    {messageOptions.length > 0 && (
-                      <div className="flex flex-wrap gap-2.5 pt-2">
+                    {/* Interactive choice elements */}
+                    {message.role === "assistant" && messageOptions.length > 0 && (
+                      <div className="flex flex-wrap gap-2.5 pt-1">
                         {messageOptions.map((opt, optIdx) => (
                           <button
                             key={optIdx}
                             onClick={() => handleSend(opt)}
-                            className="px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-teal-500 hover:bg-teal-950/40 text-teal-400 hover:text-teal-200 text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-lg flex items-center gap-2 group animate-fade-in"
+                            disabled={loading}
+                            className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-950 border border-slate-850 hover:border-teal-500/50 hover:bg-slate-900/40 text-slate-300 hover:text-slate-100 transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                           >
-                            <span className="w-1.5 h-1.5 rounded-full bg-teal-500 group-hover:bg-emerald-400 animate-pulse" />
                             {opt}
                           </button>
                         ))}
                       </div>
                     )}
 
-                  {/* RENDER DYNAMIC COLORED DATABASE TABLE FOR SEARCH RESULTS */}
-                  {message.searchLogs && message.searchLogs.length > 0 && (
-                    <div className="space-y-4 w-full">
-                      {message.searchLogs.map((log, logIdx) => (
-                        <div 
-                          key={logIdx} 
-                          className="rounded-2xl border border-slate-800 bg-slate-950/60 overflow-hidden shadow-2xl"
-                        >
-                          {/* Table Log Title Header */}
-                          <div className="p-4 bg-slate-900/40 border-b border-slate-850 flex items-center justify-between flex-wrap gap-2">
-                            <div className="flex items-center gap-2.5 text-xs text-slate-300">
-                              <Terminal className="w-4 h-4 text-emerald-400" />
-                              <span>Searched Namespace: <strong className="text-teal-400 font-semibold">"{log.namespace}"</strong> for <strong className="text-teal-400 font-semibold">"{log.q}"</strong></span>
+                    {/* RENDER DYNAMIC SPARQL SEARCH LOG TABLE IF RETURNED */}
+                    {message.role === "assistant" && message.searchLogs && message.searchLogs.length > 0 && (
+                      <div className="space-y-6 pt-2">
+                        {message.searchLogs.map((log: any, logIdx: number) => (
+                          <div 
+                            key={logIdx} 
+                            className="border border-slate-800 bg-slate-950/50 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg"
+                          >
+                            {/* Log Card Header */}
+                            <div 
+                              onClick={() => setExpandedLog(prev => ({ ...prev, [logIdx]: !prev[logIdx] }))}
+                              className="px-5 py-4 bg-slate-900/40 border-b border-slate-850 flex items-center justify-between cursor-pointer hover:bg-slate-900/70 transition-colors"
+                            >
+                              <div className="flex items-center gap-3">
+                                <Terminal className="text-teal-400 w-4 h-4 animate-pulse" />
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">EUR-Lex Database Search Event</span>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <span className="text-[10px] bg-teal-950/40 border border-teal-850 text-teal-400 px-2.5 py-0.5 rounded-full font-semibold">
+                                  {log.resultsCount} Hits Found
+                                </span>
+                                {expandedLog[logIdx] ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
+                              </div>
                             </div>
-                            <span className="text-[10px] font-bold uppercase bg-emerald-950 border border-emerald-800/60 text-emerald-400 px-3 py-1 rounded-full">
-                              {log.resultsCount} matching records
-                            </span>
-                          </div>
 
-                          {/* TABLE VIEW */}
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-left text-xs border-collapse">
-                              <thead>
-                                <tr className="bg-slate-900/80 border-b border-slate-850 text-slate-400 font-medium">
-                                  <th className="p-4 w-1/4">📜 Document Name</th>
-                                  <th className="p-4 w-[12%] text-center">🎯 Relevance</th>
-                                  <th className="p-4">🔍 Context Preview Snippet</th>
-                                  <th className="p-4 w-[10%] text-center">🔗 Action</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-850">
-                                {Array.isArray(log.results) && log.results.length > 0 ? (
-                                  log.results.map((doc: any, docIdx: number) => {
-                                    // relevance score mapping
-                                    const score = doc.score || (0.95 - docIdx * 0.08);
-                                    const scorePercent = (score * 100).toFixed(0);
-                                    
-                                    // Score badges
-                                    let scoreColor = "text-emerald-400 bg-emerald-950/40 border-emerald-800/80";
-                                    if (score < 0.8) {
-                                      scoreColor = "text-cyan-400 bg-cyan-950/40 border-cyan-800/80";
-                                    }
-                                    if (score < 0.6) {
-                                      scoreColor = "text-slate-400 bg-slate-900/40 border-slate-800/80";
-                                    }
+                            {/* Collapsible details log */}
+                            {expandedLog[logIdx] && (
+                              <div className="p-4 border-b border-slate-850 bg-slate-950 text-[10px] font-mono text-slate-500 space-y-1.5 leading-relaxed">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
+                                  <span>SPARQL Host URI: <strong className="text-slate-400">publications.europa.eu/webapi/rdf/sparql</strong></span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
+                                  <span>Searched Namespace: <strong className="text-teal-400 font-semibold">"{log.namespace}"</strong> for <strong className="text-teal-400 font-semibold">"{log.q}"</strong></span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
+                                  <span>Database Query Success: <strong className={log.success ? "text-emerald-400" : "text-red-400"}>{log.success ? "true" : "false"}</strong></span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
+                                  <span>Result limit depth (top_k): <strong className="text-slate-400">{log.top_k}</strong></span>
+                                </div>
+                              </div>
+                            )}
 
-                                    // link creation
-                                    const targetLink = doc.url || `https://legaldatahunter.com/doc/${encodeURIComponent(doc.id || doc.title || "document")}`;
-
-                                    return (
-                                      <tr 
-                                        key={docIdx} 
-                                        className={`hover:bg-slate-900/40 transition-colors ${docIdx % 2 === 0 ? "bg-transparent" : "bg-slate-900/10"}`}
-                                      >
-                                        <td className="p-4 font-semibold text-slate-200 align-top">
-                                          {doc.title || `Legal Record #${docIdx + 1}`}
-                                        </td>
-                                        <td className="p-4 align-top text-center">
-                                          <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold border ${scoreColor}`}>
-                                            {scorePercent}% Match
-                                          </span>
-                                        </td>
-                                        <td className="p-4 align-top text-slate-400 leading-relaxed font-mono text-[11px] whitespace-pre-wrap">
-                                          {doc.snippet || doc.content || "Context content payload loaded securely."}
-                                        </td>
-                                        <td className="p-4 align-top text-center">
-                                          <div className="flex items-center justify-center gap-3">
-                                            <a 
-                                              href={targetLink}
-                                              target="_blank" 
-                                              rel="noopener noreferrer"
-                                              className="inline-flex items-center gap-1.5 text-xs text-teal-400 hover:text-emerald-400 hover:underline transition-colors font-medium cursor-pointer"
-                                            >
-                                              Link <ExternalLink className="w-3.5 h-3.5" />
-                                            </a>
-                                            <button 
-                                              onClick={() => handleSummarize(doc.title, doc.snippet, log.namespace, doc.id)}
-                                              className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-teal-450 hover:underline transition-colors font-medium cursor-pointer"
-                                            >
-                                              Summarise <Sparkles className="w-3.5 h-3.5" />
-                                            </button>
-                                          </div>
-                                        </td>
-                                      </tr>
-                                    );
-                                  })
-                                ) : (
-                                  <tr>
-                                    <td colSpan={4} className="p-8 text-center text-slate-500 italic">
-                                      No database snippets returned for this action.
-                                    </td>
+                            {/* Render search result tables */}
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-left text-xs border-collapse">
+                                <thead>
+                                  <tr className="bg-slate-900/80 border-b border-slate-850 text-slate-400 font-medium">
+                                    <th className="p-4 w-1/4">📜 Document Name</th>
+                                    <th className="p-4 w-[12%] text-center">🎯 Relevance</th>
+                                    <th className="p-4">🔍 Context Preview Snippet</th>
+                                    <th className="p-4 w-[10%] text-center">🔗 Action</th>
                                   </tr>
-                                )}
-                              </tbody>
-                            </table>
+                                </thead>
+                                <tbody className="divide-y divide-slate-850">
+                                  {Array.isArray(log.results) && log.results.length > 0 ? (
+                                    log.results.map((doc: any, docIdx: number) => {
+                                      // relevance score mapping
+                                      const score = doc.score || (0.95 - docIdx * 0.08);
+                                      const scorePercent = (score * 100).toFixed(0);
+                                      
+                                      // Score badges
+                                      let scoreColor = "text-emerald-400 bg-emerald-950/40 border-emerald-800/80";
+                                      if (score < 0.8) {
+                                        scoreColor = "text-cyan-400 bg-cyan-950/40 border-cyan-800/80";
+                                      }
+                                      if (score < 0.6) {
+                                        scoreColor = "text-slate-400 bg-slate-900/40 border-slate-800/80";
+                                      }
+
+                                      // link creation
+                                      const targetLink = doc.url || `https://legaldatahunter.com/doc/${encodeURIComponent(doc.id || doc.title || "document")}`;
+
+                                      return (
+                                        <tr 
+                                          key={docIdx} 
+                                          className={`hover:bg-slate-900/40 transition-colors ${docIdx % 2 === 0 ? "bg-transparent" : "bg-slate-900/10"}`}
+                                        >
+                                          <td className="p-4 font-semibold text-slate-200 align-top">
+                                            {doc.title || `Legal Record #${docIdx + 1}`}
+                                          </td>
+                                          <td className="p-4 align-top text-center">
+                                            <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold border ${scoreColor}`}>
+                                              {scorePercent}% Match
+                                            </span>
+                                          </td>
+                                          <td className="p-4 align-top text-slate-400 leading-relaxed font-mono text-[11px] whitespace-pre-wrap">
+                                            {doc.snippet || doc.content || "Context content payload loaded securely."}
+                                          </td>
+                                          <td className="p-4 align-top text-center">
+                                            <div className="flex items-center justify-center gap-3">
+                                              <a 
+                                                href={targetLink}
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1.5 text-xs text-teal-400 hover:text-emerald-400 hover:underline transition-colors font-medium cursor-pointer"
+                                              >
+                                                Link <ExternalLink className="w-3.5 h-3.5" />
+                                              </a>
+                                              <button 
+                                                onClick={() => handleSummarize(doc.title, doc.snippet, log.namespace, doc.id)}
+                                                className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-teal-455 hover:underline transition-colors font-medium cursor-pointer"
+                                              >
+                                                Summarise <Sparkles className="w-3.5 h-3.5" />
+                                              </button>
+                                            </div>
+                                          </td>
+                                        </tr>
+                                      );
+                                    })
+                                  ) : (
+                                    <tr>
+                                      <td colSpan={4} className="p-8 text-center text-slate-500 italic">
+                                        No database snippets returned for this action.
+                                      </td>
+                                    </tr>
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
             })}
-
-            {/* Loading thinking bubble */}
             {loading && (
               <div className="flex gap-4 max-w-4xl mr-auto">
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border bg-slate-900 border-slate-800 text-emerald-400 animate-pulse">
@@ -938,7 +1006,7 @@ export default function ChatPage() {
           </div>
 
           {/* Chat Floating Input */}
-          <div className="mt-6 border-t border-slate-850 pt-6">
+          <div className="mt-6 border-t border-slate-850 pt-6 relative z-10">
             <form 
               onSubmit={(e) => { e.preventDefault(); handleSend(); }}
               className="max-w-6xl mx-auto flex gap-3 p-2 bg-slate-950/60 border border-slate-800 rounded-2xl focus-within:border-teal-500/80 focus-within:shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all duration-300 relative z-10"
