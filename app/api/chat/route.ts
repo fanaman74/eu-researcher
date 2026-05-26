@@ -56,6 +56,52 @@ function getSectorFromCelex(celex: string): string {
   }
 }
 
+async function executeQuery(keywordFilters: string, sectorFilter: string, top_k: number) {
+  const sparqlQuery = `
+    PREFIX cdm: <http://publications.europa.eu/ontology/cdm#>
+
+    SELECT DISTINCT ?work ?celex ?title ?date
+    WHERE {
+      ?work cdm:resource_legal_id_celex ?celex .
+      ?expr cdm:expression_belongs_to_work ?work .
+      ?expr cdm:expression_uses_language <http://publications.europa.eu/resource/authority/language/ENG> .
+      ?expr cdm:expression_title ?title .
+      
+      OPTIONAL { ?work cdm:work_date_document ?date . }
+      
+      ${sectorFilter}
+      FILTER(${keywordFilters})
+    }
+    ORDER BY DESC(?date)
+    LIMIT ${top_k}
+  `;
+
+  const endpoint = 'https://publications.europa.eu/webapi/rdf/sparql';
+  const url = `${endpoint}?query=${encodeURIComponent(sparqlQuery)}&format=application%2Fsparql-results%2Bjson`;
+
+  const response = await fetch(url, {
+    headers: { 'Accept': 'application/sparql-results+json' }
+  });
+  if (!response.ok) {
+    throw new Error(`SPARQL endpoint returned status: ${response.status}`);
+  }
+  const data = await response.json();
+  
+  return data.results.bindings.map((b: any, idx: number) => {
+    const celex = b.celex.value;
+    const sector = getSectorFromCelex(celex);
+    return {
+      id: celex,
+      title: b.title.value,
+      score: 0.98 - idx * 0.05,
+      country: "EU",
+      sector: sector,
+      url: `https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:${celex}`,
+      snippet: `[${sector}] EUR-Lex official record. CELEX identifier: ${celex}. Document Date: ${b.date ? b.date.value : "N/A"}. Work Cellar URI: ${b.work.value}.`
+    };
+  });
+}
+
 async function callEURpxSPARQL(q: string, namespace: string = "all", top_k: number = 5) {
   const stopWords = new Set(["the", "a", "an", "and", "or", "of", "in", "on", "at", "to", "for", "with", "by", "about", "against", "eu", "europe", "european", "court", "case", "law", "precedent", "precedents", "ruling", "rulings", "judgement", "judgment", "judgments"]);
   const keywords = q.toLowerCase()
@@ -90,56 +136,17 @@ async function callEURpxSPARQL(q: string, namespace: string = "all", top_k: numb
     sectorFilter = 'FILTER(STRSTARTS(?celex, "9"))';
   }
 
-  // Build SPARQL filters for case-insensitive contains on all keywords
-  const keywordFilters = keywords.map(kw => `CONTAINS(LCASE(?title), "${kw}")`).join(" || ");
-
-  const sparqlQuery = `
-    PREFIX cdm: <http://publications.europa.eu/ontology/cdm#>
-
-    SELECT DISTINCT ?work ?celex ?title ?date
-    WHERE {
-      ?work cdm:resource_legal_id_celex ?celex .
-      ?expr cdm:expression_belongs_to_work ?work .
-      ?expr cdm:expression_uses_language <http://publications.europa.eu/resource/authority/language/ENG> .
-      ?expr cdm:expression_title ?title .
-      
-      OPTIONAL { ?work cdm:work_date_document ?date . }
-      
-      ${sectorFilter}
-      FILTER(${keywordFilters})
-      FILTER NOT EXISTS { ?work cdm:do_not_index "true"^^<http://www.w3.org/2001/XMLSchema#boolean> }
-    }
-    ORDER BY DESC(?date)
-    LIMIT ${top_k}
-  `;
-
-  const endpoint = 'https://publications.europa.eu/webapi/rdf/sparql';
-  const url = `${endpoint}?query=${encodeURIComponent(sparqlQuery)}&format=application%2Fsparql-results%2Bjson`;
-
   try {
-    const response = await fetch(url, {
-      headers: { 'Accept': 'application/sparql-results+json' }
-    });
-    if (!response.ok) {
-      throw new Error(`SPARQL endpoint returned status: ${response.status}`);
-    }
-    const data = await response.json();
+    // 1. Try high-precision AND search first
+    const andFilters = keywords.map(kw => `CONTAINS(LCASE(?title), "${kw}")`).join(" && ");
+    let hits = await executeQuery(andFilters, sectorFilter, top_k);
     
-    // Parse SPARQL bindings to search result array
-    const hits = data.results.bindings.map((b: any, idx: number) => {
-      const celex = b.celex.value;
-      const sector = getSectorFromCelex(celex);
-      return {
-        id: celex,
-        title: b.title.value,
-        score: 0.98 - idx * 0.05,
-        country: "EU",
-        sector: sector,
-        url: `https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:${celex}`,
-        snippet: `[${sector}] EUR-Lex official record. CELEX identifier: ${celex}. Document Date: ${b.date ? b.date.value : "N/A"}. Work Cellar URI: ${b.work.value}.`
-      };
-    });
-
+    // 2. If no hits, fallback to OR search
+    if (hits.length === 0 && keywords.length > 1) {
+      const orFilters = keywords.map(kw => `CONTAINS(LCASE(?title), "${kw}")`).join(" || ");
+      hits = await executeQuery(orFilters, sectorFilter, top_k);
+    }
+    
     return { hits };
   } catch (error: any) {
     console.error("SPARQL Query Fetch Error:", error);
