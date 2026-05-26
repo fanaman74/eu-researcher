@@ -39,7 +39,24 @@ const searchTool: OpenAI.Chat.Completions.ChatCompletionTool = {
   }
 };
 
-async function callEURpxSPARQL(q: string, namespace: string = "case_law", top_k: number = 5) {
+function getSectorFromCelex(celex: string): string {
+  const first = celex.charAt(0);
+  switch (first) {
+    case "0": return "Consolidated Texts";
+    case "1": return "Primary Law & Treaties";
+    case "2": return "International Agreements";
+    case "3": return "Secondary Legislation";
+    case "4": return "Complementary Legislation";
+    case "5": return "Preparatory Documents";
+    case "6": return "Case Law";
+    case "7": return "National Transposition";
+    case "8": return "National Case-Law";
+    case "9": return "Parliamentary Questions";
+    default: return "Other Legal Document";
+  }
+}
+
+async function callEURpxSPARQL(q: string, namespace: string = "all", top_k: number = 5) {
   const stopWords = new Set(["the", "a", "an", "and", "or", "of", "in", "on", "at", "to", "for", "with", "by", "about", "against", "eu", "europe", "european", "court", "case", "law", "precedent", "precedents", "ruling", "rulings", "judgement", "judgment", "judgments"]);
   const keywords = q.toLowerCase()
     .split(/[\s,.\-\/]+/)
@@ -109,14 +126,19 @@ async function callEURpxSPARQL(q: string, namespace: string = "case_law", top_k:
     const data = await response.json();
     
     // Parse SPARQL bindings to search result array
-    const hits = data.results.bindings.map((b: any, idx: number) => ({
-      id: b.celex.value,
-      title: b.title.value,
-      score: 0.98 - idx * 0.05,
-      country: "EU",
-      url: `https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:${b.celex.value}`,
-      snippet: `EUR-Lex official record. CELEX identifier: ${b.celex.value}. Document Date: ${b.date ? b.date.value : "N/A"}. Work Cellar URI: ${b.work.value}.`
-    }));
+    const hits = data.results.bindings.map((b: any, idx: number) => {
+      const celex = b.celex.value;
+      const sector = getSectorFromCelex(celex);
+      return {
+        id: celex,
+        title: b.title.value,
+        score: 0.98 - idx * 0.05,
+        country: "EU",
+        sector: sector,
+        url: `https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:${celex}`,
+        snippet: `[${sector}] EUR-Lex official record. CELEX identifier: ${celex}. Document Date: ${b.date ? b.date.value : "N/A"}. Work Cellar URI: ${b.work.value}.`
+      };
+    });
 
     return { hits };
   } catch (error: any) {
@@ -127,7 +149,7 @@ async function callEURpxSPARQL(q: string, namespace: string = "case_law", top_k:
 
 export async function POST(req: Request) {
   try {
-    const { messages, defaultNamespace = "case_law", defaultTopK = 5 } = await req.json();
+    const { messages, defaultNamespace = "all", defaultTopK = 5 } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: "Missing messages array." }, { status: 400 });

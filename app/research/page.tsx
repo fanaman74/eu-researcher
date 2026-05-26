@@ -38,7 +38,7 @@ export default function ResearchPage() {
   const [loading, setLoading] = useState(false);
 
   // Settings
-  const [namespace, setNamespace] = useState("case_law");
+  const [namespace, setNamespace] = useState("all");
   const [topK, setTopK] = useState(5);
 
   // Accordion search states
@@ -212,54 +212,7 @@ export default function ResearchPage() {
 
           {/* Selector Bubbles & Slider */}
           <div className="space-y-6 border-b border-slate-850 pb-6 relative z-10">
-            {/* Sector Pills */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold font-sans text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" /> Targeted Legal Sectors & Domains
-              </label>
-              <div className="flex flex-wrap gap-2.5">
-                {[
-                  { id: "consolidated", label: "Consolidated Texts (Sector 0)", color: "rose" },
-                  { id: "international", label: "Primary Law & Treaties (Sector 1)", color: "amber" },
-                  { id: "agreements", label: "International Agreements (Sector 2)", color: "violet" },
-                  { id: "statutes", label: "Secondary Legislation (Sector 3)", color: "cyan" },
-                  { id: "complementary", label: "Complementary Legislation (Sector 4)", color: "blue" },
-                  { id: "regulatory", label: "Preparatory Documents (Sector 5)", color: "indigo" },
-                  { id: "case_law", label: "Case Law (Sector 6)", color: "emerald" },
-                  { id: "transposition", label: "National Transposition (Sector 7)", color: "yellow" },
-                  { id: "national_case_law", label: "National Case-Law (Sector 8)", color: "teal" },
-                  { id: "parliamentary", label: "Parliamentary Questions (Sector 9)", color: "fuchsia" }
-                ].map((item) => {
-                  const isActive = namespace === item.id;
-                  let pillStyle = "bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200";
-                  
-                  if (isActive) {
-                    if (item.color === "emerald") pillStyle = "border-emerald-500 bg-emerald-500/10 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.1)]";
-                    else if (item.color === "cyan") pillStyle = "border-cyan-500 bg-cyan-500/10 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.1)]";
-                    else if (item.color === "indigo") pillStyle = "border-indigo-500 bg-indigo-500/10 text-indigo-300 shadow-[0_0_15px_rgba(99,102,241,0.1)]";
-                    else if (item.color === "amber") pillStyle = "border-amber-500 bg-amber-500/10 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.1)]";
-                    else if (item.color === "rose") pillStyle = "border-rose-500 bg-rose-500/10 text-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.1)]";
-                    else if (item.color === "violet") pillStyle = "border-violet-500 bg-violet-500/10 text-violet-300 shadow-[0_0_15px_rgba(139,92,246,0.1)]";
-                    else if (item.color === "blue") pillStyle = "border-blue-500 bg-blue-500/10 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.1)]";
-                    else if (item.color === "yellow") pillStyle = "border-yellow-500 bg-yellow-500/10 text-yellow-300 shadow-[0_0_15px_rgba(234,179,8,0.1)]";
-                    else if (item.color === "teal") pillStyle = "border-teal-500 bg-teal-500/10 text-teal-300 shadow-[0_0_15px_rgba(20,184,166,0.1)]";
-                    else if (item.color === "fuchsia") pillStyle = "border-fuchsia-500 bg-fuchsia-500/10 text-fuchsia-300 shadow-[0_0_15px_rgba(217,70,239,0.1)]";
-                  }
 
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setNamespace(item.id)}
-                      className={`px-3 py-1.5 text-xs font-semibold rounded-xl border backdrop-blur-sm transition-all duration-350 cursor-pointer active:scale-95 flex items-center gap-1.5 ${pillStyle}`}
-                    >
-                      {isActive && <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-current" />}
-                      {item.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
 
             {/* Slider */}
             <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 bg-slate-950/40 p-4 border border-slate-850 rounded-2xl">
@@ -380,7 +333,14 @@ export default function ResearchPage() {
 
                                       return (
                                         <tr key={docIdx} className={`hover:bg-slate-900/40 transition-colors ${docIdx % 2 === 0 ? "bg-transparent" : "bg-slate-900/10"}`}>
-                                          <td className="p-4 font-semibold text-slate-200 align-top">{doc.title}</td>
+                                          <td className="p-4 font-semibold text-slate-200 align-top">
+                                            <div>{doc.title}</div>
+                                            {doc.sector && (
+                                              <span className="inline-block mt-1.5 px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-slate-900 border border-slate-800 text-slate-400">
+                                                {doc.sector}
+                                              </span>
+                                            )}
+                                          </td>
                                           <td className="p-4 align-top text-center">
                                             <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold border ${scoreColor}`}>
                                               {scorePercent}% Match
