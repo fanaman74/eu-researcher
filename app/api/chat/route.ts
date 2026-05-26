@@ -56,7 +56,7 @@ function getSectorFromCelex(celex: string): string {
   }
 }
 
-async function executeQuery(keywordFilters: string, sectorFilter: string, top_k: number) {
+async function executeQuery(keywordFilters: string, sectorFilter: string, harassmentCourtFilter: string, top_k: number) {
   const sparqlQuery = `
     PREFIX cdm: <http://publications.europa.eu/ontology/cdm#>
 
@@ -68,8 +68,10 @@ async function executeQuery(keywordFilters: string, sectorFilter: string, top_k:
       ?expr cdm:expression_title ?title .
       
       OPTIONAL { ?work cdm:work_date_document ?date . }
+      OPTIONAL { ?work cdm:work_created_by_agent ?courtAgent . }
       
       ${sectorFilter}
+      ${harassmentCourtFilter}
       FILTER(${keywordFilters})
     }
     ORDER BY DESC(?date)
@@ -136,15 +138,28 @@ async function callEURpxSPARQL(q: string, namespace: string = "all", top_k: numb
     sectorFilter = 'FILTER(STRSTARTS(?celex, "9"))';
   }
 
+  // Harassment queries should specifically target General Court or Civil Service Tribunal cases
+  let harassmentCourtFilter = "";
+  if (keywords.includes("harassment") || q.toLowerCase().includes("harassment")) {
+    harassmentCourtFilter = `
+      FILTER(
+        ?courtAgent = <http://publications.europa.eu/resource/authority/corporate-body/GCEU> || 
+        ?courtAgent = <http://publications.europa.eu/resource/authority/corporate-body/CST> ||
+        CONTAINS(STR(?celex), "T") || 
+        CONTAINS(STR(?celex), "F")
+      )
+    `;
+  }
+
   try {
     // 1. Try high-precision AND search first
     const andFilters = keywords.map(kw => `CONTAINS(LCASE(?title), "${kw}")`).join(" && ");
-    let hits = await executeQuery(andFilters, sectorFilter, top_k);
+    let hits = await executeQuery(andFilters, sectorFilter, harassmentCourtFilter, top_k);
     
     // 2. If no hits, fallback to OR search
     if (hits.length === 0 && keywords.length > 1) {
       const orFilters = keywords.map(kw => `CONTAINS(LCASE(?title), "${kw}")`).join(" || ");
-      hits = await executeQuery(orFilters, sectorFilter, top_k);
+      hits = await executeQuery(orFilters, sectorFilter, harassmentCourtFilter, top_k);
     }
     
     return { hits };
