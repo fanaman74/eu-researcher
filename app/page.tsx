@@ -429,7 +429,7 @@ export default function ChatPage() {
         
         <div className="max-w-4xl mx-auto space-y-8 relative z-10">
           <div className="inline-flex items-center gap-2 bg-slate-900/80 px-4 py-2 rounded-full border border-slate-800 text-teal-400 text-xs font-semibold uppercase tracking-wider pulse-emerald">
-            <Sparkles className="w-4 h-4 text-emerald-400" /> Powered by DeepSeek-V4-Flash
+            <Sparkles className="w-4 h-4 text-emerald-400" /> Powered by Gemini 3.5 Flash
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight">

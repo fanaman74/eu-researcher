@@ -387,7 +387,7 @@ export default function ResearchPage() {
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:-0.15s]" />
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-bounce" />
                   </span>
-                  <span className="text-xs text-slate-400 font-medium">DeepSeek-V4 is querying database indexes...</span>
+                  <span className="text-xs text-slate-400 font-medium">Gemini 3.5 Flash is querying database indexes...</span>
                 </div>
               </div>
             )}
