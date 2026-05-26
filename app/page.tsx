@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { 
   Send, 
   Scale, 
@@ -100,21 +101,8 @@ const FALLBACK_LATEST_DOCS = [
 ];
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: "Greetings. I am your EU Legal Data Hunter AI agent. I can perform active research on European Union regulations, directives, decisions, CJEU/ECJ case law, and member state jurisdictions to assist your inquiry. What EU legal concepts would you like to search today?"
-    }
-  ]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-
   // Settings
   const [namespace, setNamespace] = useState("case_law");
-  const [topK, setTopK] = useState(5);
-
-  // Accordion search states
-  const [expandedLog, setExpandedLog] = useState<{ [key: number]: boolean }>({});
 
   // Summarizer Modal States
   const [modalOpen, setModalOpen] = useState(false);
@@ -124,17 +112,17 @@ export default function ChatPage() {
   const [summarizing, setSummarizing] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
 
-  // Latest Documents States
+  // Latest Documents States (Section 1)
   const [latestDocs, setLatestDocs] = useState<any[]>(FALLBACK_LATEST_DOCS);
   const [loadingLatest, setLoadingLatest] = useState(false);
 
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  // Sector Specific Documents States (Section 3)
+  const [sectorDocs, setSectorDocs] = useState<any[]>([]);
+  const [loadingSectorDocs, setLoadingSectorDocs] = useState(false);
+
   const dashboardRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
-
+  // Fetch default general latest documents (Section 1)
   useEffect(() => {
     const fetchLatestDocs = async () => {
       setLoadingLatest(true);
@@ -143,11 +131,11 @@ export default function ChatPage() {
         if (res.ok) {
           const data = await res.json();
           if (data.documents && data.documents.length > 0) {
-            setLatestDocs(data.documents);
+            setLatestDocs(data.documents.slice(0, 8));
           }
         }
       } catch (err) {
-        console.warn("Failed to fetch latest EUR-Lex documents, using built-in high-quality records:", err);
+        console.warn("Failed to fetch latest EUR-Lex documents, using fallback:", err);
       } finally {
         setLoadingLatest(false);
       }
@@ -155,55 +143,26 @@ export default function ChatPage() {
     fetchLatestDocs();
   }, []);
 
-  const ALL_PRESETS = [
-    {
-      title: "Employment Precedents",
-      query: "Analyze European Court of Justice precedents regarding gender pay discrimination and constructive dismissal."
-    },
-    {
-      title: "Environmental Liability",
-      query: "What are the EU regulatory disclosure requirements and ECHR precedents regarding offshore industrial pollution liability?"
-    },
-    {
-      title: "GDPR Data Violations",
-      query: "Find European precedents concerning biometric data processing violations and class action claims under GDPR."
-    },
-    {
-      title: "Digital Markets Act",
-      query: "Search for European Commission antitrust rulings and DMA compliance guidelines regarding third-party app stores."
-    },
-    {
-      title: "AI Act Compliance",
-      query: "Review EU AI Act compliance mandates, risk classification thresholds, and penalties for prohibited AI systems."
-    },
-    {
-      title: "Consumer Rights",
-      query: "Analyze CJEU decisions regarding consumer contract transparency, geoblocking restrictions, and airline delay refunds."
-    }
-  ];
-
-  const [activePresets, setActivePresets] = useState<typeof ALL_PRESETS>([]);
-
-  const rotatePresets = () => {
-    const shuffled = [...ALL_PRESETS].sort(() => 0.5 - Math.random());
-    setActivePresets(shuffled.slice(0, 2));
-  };
-
+  // Fetch sector specific documents dynamically (Section 3)
   useEffect(() => {
-    rotatePresets();
-  }, []);
-
-  const handleReset = () => {
-    setMessages([
-      {
-        role: "assistant",
-        content: "Greetings. I am your EU Legal Data Hunter AI agent. I can perform active research on European Union regulations, directives, decisions, CJEU/ECJ case law, and member state jurisdictions to assist your inquiry. What EU legal concepts would you like to search today?"
+    const fetchSectorDocs = async () => {
+      setLoadingSectorDocs(true);
+      try {
+        const res = await fetch(`/api/latest?namespace=${namespace}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.documents) {
+            setSectorDocs(data.documents.slice(0, 5));
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch sector specific documents:", err);
+      } finally {
+        setLoadingSectorDocs(false);
       }
-    ]);
-    setInput("");
-    setLoading(false);
-    rotatePresets();
-  };
+    };
+    fetchSectorDocs();
+  }, [namespace]);
 
   const scrollToDashboard = () => {
     dashboardRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -254,57 +213,6 @@ export default function ChatPage() {
     navigator.clipboard.writeText(summaryText);
     setCopySuccess(true);
     setTimeout(() => setCopySuccess(false), 2000);
-  };
-
-  const handleSend = async (textToSend?: string) => {
-    const activeText = textToSend || input;
-    if (!activeText.trim()) return;
-
-    if (!textToSend) setInput("");
-    setLoading(true);
-
-    const newMessages = [...messages, { role: "user" as const, content: activeText }];
-    setMessages(newMessages);
-
-    try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
-          defaultNamespace: namespace,
-          defaultTopK: topK
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to communicate with coordinator API.");
-      }
-
-      const data = await response.json();
-      setMessages(prev => [
-        ...prev, 
-        { 
-          role: "assistant", 
-          content: data.content,
-          searchLogs: data.searchLogs 
-        }
-      ]);
-    } catch (err: any) {
-      setMessages(prev => [
-        ...prev,
-        { role: "assistant", content: `⚠️ Error occurred: ${err.message || "Failed to process chat response."}` }
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const toggleAccordion = (index: number) => {
-    setExpandedLog(prev => ({
-      ...prev,
-      [index]: !prev[index]
-    }));
   };
 
   return (
@@ -536,12 +444,12 @@ export default function ChatPage() {
           </p>
 
           <div className="flex gap-4 justify-center pt-4">
-            <button 
-              onClick={scrollToDashboard}
+            <Link 
+              href="/research"
               className="px-8 py-4 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-450 hover:to-cyan-450 text-white font-semibold text-base shadow-[0_0_30px_rgba(20,184,166,0.25)] hover:scale-[1.03] active:scale-[0.98] transition-all flex items-center gap-2.5 cursor-pointer"
             >
-              Access Research Console <ChevronRight className="w-5 h-5" />
-            </button>
+              Advanced AI Research <ChevronRight className="w-5 h-5" />
+            </Link>
           </div>
         </div>
 
@@ -670,86 +578,9 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* ========================================================= */}
-        {/* SECTION 2: RESEARCH CONSOLE CONFIGURATION (SETTINGS)     */}
-        {/* ========================================================= */}
-        <div className="bg-slate-900/20 border border-slate-800/80 border-t-4 border-t-cyan-500 rounded-3xl p-6 md:p-8 space-y-6 shadow-[0_0_50px_-12px_rgba(6,182,212,0.15)] backdrop-blur-md relative overflow-hidden">
-          {/* Floating glass badge */}
-          <div className="absolute top-4 right-4 md:top-6 md:right-8 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-mono text-[9px] font-bold uppercase tracking-widest px-3 py-1 rounded-full backdrop-blur-md pointer-events-none z-10">
-            [02 / System & Presets]
-          </div>
-
-          {/* Subtle cyan ambient light glow in the top-right */}
-          <span className="absolute -right-32 -top-32 w-64 h-64 rounded-full bg-gradient-to-br from-cyan-500/5 to-transparent blur-3xl pointer-events-none" />
-
-          {/* Section Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-850 pb-4 relative z-10">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
-                <Sliders className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
-                  System Status & Presets <span className="text-[10px] font-mono tracking-wider bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 px-2.5 py-0.5 rounded-full">Dashboard Info</span>
-                </h2>
-                <p className="text-xs text-slate-400">Confirm database network sockets, launch quick search presets, and view server status</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 relative z-10">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-emerald" />
-              <span className="text-xs bg-slate-900 border border-slate-800 text-slate-300 px-3 py-1 rounded-full font-medium">System Armed</span>
-            </div>
-          </div>
-
-          {/* Settings Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
-            {/* Status Panel Card (1 Column) */}
-            <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-6">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold tracking-wider uppercase text-slate-400 flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-cyan-400" /> Connection Status
-                </span>
-                <span className="text-[10px] uppercase bg-cyan-950/50 border border-cyan-800/80 text-cyan-400 px-2 py-0.5 rounded-full">Secure</span>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-400">OpenRouter (DeepSeek)</span>
-                  <span className="text-emerald-400 text-xs font-semibold flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" /> Connected
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-400">EUR-Lex SPARQL Endpoint</span>
-                  <span className="text-emerald-400 text-xs font-semibold flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" /> Secured
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Presets Card (Spans 2 Columns) */}
-            <div className="lg:col-span-2 bg-slate-900/40 backdrop-blur-md p-6 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-4">
-              <span className="text-sm font-semibold tracking-wider uppercase text-slate-400 flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-cyan-400" /> Quick Search Presets
-              </span>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {activePresets.map((preset, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleSend(preset.query)}
-                    className="text-left p-3.5 rounded-xl bg-slate-950/40 border border-slate-855 hover:border-teal-500 hover:bg-slate-900/60 transition-all duration-300 group cursor-pointer h-24 flex flex-col justify-between"
-                  >
-                    <div className="text-[11px] font-bold text-teal-400 group-hover:text-emerald-400 transition-colors line-clamp-1">{preset.title}</div>
-                    <div className="text-[10px] text-slate-400 line-clamp-2 mt-1 leading-snug">{preset.query}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* ========================================================= */}
-        {/* SECTION 3: INTERACTIVE QUERY CONSOLE (SEARCH & CHAT)      */}
+        {/* SECTION 2: INTERACTIVE QUERY CONSOLE (SEARCH & CHAT)      */}
         {/* ========================================================= */}
         <div className="bg-slate-900/20 border border-slate-800/80 border-t-4 border-t-purple-500 rounded-3xl p-6 md:p-8 space-y-6 shadow-[0_0_50px_-12px_rgba(168,85,247,0.15)] backdrop-blur-md relative overflow-hidden">
           {/* Floating glass badge */}
@@ -822,7 +653,7 @@ export default function ChatPage() {
                       className={`px-3 py-1.5 text-xs font-semibold rounded-xl border backdrop-blur-sm transition-all duration-350 cursor-pointer active:scale-95 flex items-center gap-1.5 ${pillStyle}`}
                     >
                       {isActive && (
-                        <span className={`w-1.5 h-1.5 rounded-full animate-pulse bg-current`} />
+                        <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-current" />
                       )}
                       {item.label}
                     </button>
@@ -830,266 +661,145 @@ export default function ChatPage() {
                 })}
               </div>
             </div>
+          </div>
 
-            {/* Range Slider for depth (Sleek full-width control) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 bg-slate-950/40 p-4 border border-slate-850 rounded-2xl">
-              <div className="flex flex-col gap-1 col-span-1">
-                <label className="text-[10px] font-bold font-sans text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Database Search Depth (top_k)
-                </label>
-                <p className="text-[10px] text-slate-500 leading-none">Max matching documents to retrieve for reasoning</p>
-              </div>
-              <div className="flex items-center gap-4 col-span-2">
-                <input 
-                  type="range"
-                  min="1"
-                  max="15"
-                  value={topK}
-                  onChange={(e) => setTopK(parseInt(e.target.value))}
-                  className="flex-1 h-1.5 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                />
-                <span className="text-emerald-400 font-mono font-bold text-xs bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-lg">
-                  {topK} Documents
-                </span>
-              </div>
+          {/* Dynamic Top 5 Category-Specific Documents Grid */}
+          <div className="space-y-6 relative z-10 pt-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold font-sans text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-400" /> Dynamic Category Document Stream
+              </span>
+              {loadingSectorDocs ? (
+                <span className="text-[10px] text-purple-400 animate-pulse font-medium">Synchronizing Sector Records...</span>
+              ) : (
+                <span className="text-[9px] bg-slate-950 border border-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-medium">Top 5 Records Loaded</span>
+              )}
             </div>
 
-          </div>
-
-          {/* Chat Messages Log */}
-          <div className="space-y-8 min-h-[350px] max-h-[600px] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-slate-950 relative z-10">
-            {messages.map((message, index) => {
-              // Parse options for assistant messages dynamically
-              let displayContent = message.content;
-              const messageOptions = [];
-              
-              if (message.role === "assistant") {
-                const optionRegex = /\[Option:\s*(.*?)\]/gi;
-                let match;
-                while ((match = optionRegex.exec(message.content)) !== null) {
-                  messageOptions.push(match[1].trim());
-                }
-                displayContent = message.content.replace(/\[Option:\s*(.*?)\]/gi, '').trim();
-              }
-
-              return (
-                <div 
-                  key={index}
-                  className={`flex gap-4 max-w-6xl ${message.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"}`}
-                >
-                  {/* Avatar Icon */}
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${message.role === "user" ? "bg-gradient-to-tr from-emerald-500 to-cyan-500 border-cyan-400 text-white" : "bg-slate-900 border-slate-800 text-teal-400"}`}>
-                    {message.role === "user" ? <MessageSquare className="w-4.5 h-4.5" /> : <Scale className="w-4.5 h-4.5" />}
-                  </div>
-
-                  {/* Message Container */}
-                  <div className="space-y-4 w-[90%]">
-                    <div className={`p-5 rounded-2xl border text-sm leading-relaxed whitespace-pre-wrap ${message.role === "user" ? "bg-gradient-to-br from-emerald-950/40 to-teal-900/40 border-teal-800/80 text-teal-55" : "bg-slate-900/50 border-slate-800 backdrop-blur-md text-slate-100"}`}>
-                      {displayContent}
+            {loadingSectorDocs ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 relative z-10">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="bg-slate-900/40 backdrop-blur-md p-5 rounded-2xl border border-slate-800 animate-pulse h-60 flex flex-col justify-between">
+                    <div className="space-y-3">
+                      <div className="h-4 bg-slate-800 rounded w-2/3" />
+                      <div className="h-3 bg-slate-800 rounded w-1/2" />
+                      <div className="h-12 bg-slate-800/60 rounded mt-4" />
                     </div>
+                    <div className="h-8 bg-slate-800 rounded w-full mt-4" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 relative z-10">
+                {sectorDocs.map((doc, idx) => {
+                  let themeColorClass = "border-slate-800 text-slate-400";
+                  let bulletColor = "bg-slate-505";
+                  let badgeStyle = "border-slate-800 bg-slate-950 text-slate-400";
 
-                    {/* Interactive choice elements */}
-                    {message.role === "assistant" && messageOptions.length > 0 && (
-                      <div className="flex flex-wrap gap-2.5 pt-1">
-                        {messageOptions.map((opt, optIdx) => (
-                          <button
-                            key={optIdx}
-                            onClick={() => handleSend(opt)}
-                            disabled={loading}
-                            className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-950 border border-slate-850 hover:border-teal-500/50 hover:bg-slate-900/40 text-slate-300 hover:text-slate-100 transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                  if (namespace === "case_law") {
+                    themeColorClass = "hover:border-emerald-500/40";
+                    bulletColor = "bg-emerald-500";
+                    badgeStyle = "border-emerald-500/20 bg-emerald-950/20 text-emerald-400";
+                  } else if (namespace === "statutes") {
+                    themeColorClass = "hover:border-cyan-500/40";
+                    bulletColor = "bg-cyan-500";
+                    badgeStyle = "border-cyan-500/20 bg-cyan-950/20 text-cyan-400";
+                  } else if (namespace === "regulatory") {
+                    themeColorClass = "hover:border-indigo-500/40";
+                    bulletColor = "bg-indigo-500";
+                    badgeStyle = "border-indigo-500/20 bg-indigo-950/20 text-indigo-400";
+                  } else if (namespace === "international") {
+                    themeColorClass = "hover:border-amber-500/40";
+                    bulletColor = "bg-amber-500";
+                    badgeStyle = "border-amber-500/20 bg-amber-950/20 text-amber-400";
+                  } else if (namespace === "consolidated") {
+                    themeColorClass = "hover:border-rose-500/40";
+                    bulletColor = "bg-rose-500";
+                    badgeStyle = "border-rose-500/20 bg-rose-950/20 text-rose-400";
+                  } else if (namespace === "agreements") {
+                    themeColorClass = "hover:border-violet-500/40";
+                    bulletColor = "bg-violet-500";
+                    badgeStyle = "border-violet-500/20 bg-violet-950/20 text-violet-400";
+                  } else if (namespace === "complementary") {
+                    themeColorClass = "hover:border-blue-500/40";
+                    bulletColor = "bg-blue-500";
+                    badgeStyle = "border-blue-500/20 bg-blue-950/20 text-blue-400";
+                  } else if (namespace === "transposition") {
+                    themeColorClass = "hover:border-yellow-500/40";
+                    bulletColor = "bg-yellow-500";
+                    badgeStyle = "border-yellow-500/20 bg-yellow-950/20 text-yellow-400";
+                  } else if (namespace === "national_case_law") {
+                    themeColorClass = "hover:border-teal-500/40";
+                    bulletColor = "bg-teal-500";
+                    badgeStyle = "border-teal-500/20 bg-teal-950/20 text-teal-400";
+                  } else if (namespace === "parliamentary") {
+                    themeColorClass = "hover:border-fuchsia-500/40";
+                    bulletColor = "bg-fuchsia-500";
+                    badgeStyle = "border-fuchsia-500/20 bg-fuchsia-950/20 text-fuchsia-400";
+                  }
+
+                  return (
+                    <div 
+                      key={idx}
+                      className={`bg-slate-900/40 backdrop-blur-md p-5 rounded-2xl border border-slate-800 flex flex-col justify-between ${themeColorClass} transition-all hover:scale-[1.02] duration-300 group shadow-lg shadow-slate-950/20 relative overflow-hidden h-[280px]`}
+                    >
+                      <span className="absolute -right-12 -top-12 w-24 h-24 rounded-full bg-gradient-to-br from-slate-500/5 to-transparent blur-xl pointer-events-none group-hover:from-purple-500/5 transition-all duration-300" />
+                      
+                      <div>
+                        <div className="flex flex-col items-start gap-1.5 border-b border-slate-850/50 pb-2.5">
+                          <span className="text-[10px] font-mono font-bold text-slate-400 tracking-wide flex items-center gap-1.5">
+                            <span className={`w-1.5 h-1.5 rounded-full ${bulletColor}`} /> {doc.celex}
+                          </span>
+                          <span className={`text-[8px] font-bold font-sans uppercase tracking-wider px-2 py-0.5 rounded-md ${badgeStyle}`}>
+                            {doc.sector}
+                          </span>
+                        </div>
+
+                        <h4 
+                          title={doc.title}
+                          className="text-[11px] font-bold text-slate-200 line-clamp-4 leading-snug my-3 group-hover:text-white transition-colors cursor-help"
+                        >
+                          {doc.title}
+                        </h4>
+                      </div>
+
+                      <div className="border-t border-slate-850/50 pt-2.5 flex items-center justify-between mt-auto">
+                        <span className="text-[9px] font-semibold text-slate-500 flex items-center gap-1">
+                          🗓️ {doc.date}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <a 
+                            href={doc.url}
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-500 hover:text-slate-350 transition-colors"
+                            title="View Official Document"
                           >
-                            {opt}
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                          <button 
+                            onClick={() => handleSummarize(doc.title, doc.snippet || "", namespace, doc.celex)}
+                            className="inline-flex items-center gap-1 text-[9px] px-2.5 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 hover:border-purple-500/40 text-purple-400 hover:text-purple-300 font-bold transition-all duration-300 cursor-pointer"
+                          >
+                            Summary <Sparkles className="w-2.5 h-2.5" />
                           </button>
-                        ))}
+                        </div>
                       </div>
-                    )}
-
-                    {/* RENDER DYNAMIC SPARQL SEARCH LOG TABLE IF RETURNED */}
-                    {message.role === "assistant" && message.searchLogs && message.searchLogs.length > 0 && (
-                      <div className="space-y-6 pt-2">
-                        {message.searchLogs.map((log: any, logIdx: number) => (
-                          <div 
-                            key={logIdx} 
-                            className="border border-slate-800 bg-slate-950/50 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg"
-                          >
-                            {/* Log Card Header */}
-                            <div 
-                              onClick={() => setExpandedLog(prev => ({ ...prev, [logIdx]: !prev[logIdx] }))}
-                              className="px-5 py-4 bg-slate-900/40 border-b border-slate-850 flex items-center justify-between cursor-pointer hover:bg-slate-900/70 transition-colors"
-                            >
-                              <div className="flex items-center gap-3">
-                                <Terminal className="text-teal-400 w-4 h-4 animate-pulse" />
-                                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">EUR-Lex Database Search Event</span>
-                              </div>
-                              <div className="flex items-center gap-4">
-                                <span className="text-[10px] bg-teal-950/40 border border-teal-850 text-teal-400 px-2.5 py-0.5 rounded-full font-semibold">
-                                  {log.resultsCount} Hits Found
-                                </span>
-                                {expandedLog[logIdx] ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
-                              </div>
-                            </div>
-
-                            {/* Collapsible details log */}
-                            {expandedLog[logIdx] && (
-                              <div className="p-4 border-b border-slate-850 bg-slate-950 text-[10px] font-mono text-slate-500 space-y-1.5 leading-relaxed">
-                                <div className="flex items-center gap-2">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
-                                  <span>SPARQL Host URI: <strong className="text-slate-400">publications.europa.eu/webapi/rdf/sparql</strong></span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
-                                  <span>Searched Namespace: <strong className="text-teal-400 font-semibold">"{log.namespace}"</strong> for <strong className="text-teal-400 font-semibold">"{log.q}"</strong></span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
-                                  <span>Database Query Success: <strong className={log.success ? "text-emerald-400" : "text-red-400"}>{log.success ? "true" : "false"}</strong></span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
-                                  <span>Result limit depth (top_k): <strong className="text-slate-400">{log.top_k}</strong></span>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Render search result tables */}
-                            <div className="overflow-x-auto">
-                              <table className="w-full text-left text-xs border-collapse">
-                                <thead>
-                                  <tr className="bg-slate-900/80 border-b border-slate-850 text-slate-400 font-medium">
-                                    <th className="p-4 w-1/4">📜 Document Name</th>
-                                    <th className="p-4 w-[12%] text-center">🎯 Relevance</th>
-                                    <th className="p-4">🔍 Context Preview Snippet</th>
-                                    <th className="p-4 w-[10%] text-center">🔗 Action</th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-850">
-                                  {Array.isArray(log.results) && log.results.length > 0 ? (
-                                    log.results.map((doc: any, docIdx: number) => {
-                                      // relevance score mapping
-                                      const score = doc.score || (0.95 - docIdx * 0.08);
-                                      const scorePercent = (score * 100).toFixed(0);
-                                      
-                                      // Score badges
-                                      let scoreColor = "text-emerald-400 bg-emerald-950/40 border-emerald-800/80";
-                                      if (score < 0.8) {
-                                        scoreColor = "text-cyan-400 bg-cyan-950/40 border-cyan-800/80";
-                                      }
-                                      if (score < 0.6) {
-                                        scoreColor = "text-slate-400 bg-slate-900/40 border-slate-800/80";
-                                      }
-
-                                      // link creation
-                                      const targetLink = doc.url || `https://legaldatahunter.com/doc/${encodeURIComponent(doc.id || doc.title || "document")}`;
-
-                                      return (
-                                        <tr 
-                                          key={docIdx} 
-                                          className={`hover:bg-slate-900/40 transition-colors ${docIdx % 2 === 0 ? "bg-transparent" : "bg-slate-900/10"}`}
-                                        >
-                                          <td className="p-4 font-semibold text-slate-200 align-top">
-                                            {doc.title || `Legal Record #${docIdx + 1}`}
-                                          </td>
-                                          <td className="p-4 align-top text-center">
-                                            <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold border ${scoreColor}`}>
-                                              {scorePercent}% Match
-                                            </span>
-                                          </td>
-                                          <td className="p-4 align-top text-slate-400 leading-relaxed font-mono text-[11px] whitespace-pre-wrap">
-                                            {doc.snippet || doc.content || "Context content payload loaded securely."}
-                                          </td>
-                                          <td className="p-4 align-top text-center">
-                                            <div className="flex items-center justify-center gap-3">
-                                              <a 
-                                                href={targetLink}
-                                                target="_blank" 
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-1.5 text-xs text-teal-400 hover:text-emerald-400 hover:underline transition-colors font-medium cursor-pointer"
-                                              >
-                                                Link <ExternalLink className="w-3.5 h-3.5" />
-                                              </a>
-                                              <button 
-                                                onClick={() => handleSummarize(doc.title, doc.snippet, log.namespace, doc.id)}
-                                                className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-teal-455 hover:underline transition-colors font-medium cursor-pointer"
-                                              >
-                                                Summarise <Sparkles className="w-3.5 h-3.5" />
-                                              </button>
-                                            </div>
-                                          </td>
-                                        </tr>
-                                      );
-                                    })
-                                  ) : (
-                                    <tr>
-                                      <td colSpan={4} className="p-8 text-center text-slate-500 italic">
-                                        No database snippets returned for this action.
-                                      </td>
-                                    </tr>
-                                  )}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    </div>
+                  );
+                })}
+                {sectorDocs.length === 0 && (
+                  <div className="col-span-5 py-12 text-center text-xs text-slate-550 italic bg-slate-950/20 border border-slate-850 rounded-2xl w-full">
+                    No recent legislative or case publications returned for this domain authority since 2023.
                   </div>
-                </div>
-              );
-            })}
-            {loading && (
-              <div className="flex gap-4 max-w-4xl mr-auto">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border bg-slate-900 border-slate-800 text-emerald-400 animate-pulse">
-                  <Scale className="w-4.5 h-4.5 animate-spin" />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <div className="p-4 bg-slate-900/40 border border-slate-800 backdrop-blur-md rounded-2xl flex items-center gap-3">
-                    <span className="flex gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:-0.3s]" />
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:-0.15s]" />
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-bounce" />
-                    </span>
-                    <span className="text-xs text-slate-400 font-medium">DeepSeek-V4 is querying database indexes...</span>
-                  </div>
-                </div>
+                )}
               </div>
             )}
-            <div ref={chatEndRef} />
-          </div>
-
-          {/* Chat Floating Input */}
-          <div className="mt-6 border-t border-slate-850 pt-6 relative z-10">
-            <form 
-              onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-              className="max-w-6xl mx-auto flex gap-3 p-2 bg-slate-950/60 border border-slate-800 rounded-2xl focus-within:border-teal-500/80 focus-within:shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all duration-300 relative z-10"
-            >
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about European cases, EU directives, precedents, or statutory definitions..."
-                className="flex-1 bg-transparent px-4 py-3 text-sm focus:outline-none text-slate-100 placeholder-slate-500"
-              />
-              <button
-                type="button"
-                onClick={handleReset}
-                className="px-5 py-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-red-500/50 hover:text-red-400 text-slate-400 text-sm font-medium transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-              >
-                Reset
-              </button>
-              <button
-                type="submit"
-                disabled={!input.trim() || loading}
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-450 hover:to-cyan-450 text-white font-medium text-sm flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 disabled:pointer-events-none cursor-pointer"
-              >
-                Query <Send className="w-4 h-4" />
-              </button>
-            </form>
           </div>
 
         </div>
       </section>
 
-    {/* 4. SENIOR EU LAWYER CASE SUMMARIZER POPUP MODAL */}
     {modalOpen && activeSummaryDoc && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-fade-in">
         <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 md:p-8 max-w-4xl w-full max-h-[90vh] flex flex-col justify-between shadow-2xl glass-card relative z-50">
