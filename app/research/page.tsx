@@ -5,18 +5,12 @@ import Link from "next/link";
 import { 
   Send, 
   Scale, 
-  BookOpen, 
-  Settings, 
-  Sliders, 
   MessageSquare, 
-  Globe, 
-  Activity,
-  ChevronDown,
-  ChevronUp,
-  Shield,
-  Terminal,
-  Sparkles,
-  ArrowLeft,
+  ChevronDown, 
+  ChevronUp, 
+  Terminal, 
+  Sparkles, 
+  ArrowLeft, 
   ExternalLink
 } from "lucide-react";
 
@@ -64,44 +58,6 @@ export default function ResearchPage() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  const ALL_PRESETS = [
-    {
-      title: "Employment Precedents",
-      query: "Analyze European Court of Justice precedents regarding gender pay discrimination and constructive dismissal."
-    },
-    {
-      title: "Environmental Liability",
-      query: "What are the EU regulatory disclosure requirements and ECHR precedents regarding offshore industrial pollution liability?"
-    },
-    {
-      title: "GDPR Data Violations",
-      query: "Find European precedents concerning biometric data processing violations and class action claims under GDPR."
-    },
-    {
-      title: "Digital Markets Act",
-      query: "Search for European Commission antitrust rulings and DMA compliance guidelines regarding third-party app stores."
-    },
-    {
-      title: "AI Act Compliance",
-      query: "Review EU AI Act compliance mandates, risk classification thresholds, and penalties for prohibited AI systems."
-    },
-    {
-      title: "Consumer Rights",
-      query: "Analyze CJEU decisions regarding consumer contract transparency, geoblocking restrictions, and airline delay refunds."
-    }
-  ];
-
-  const [activePresets, setActivePresets] = useState<typeof ALL_PRESETS>([]);
-
-  const rotatePresets = () => {
-    const shuffled = [...ALL_PRESETS].sort(() => 0.5 - Math.random());
-    setActivePresets(shuffled.slice(0, 2));
-  };
-
-  useEffect(() => {
-    rotatePresets();
-  }, []);
-
   const handleReset = () => {
     setMessages([
       {
@@ -111,7 +67,6 @@ export default function ResearchPage() {
     ]);
     setInput("");
     setLoading(false);
-    rotatePresets();
   };
 
   const handleSummarize = async (title: string, snippet: string, docNamespace: string, celex: string, detailed: boolean = false) => {
@@ -230,78 +185,7 @@ export default function ResearchPage() {
           </div>
         </div>
 
-        {/* ========================================================= */}
-        {/* SECTION 2: SYSTEM STATUS & PRESETS OVERVIEW               */}
-        {/* ========================================================= */}
-        <div className="bg-slate-900/20 border border-slate-800/80 border-t-4 border-t-cyan-500 rounded-3xl p-6 md:p-8 space-y-6 shadow-[0_0_50px_-12px_rgba(6,182,212,0.15)] backdrop-blur-md relative overflow-hidden">
-          {/* Floating glass badge */}
-          <div className="absolute top-4 right-4 md:top-6 md:right-8 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-mono text-[9px] font-bold uppercase tracking-widest px-3 py-1 rounded-full backdrop-blur-md pointer-events-none z-10">
-            [02 / System & Presets]
-          </div>
 
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-850 pb-4 relative z-10">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
-                <Sliders className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
-                  System Status & Presets <span className="text-[10px] font-mono tracking-wider bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 px-2.5 py-0.5 rounded-full">Terminal Info</span>
-                </h2>
-                <p className="text-xs text-slate-400">Confirm database connection endpoints and launch fast preset search queries</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 relative z-10">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-emerald" />
-              <span className="text-xs bg-slate-900 border border-slate-800 text-slate-300 px-3 py-1 rounded-full font-medium">System Armed</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
-            {/* Status Panel */}
-            <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-6">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold tracking-wider uppercase text-slate-400 flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-cyan-400" /> Connection Status
-                </span>
-                <span className="text-[10px] uppercase bg-cyan-950/50 border border-cyan-800/80 text-cyan-400 px-2 py-0.5 rounded-full">Secure</span>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-400">OpenRouter (DeepSeek)</span>
-                  <span className="text-emerald-400 text-xs font-semibold flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" /> Connected
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-400">EUR-Lex SPARQL Endpoint</span>
-                  <span className="text-emerald-400 text-xs font-semibold flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" /> Secured
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Presets Grid */}
-            <div className="lg:col-span-2 bg-slate-900/40 backdrop-blur-md p-6 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-4">
-              <span className="text-sm font-semibold tracking-wider uppercase text-slate-400 flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-cyan-400" /> Quick Search Presets
-              </span>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {activePresets.map((preset, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleSend(preset.query)}
-                    className="text-left p-3.5 rounded-xl bg-slate-950/40 border border-slate-855 hover:border-teal-500 hover:bg-slate-900/60 transition-all duration-300 group cursor-pointer h-24 flex flex-col justify-between"
-                  >
-                    <div className="text-[11px] font-bold text-teal-400 group-hover:text-emerald-400 transition-colors line-clamp-1">{preset.title}</div>
-                    <div className="text-[10px] text-slate-400 line-clamp-2 mt-1 leading-snug">{preset.query}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* ========================================================= */}
         {/* SECTION 3: INTERACTIVE SEARCH & CONFIG CONSOLE            */}
