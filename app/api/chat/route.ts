@@ -188,7 +188,7 @@ export async function POST(req: Request) {
 
     // Step 1: Initial call to OpenRouter specifying the search tool
     let response = await openai.chat.completions.create({
-      model: "google/gemini-3.5-flash",
+      model: "deepseek/deepseek-v4-flash",
       messages: conversationMessages,
       tools: [searchTool],
       tool_choice: "auto"
@@ -198,7 +198,12 @@ export async function POST(req: Request) {
 
     // Step 2: Handle function calls if Gemini requests it
     if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
-      const updatedMessages = [systemMessage, ...messages, assistantMessage];
+      const assistantPlainMessage = {
+        role: "assistant" as const,
+        content: assistantMessage.content || "",
+        tool_calls: assistantMessage.tool_calls
+      };
+      const updatedMessages = [systemMessage, ...messages, assistantPlainMessage];
 
       for (const toolCall of assistantMessage.tool_calls) {
         if (toolCall.function.name === "search_legal_data") {
@@ -232,7 +237,7 @@ export async function POST(req: Request) {
 
       // Step 3: Call OpenRouter again with the search results
       const finalResponse = await openai.chat.completions.create({
-        model: "google/gemini-3.5-flash",
+        model: "deepseek/deepseek-v4-flash",
         messages: updatedMessages
       });
 

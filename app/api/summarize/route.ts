@@ -101,7 +101,7 @@ Official Text Context:
 ${officialText}`;
 
     const response = await openai.chat.completions.create({
-      model: "google/gemini-3.5-flash",
+      model: "deepseek/deepseek-v4-flash",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userMessage }

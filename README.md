@@ -6,7 +6,7 @@
 
 ## 🏛️ Project Architecture Overview
 
-EU-Researcher is a next-generation Next.js 15 web application designed to act as a **multi-tenant intelligence portal**. It provides targeted workspaces leveraging **live SPARQL query engines**, **RESTful web services**, and **generative AI models** (specifically `Gemini 3.5 Flash` via OpenRouter) to deliver unprecedented clarity on EU legal, regulatory, and parliamentary processes.
+EU-Researcher is a next-generation Next.js 15 web application designed to act as a **multi-tenant intelligence portal**. It provides targeted workspaces leveraging **live SPARQL query engines**, **RESTful web services**, and **generative AI models** (specifically `DeepSeek v4 Flash` via OpenRouter) to deliver unprecedented clarity on EU legal, regulatory, and parliamentary processes.
 
 ```
                    +------------------------------+
@@ -33,7 +33,7 @@ EU-Researcher is a next-generation Next.js 15 web application designed to act as
                        v (Search Hits)                  v (Raw Context)
                +-------+--------------------------------+-------+
                |           OpenRouter AI Gateway                |
-               |           (Gemini 3.5 Flash Model)             |
+               |           (DeepSeek v4 Flash Model)            |
                +-----------------------+------------------------+
                                        |
                                        v
@@ -74,7 +74,7 @@ To ensure high-fidelity summarization without truncation errors:
 * Strips nested HTML layouts, extracts the core document up to 16,000 characters, and feeds it into the LLM context.
 
 ### 3. The OpenAI-Structured LLM Gateway
-* Configured using `OpenRouter` to interface with the cutting-edge `google/gemini-3.5-flash` model.
+* Configured using `OpenRouter` to interface with the cutting-edge `deepseek/deepseek-v4-flash` model.
 * Implements robust **Function Calling** via `search_legal_data` tools.
 * Automatically strips thinking traces, raw markdown schemas, and tags before returning responses to the UI.
 
