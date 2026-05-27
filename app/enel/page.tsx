@@ -19,12 +19,17 @@ import {
   AlertTriangle,
   Zap,
   Activity,
-  Layers
+  Layers,
+  Copy,
+  Check,
+  Download
 } from "lucide-react";
 
 export default function EnelHubPage() {
   const [selectedInquiry, setSelectedInquiry] = useState<any>(null);
   const [loadingReport, setLoadingReport] = useState(false);
+  const [inDepthMode, setInDepthMode] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
   const [generatedReport, setGeneratedReport] = useState("");
   const [activeTab, setActiveTab] = useState("dg_comp");
 
@@ -92,11 +97,22 @@ export default function EnelHubPage() {
     ]
   };
 
-  const handleSelectAndGenerate = async (brief: any) => {
+  const handleSelectAndGenerate = async (brief: any, isDetailed: boolean = false) => {
     setSelectedInquiry(brief);
+    setInDepthMode(isDetailed);
     setLoadingReport(true);
     setGeneratedReport("");
     try {
+      const prompt = isDetailed
+        ? `Draft an extremely comprehensive, exhaustive, and highly detailed strategic briefing playbook (approximately 1,200 words) on Enel's lobbying risks. Focus on this topic: "${brief.title}" (Type: ${brief.type}, Source: ${brief.source}, Risk Assessment: ${brief.risk}) in Brussels public affairs context. 
+           Your briefing must include these sections:
+           1. EXECUTIVE SUMMARY & STRATEGIC RATIONALE
+           2. DETAILED REGULATORY CONTEXT & POLICY THREATS (Cite specific EU Directives or rules)
+           3. HISTORICAL PRECEDENTS & COMPARABLE CASE LAW
+           4. IMPACT EVALUATION ON ENEL ENERGY PORTFOLIOS
+           5. ADVANCED STRATEGIC RECOMMENDATIONS & BRUSSELS ADVOCACY PLAYBOOK`
+        : `Draft a highly detailed executive briefing paper on Enel strategic lobbying risks. Specifically focus on this topic: "${brief.title}" (Type: ${brief.type}, Source: ${brief.source}, Risk Assessment: ${brief.risk}) in Brussels public affairs context. List key policy threats and Enel's strategic counter-advocacy recommendation.`;
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -104,7 +120,7 @@ export default function EnelHubPage() {
           messages: [
             { 
               role: "user", 
-              content: `Draft a highly detailed executive briefing paper on Enel strategic lobbying risks. Specifically focus on this topic: "${brief.title}" (Type: ${brief.type}, Source: ${brief.source}, Risk Assessment: ${brief.risk}) in Brussels public affairs context. List key policy threats and Enel's strategic counter-advocacy recommendation.`
+              content: prompt
             }
           ]
         })
@@ -120,6 +136,25 @@ export default function EnelHubPage() {
     } finally {
       setLoadingReport(false);
     }
+  };
+
+  const copyToClipboard = () => {
+    if (!generatedReport) return;
+    navigator.clipboard.writeText(generatedReport);
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 2000);
+  };
+
+  const downloadReport = () => {
+    if (!selectedInquiry || !generatedReport) return;
+    const blob = new Blob([generatedReport], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${selectedInquiry.id.replace(/[^a-z0-9]/gi, '_')}_enel_advocacy_brief.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -345,13 +380,67 @@ export default function EnelHubPage() {
             </div>
 
             {selectedInquiry && (
-              <button
-                onClick={() => handleSelectAndGenerate(selectedInquiry)}
-                disabled={loadingReport}
-                className="w-full py-3 rounded-xl bg-teal-400 hover:bg-teal-350 disabled:opacity-50 disabled:pointer-events-none text-slate-950 font-bold text-xs flex items-center justify-center gap-2 tracking-wide shadow-lg shadow-teal-400/10 active:scale-[0.98] cursor-pointer"
-              >
-                <Cpu className="w-4.5 h-4.5 text-slate-950" /> Re-draft Strategic Briefing
-              </button>
+              <div className="space-y-3.5">
+                
+                {/* Utilities: Copy & Save (Only when report exists) */}
+                {generatedReport && (
+                  <div className="flex gap-3">
+                    <button
+                      onClick={copyToClipboard}
+                      className="flex-1 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-950 text-slate-300 text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+                    >
+                      {copySuccess ? (
+                        <>
+                          <Check className="w-4 h-4 text-emerald-400" /> Copied Brief!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4 text-slate-400" /> Copy Briefing
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={downloadReport}
+                      className="flex-1 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-950 text-slate-300 text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+                    >
+                      <Download className="w-4 h-4 text-slate-400" /> Save Briefing
+                    </button>
+                  </div>
+                )}
+
+                {/* Primary Generators */}
+                <div className="flex flex-col gap-2">
+                  {/* Toggle deep-dive or standard */}
+                  {generatedReport && !inDepthMode && (
+                    <button
+                      onClick={() => handleSelectAndGenerate(selectedInquiry, true)}
+                      disabled={loadingReport}
+                      className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-450 hover:to-teal-450 text-white font-bold text-xs flex items-center justify-center gap-2 tracking-wide shadow-lg shadow-emerald-500/10 active:scale-[0.98] cursor-pointer"
+                    >
+                      <Sparkles className="w-4 h-4 text-white" /> Upgrade to In-Depth Briefing
+                    </button>
+                  )}
+
+                  {generatedReport && inDepthMode && (
+                    <button
+                      onClick={() => handleSelectAndGenerate(selectedInquiry, false)}
+                      disabled={loadingReport}
+                      className="w-full py-3 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-950 hover:bg-slate-900 text-slate-300 font-bold text-xs flex items-center justify-center gap-2 tracking-wide active:scale-[0.98] cursor-pointer"
+                    >
+                      <Scale className="w-4 h-4 text-slate-400" /> Switch to Standard Briefing
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => handleSelectAndGenerate(selectedInquiry, inDepthMode)}
+                    disabled={loadingReport}
+                    className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-750 text-slate-200 font-bold text-xs flex items-center justify-center gap-2 tracking-wide active:scale-[0.98] cursor-pointer"
+                  >
+                    <Cpu className="w-4 h-4 text-slate-400" /> Re-draft Active Briefing
+                  </button>
+                </div>
+
+              </div>
             )}
           </div>
 
