@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "EU Legal Data Hunter AI",
-  description: "Search European Union legal case law, directives, and documents using advanced natural language intelligence.",
+  title: "Enel EU Public Affairs & Competition Intelligence",
+  description: "Automated intelligence hub monitoring EU legislative movements, parsing public consultations, and extracting judicial case law precedents for strategic Brussels engagement.",
 };
 
 export default function RootLayout({
