@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 
 export default function EnelHubPage() {
-  const [selectedRiskTopic, setSelectedRiskTopic] = useState("3sun");
+  const [selectedInquiry, setSelectedInquiry] = useState<any>(null);
   const [loadingReport, setLoadingReport] = useState(false);
   const [generatedReport, setGeneratedReport] = useState("");
   const [activeTab, setActiveTab] = useState("dg_comp");
@@ -92,7 +92,8 @@ export default function EnelHubPage() {
     ]
   };
 
-  const handleGenerateReport = async () => {
+  const handleSelectAndGenerate = async (brief: any) => {
+    setSelectedInquiry(brief);
     setLoadingReport(true);
     setGeneratedReport("");
     try {
@@ -103,7 +104,7 @@ export default function EnelHubPage() {
           messages: [
             { 
               role: "user", 
-              content: `Draft a highly detailed executive briefing paper on Enel strategic lobbying risks. Specifically focus on this topic: "${selectedRiskTopic === '3sun' ? 'DG COMP State Aid rules and Catania 3SUN solar factory support' : selectedRiskTopic === 'grid' ? 'ACER electricity transmission network codes and peak pricing tariffs' : 'RED III renewable targets and clean infrastructure support'}" in Brussels public affairs context. List key policy threats and Enel's strategic counter-advocacy recommendation.`
+              content: `Draft a highly detailed executive briefing paper on Enel strategic lobbying risks. Specifically focus on this topic: "${brief.title}" (Type: ${brief.type}, Source: ${brief.source}, Risk Assessment: ${brief.risk}) in Brussels public affairs context. List key policy threats and Enel's strategic counter-advocacy recommendation.`
             }
           ]
         })
@@ -260,26 +261,31 @@ export default function EnelHubPage() {
 
               {/* Brief Cards Stream */}
               <div className="space-y-3.5 max-h-[350px] overflow-y-auto pr-1">
-                {recentBriefs[activeTab as keyof typeof recentBriefs].map((brief) => (
-                  <div 
-                    key={brief.id} 
-                    className="p-4 bg-slate-950/60 border border-slate-900 rounded-xl space-y-2 hover:border-slate-850 transition-all"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-mono font-extrabold uppercase px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
-                        {brief.type}
-                      </span>
-                      <span className={`text-[9px] font-bold font-sans uppercase px-2 py-0.5 rounded-full border ${brief.risk === "High Risk" ? "bg-red-500/10 border-red-500/20 text-red-400" : brief.risk === "Med Risk" ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"}`}>
-                        {brief.risk}
-                      </span>
-                    </div>
-                    <h4 className="text-xs font-semibold text-slate-200 leading-snug">{brief.title}</h4>
-                    <div className="flex items-center justify-between text-[9px] text-slate-500 font-mono">
-                      <span>Source: {brief.source}</span>
-                      <span>Date: {brief.date}</span>
-                    </div>
-                  </div>
-                ))}
+                {recentBriefs[activeTab as keyof typeof recentBriefs].map((brief) => {
+                  const isSelected = selectedInquiry?.id === brief.id && selectedInquiry?.source === brief.source;
+                  return (
+                    <button 
+                      key={brief.id} 
+                      onClick={() => handleSelectAndGenerate(brief)}
+                      disabled={loadingReport}
+                      className={`w-full text-left p-4 bg-slate-950/60 border rounded-xl space-y-2 transition-all hover:border-slate-700 cursor-pointer active:scale-[0.99] disabled:opacity-70 disabled:pointer-events-none ${isSelected ? "border-teal-500/50 bg-slate-900/60 shadow-[0_0_15px_rgba(20,184,166,0.08)]" : "border-slate-900 hover:border-slate-850"}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] font-mono font-extrabold uppercase px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
+                          {brief.type}
+                        </span>
+                        <span className={`text-[9px] font-bold font-sans uppercase px-2 py-0.5 rounded-full border ${brief.risk === "High Risk" ? "bg-red-500/10 border-red-500/20 text-red-400" : brief.risk === "Med Risk" ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"}`}>
+                          {brief.risk}
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-semibold text-slate-200 leading-snug">{brief.title}</h4>
+                      <div className="flex items-center justify-between text-[9px] text-slate-500 font-mono">
+                        <span>Source: {brief.source}</span>
+                        <span>Date: {brief.date}</span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -298,26 +304,29 @@ export default function EnelHubPage() {
                 <p className="text-[11px] text-slate-455">Draft strategic position summaries & counter-advocacy memos instantly</p>
               </div>
 
-              {/* Topic Selector */}
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { id: "3sun", label: "3SUN Catania Solar", color: "border-t-emerald-500" },
-                  { id: "grid", label: "ACER Transmission Network", color: "border-t-cyan-500" },
-                  { id: "red3", label: "RED III Targets", color: "border-t-amber-500" }
-                ].map((topic) => (
-                  <button
-                    key={topic.id}
-                    onClick={() => setSelectedRiskTopic(topic.id)}
-                    className={`p-3 bg-slate-950 border border-slate-900 border-t-2 rounded-xl text-left transition-all hover:border-slate-800 cursor-pointer active:scale-95 flex flex-col gap-1.5 ${topic.color} ${selectedRiskTopic === topic.id ? "bg-slate-900 border-teal-500/50 shadow-[0_0_15px_rgba(20,184,166,0.05)]" : ""}`}
-                  >
-                    <span className="text-[10px] font-bold text-slate-200 leading-tight">{topic.label}</span>
-                    <span className="text-[8px] font-mono text-slate-500 uppercase">Strategic Focus</span>
-                  </button>
-                ))}
-              </div>
+              {/* Active Inquiry Subject Display */}
+              {selectedInquiry ? (
+                <div className="p-4 bg-slate-950/80 border border-slate-900 rounded-xl space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[8px] font-mono font-extrabold uppercase px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
+                      {selectedInquiry.type}
+                    </span>
+                    <span className={`text-[8px] font-bold font-sans uppercase px-2 py-0.5 rounded-full border ${selectedInquiry.risk === "High Risk" ? "bg-red-500/10 border-red-500/20 text-red-400" : selectedInquiry.risk === "Med Risk" ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"}`}>
+                      {selectedInquiry.risk}
+                    </span>
+                  </div>
+                  <h4 className="text-xs font-bold text-slate-200 leading-snug">
+                    <span className="text-slate-500 font-normal">Active Subject:</span> {selectedInquiry.title}
+                  </h4>
+                </div>
+              ) : (
+                <div className="p-4 bg-slate-950/30 border border-dashed border-slate-900 rounded-xl text-center text-xs text-slate-500 italic">
+                  No inquiry subject selected. Click on a feed card to begin.
+                </div>
+              )}
 
               {/* Generated Briefing Frame */}
-              <div className="bg-slate-950 border border-slate-900 p-5 rounded-2xl min-h-[180px] max-h-[300px] overflow-y-auto flex flex-col justify-center relative">
+              <div className="bg-slate-950 border border-slate-900 p-5 rounded-2xl min-h-[220px] max-h-[340px] overflow-y-auto flex flex-col justify-center relative">
                 {loadingReport ? (
                   <div className="flex flex-col items-center justify-center gap-3">
                     <Cpu className="w-8 h-8 text-teal-400 animate-spin" />
@@ -328,20 +337,22 @@ export default function EnelHubPage() {
                     {generatedReport}
                   </div>
                 ) : (
-                  <div className="text-center text-slate-500 italic text-xs space-y-2">
-                    <p>Select a strategic risk topic above and generate an executive public affairs brief.</p>
+                  <div className="text-center text-slate-500 italic text-xs space-y-2 p-4">
+                    <p>Select any legislative inquiry card on the left to instantly generate a custom strategic counter-advocacy brief.</p>
                   </div>
                 )}
               </div>
             </div>
 
-            <button
-              onClick={handleGenerateReport}
-              disabled={loadingReport}
-              className="w-full py-3 rounded-xl bg-teal-400 hover:bg-teal-350 disabled:opacity-50 disabled:pointer-events-none text-slate-950 font-bold text-xs flex items-center justify-center gap-2 tracking-wide shadow-lg shadow-teal-400/10 active:scale-[0.98] cursor-pointer"
-            >
-              <Cpu className="w-4.5 h-4.5 text-slate-950" /> Generate AI Advocacy Briefing
-            </button>
+            {selectedInquiry && (
+              <button
+                onClick={() => handleSelectAndGenerate(selectedInquiry)}
+                disabled={loadingReport}
+                className="w-full py-3 rounded-xl bg-teal-400 hover:bg-teal-350 disabled:opacity-50 disabled:pointer-events-none text-slate-950 font-bold text-xs flex items-center justify-center gap-2 tracking-wide shadow-lg shadow-teal-400/10 active:scale-[0.98] cursor-pointer"
+              >
+                <Cpu className="w-4.5 h-4.5 text-slate-950" /> Re-draft Strategic Briefing
+              </button>
+            )}
           </div>
 
         </div>
