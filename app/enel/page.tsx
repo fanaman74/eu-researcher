@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { 
   Scale, 
@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 
 export default function EnelHubPage() {
+  const briefingRef = useRef<HTMLDivElement>(null);
   const [selectedInquiry, setSelectedInquiry] = useState<any>(null);
   const [loadingReport, setLoadingReport] = useState(false);
   const [inDepthMode, setInDepthMode] = useState(false);
@@ -162,6 +163,12 @@ export default function EnelHubPage() {
     setInDepthMode(isDetailed);
     setLoadingReport(true);
     setGeneratedReport("");
+
+    // Smooth scroll down to the briefing section
+    setTimeout(() => {
+      briefingRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+
     try {
       const prompt = isDetailed
         ? `Draft an extremely comprehensive, exhaustive, and highly detailed strategic briefing playbook (approximately 1,200 words) on Enel's lobbying risks. Focus on this topic: "${brief.title}" (Type: ${brief.type}, Source: ${brief.source}, Risk Assessment: ${brief.risk}) in Brussels public affairs context. 
@@ -407,7 +414,7 @@ export default function EnelHubPage() {
           </div>
 
           {/* AI Executive Advocate Risk Summarizer (3/5 columns) */}
-          <div className="lg:col-span-3 bg-slate-900/20 border border-slate-900 rounded-3xl p-6 md:p-8 space-y-6 backdrop-blur-md flex flex-col justify-between">
+          <div ref={briefingRef} className="lg:col-span-3 bg-slate-900/20 border border-slate-900 rounded-3xl p-6 md:p-8 space-y-6 backdrop-blur-md flex flex-col justify-between">
             <div className="space-y-4">
               <div>
                 <h3 className="text-base font-bold text-slate-200 flex items-center gap-2">
