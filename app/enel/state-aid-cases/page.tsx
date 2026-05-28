@@ -15,6 +15,7 @@ import {
 export default function StateAidCasesPage() {
   const [cases, setCases] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const [selectedSector, setSelectedSector] = useState("All");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,11 +36,22 @@ export default function StateAidCasesPage() {
     fetchData();
   }, []);
 
-  const filtered = cases.filter(item => 
-    item.title.toLowerCase().includes(search.toLowerCase()) ||
-    item.id.toLowerCase().includes(search.toLowerCase()) ||
-    item.sector.toLowerCase().includes(search.toLowerCase())
-  );
+  const getSectorCount = (sectorName: string) => {
+    if (sectorName === "All") return cases.length;
+    return cases.filter(item => item.sector === sectorName).length;
+  };
+
+  const filtered = cases.filter(item => {
+    const matchesSearch = 
+      item.title.toLowerCase().includes(search.toLowerCase()) ||
+      item.id.toLowerCase().includes(search.toLowerCase()) ||
+      item.sector.toLowerCase().includes(search.toLowerCase());
+    
+    const matchesSector = selectedSector === "All" || item.sector === selectedSector;
+    
+    return matchesSearch && matchesSector;
+  });
+
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative selection:bg-teal-500/30 selection:text-teal-200">
@@ -68,7 +80,7 @@ export default function StateAidCasesPage() {
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#10b981]" />
             <span className="text-[10px] font-mono font-bold text-slate-350 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
-              32 Cases Tracked
+              {loading ? "..." : `${cases.length} Cases Tracked`}
             </span>
           </div>
         </div>
@@ -88,6 +100,33 @@ export default function StateAidCasesPage() {
           <button className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-950 hover:bg-slate-900 text-xs font-bold text-slate-300 hover:text-white transition-all cursor-pointer">
             <Download className="w-4 h-4" /> Export Registry
           </button>
+        </div>
+
+        {/* Sector Bubble Filters */}
+        <div className="flex flex-row items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 mr-2 shrink-0">Sector:</span>
+          {["All", "Case Law", "Preparatory Documents", "Secondary Legislation"].map((sector) => {
+            const isActive = selectedSector === sector;
+            const count = getSectorCount(sector);
+            return (
+              <button
+                key={sector}
+                onClick={() => setSelectedSector(sector)}
+                className={`px-4 py-2 rounded-full border text-[11px] font-semibold transition-all duration-200 cursor-pointer whitespace-nowrap flex items-center gap-2 ${
+                  isActive
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+                    : "bg-slate-900/60 border-slate-900 text-slate-400 hover:text-slate-200 hover:border-slate-800"
+                }`}
+              >
+                {sector}
+                <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
+                  isActive ? "bg-emerald-500/25 text-emerald-355" : "bg-slate-950 text-slate-500"
+                }`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Tabular View */}

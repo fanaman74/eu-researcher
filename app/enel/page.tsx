@@ -33,12 +33,60 @@ export default function EnelHubPage() {
   const [generatedReport, setGeneratedReport] = useState("");
   const [activeTab, setActiveTab] = useState("dg_comp");
 
+  const [activeConsultationsCount, setActiveConsultationsCount] = useState(14);
+  const [mepQuestionsCount, setMepQuestionsCount] = useState(89);
+  const [stateAidCount, setStateAidCount] = useState(32);
+  const [acerRevisionsCount, setAcerRevisionsCount] = useState(8);
+
+  useEffect(() => {
+    async function fetchCounts() {
+      try {
+        const resConsultations = await fetch("/api/have-your-say");
+        if (resConsultations.ok) {
+          const data = await resConsultations.json();
+          setActiveConsultationsCount(data.consultations?.length || 0);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+      try {
+        const resParliament = await fetch("/api/parliament");
+        if (resParliament.ok) {
+          const data = await resParliament.json();
+          setMepQuestionsCount(data.questions?.length || 0);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+      try {
+        const resEurlex = await fetch("/api/eurlex?q=state aid energy&top_k=15");
+        if (resEurlex.ok) {
+          const data = await resEurlex.json();
+          setStateAidCount(data.hits?.length || 0);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+      try {
+        const resComitology = await fetch("/api/comitology");
+        if (resComitology.ok) {
+          const data = await resComitology.json();
+          setAcerRevisionsCount(data.votes?.length || 0);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    fetchCounts();
+  }, []);
+
   const statistics = [
-    { label: "Active Consultations", count: 14, icon: Users, color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
-    { label: "MEP Questions Tracked", count: 89, icon: BarChart3, color: "text-purple-400 bg-purple-500/10 border-purple-500/20" },
-    { label: "DG COMP State Aid Cases", count: 32, icon: Scale, color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
-    { label: "ACER Grid Revisions", count: 8, icon: Zap, color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" }
+    { label: "Active Consultations", count: activeConsultationsCount, icon: Users, color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
+    { label: "MEP Questions Tracked", count: mepQuestionsCount, icon: BarChart3, color: "text-purple-400 bg-purple-500/10 border-purple-500/20" },
+    { label: "DG COMP State Aid Cases", count: stateAidCount, icon: Scale, color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
+    { label: "ACER Grid Revisions", count: acerRevisionsCount, icon: Zap, color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" }
   ];
+
 
   const tools = [
     {

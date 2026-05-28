@@ -69,7 +69,7 @@ export default function AcerGridRevisionsPage() {
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#06b6d4]" />
             <span className="text-[10px] font-mono font-bold text-slate-350 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
-              8 Revisions Tracked
+              {loading ? "..." : `${votes.length} Revisions Tracked`}
             </span>
           </div>
         </div>

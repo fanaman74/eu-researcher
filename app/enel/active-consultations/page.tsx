@@ -68,7 +68,7 @@ export default function ActiveConsultationsPage() {
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_#f59e0b]" />
             <span className="text-[10px] font-mono font-bold text-slate-350 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
-              14 Total Inquiries
+              {loading ? "..." : `${consultations.length} Total Inquiries`}
             </span>
           </div>
         </div>

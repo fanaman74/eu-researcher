@@ -70,7 +70,7 @@ export default function MepQuestionsPage() {
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse shadow-[0_0_8px_#a855f7]" />
             <span className="text-[10px] font-mono font-bold text-slate-350 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
-              89 Questions Tracked
+              {loading ? "..." : `${questions.length} Questions Tracked`}
             </span>
           </div>
         </div>
