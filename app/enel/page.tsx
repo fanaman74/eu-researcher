@@ -93,10 +93,10 @@ export default function EnelHubPage() {
   }, []);
 
   const statistics = [
-    { label: "Active Consultations", count: activeConsultationsCount !== null ? activeConsultationsCount : "...", icon: Users, color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
-    { label: "MEP Questions Tracked", count: mepQuestionsCount !== null ? mepQuestionsCount : "...", icon: BarChart3, color: "text-purple-400 bg-purple-500/10 border-purple-500/20" },
-    { label: "DG COMP State Aid Cases", count: stateAidCount !== null ? stateAidCount : "...", icon: Scale, color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
-    { label: "ACER Grid Revisions", count: acerRevisionsCount !== null ? acerRevisionsCount : "...", icon: Zap, color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" }
+    { label: "Active Consultations", count: activeConsultationsCount, icon: Users, color: "text-amber-400 bg-amber-500/10 border-amber-500/20", dotColor: "bg-amber-400" },
+    { label: "MEP Questions Tracked", count: mepQuestionsCount, icon: BarChart3, color: "text-purple-400 bg-purple-500/10 border-purple-500/20", dotColor: "bg-purple-400" },
+    { label: "DG COMP State Aid Cases", count: stateAidCount, icon: Scale, color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20", dotColor: "bg-emerald-400" },
+    { label: "ACER Grid Revisions", count: acerRevisionsCount, icon: Zap, color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20", dotColor: "bg-cyan-400" }
   ];
 
 
@@ -280,7 +280,17 @@ export default function EnelHubPage() {
               >
                 <div className="space-y-1">
                   <span className="text-xs text-slate-400 font-medium group-hover:text-slate-300 transition-colors">{stat.label}</span>
-                  <div className="text-2xl font-bold font-mono text-white group-hover:text-cyan-400 transition-colors">{stat.count}</div>
+                  <div className="text-2xl font-bold font-mono text-white group-hover:text-cyan-400 transition-colors h-8 flex items-center">
+                    {stat.count !== null ? (
+                      stat.count
+                    ) : (
+                      <span className="flex items-center gap-1.5 pt-1">
+                        <span className={`w-1.5 h-1.5 rounded-full ${stat.dotColor} animate-bounce [animation-delay:-0.3s]`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${stat.dotColor} animate-bounce [animation-delay:-0.15s]`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${stat.dotColor} animate-bounce`} />
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className={`w-12 h-12 rounded-xl border flex items-center justify-center transition-all duration-300 group-hover:scale-105 ${stat.color}`}>
                   <Icon className="w-5 h-5" />
