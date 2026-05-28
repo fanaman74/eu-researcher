@@ -32,6 +32,7 @@ export default function EnelHubPage() {
   const [inDepthMode, setInDepthMode] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [generatedReport, setGeneratedReport] = useState("");
+  const [originalReport, setOriginalReport] = useState("");
   const [activeTab, setActiveTab] = useState("dg_comp");
 
   const [activeConsultationsCount, setActiveConsultationsCount] = useState<number | null>(null);
@@ -222,6 +223,71 @@ export default function EnelHubPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const extractQuestions = (text: string) => {
+    if (!text) return [];
+    const lines = text.split("\n");
+    const questionsList: string[] = [];
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      const match = trimmed.match(/^[-*\d.]+\s+["']?(What|How|Why|Is|Can|Are|Should|Will|Could|Would|Which|Who|Where|When)[\s\S]+\?["']?$/i);
+      if (match) {
+        const cleanQuestion = trimmed
+          .replace(/^[-*\d.]+\s+/, "")
+          .replace(/^["']|["']$/g, "")
+          .trim();
+        if (cleanQuestion && !questionsList.includes(cleanQuestion)) {
+          questionsList.push(cleanQuestion);
+        }
+      }
+    }
+    return questionsList;
+  };
+
+  const handleFollowUpQuestion = async (question: string) => {
+    if (!originalReport) {
+      setOriginalReport(generatedReport);
+    }
+    setLoadingReport(true);
+    setGeneratedReport("");
+    
+    setTimeout(() => {
+      briefingRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+
+    try {
+      const prompt = `Provide a highly comprehensive, expert-level strategic response (approximately 500-600 words) answering this specific follow-up question: "${question}". 
+      Keep the context focused on Enel's public affairs, lobbying interests, and EU regulatory risk factors. 
+      Use professional headings and clear, structured spacing. Add a closing section called "STRATEGIC RECOMMENDATION FOR ENEL".`;
+
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [
+            { role: "user", content: prompt }
+          ]
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setGeneratedReport(data.content);
+      } else {
+        throw new Error("Failed to generate answer to follow-up question.");
+      }
+    } catch (err: any) {
+      setGeneratedReport(`⚠️ Error: ${err.message || "An issue occurred answering follow-up question."}`);
+    } finally {
+      setLoadingReport(false);
+    }
+  };
+
+  const handleBackToMain = () => {
+    setGeneratedReport(originalReport);
+    setOriginalReport("");
   };
 
   return (
@@ -445,6 +511,14 @@ export default function EnelHubPage() {
               )}
 
               {/* Generated Briefing Frame */}
+              {originalReport && !loadingReport && (
+                <button
+                  onClick={handleBackToMain}
+                  className="mb-4 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[11px] font-bold text-slate-350 hover:text-white transition-all active:scale-95 cursor-pointer"
+                >
+                  ← Return to Main Briefing
+                </button>
+              )}
               <div className={`bg-slate-950 border border-slate-900 p-5 rounded-2xl min-h-[220px] max-h-[340px] overflow-y-auto flex flex-col relative ${generatedReport || loadingReport ? "justify-start" : "justify-center"}`}>
                 {loadingReport ? (
                   <div className="flex flex-col items-center justify-center gap-3">
@@ -461,6 +535,27 @@ export default function EnelHubPage() {
                   </div>
                 )}
               </div>
+
+              {/* Follow-up Interactive Questions */}
+              {!loadingReport && generatedReport && extractQuestions(generatedReport).length > 0 && (
+                <div className="mt-4 space-y-2.5">
+                  <h4 className="text-[10px] font-mono font-extrabold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Deep Dive Follow-up Questions
+                  </h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    {extractQuestions(generatedReport).map((question, qIdx) => (
+                      <button
+                        key={qIdx}
+                        onClick={() => handleFollowUpQuestion(question)}
+                        className="w-full text-left p-3.5 bg-slate-900/40 hover:bg-slate-900/80 border border-slate-900 hover:border-slate-800 rounded-xl text-[11px] text-slate-300 hover:text-white transition-all active:scale-[0.99] cursor-pointer flex justify-between items-center gap-2 group"
+                      >
+                        <span>{question}</span>
+                        <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {selectedInquiry && (
