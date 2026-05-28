@@ -361,7 +361,7 @@ export default function EnelHubPage() {
               )}
 
               {/* Generated Briefing Frame */}
-              <div className="bg-slate-950 border border-slate-900 p-5 rounded-2xl min-h-[220px] max-h-[340px] overflow-y-auto flex flex-col justify-center relative">
+              <div className={`bg-slate-950 border border-slate-900 p-5 rounded-2xl min-h-[220px] max-h-[340px] overflow-y-auto flex flex-col relative ${generatedReport || loadingReport ? "justify-start" : "justify-center"}`}>
                 {loadingReport ? (
                   <div className="flex flex-col items-center justify-center gap-3">
                     <Cpu className="w-8 h-8 text-teal-400 animate-spin" />
