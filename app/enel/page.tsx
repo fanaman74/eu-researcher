@@ -232,6 +232,18 @@ export default function EnelHubPage() {
     
     for (const line of lines) {
       const trimmed = line.trim();
+      
+      // Pattern 1: [Option: Option Description]
+      const optionMatch = trimmed.match(/^\[Option:\s*([\s\S]+?)\]$/i);
+      if (optionMatch) {
+        const cleanOption = optionMatch[1].trim();
+        if (cleanOption && !questionsList.includes(cleanOption)) {
+          questionsList.push(cleanOption);
+        }
+        continue;
+      }
+      
+      // Pattern 2: Normal bullet questions ending in ?
       const match = trimmed.match(/^[-*\d.]+\s+["']?(What|How|Why|Is|Can|Are|Should|Will|Could|Would|Which|Who|Where|When)[\s\S]+\?["']?$/i);
       if (match) {
         const cleanQuestion = trimmed
