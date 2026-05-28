@@ -206,19 +206,26 @@ export default function EnelHubPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {statistics.map((stat, idx) => {
             const Icon = stat.icon;
+            const hrefs = [
+              "/enel/active-consultations",
+              "/enel/mep-questions",
+              "/enel/state-aid-cases",
+              "/enel/acer-grid-revisions"
+            ];
             return (
-              <div 
+              <Link 
                 key={idx}
-                className="bg-slate-900/20 border border-slate-900 rounded-2xl p-6 flex items-center justify-between backdrop-blur-md hover:border-slate-800 transition-all duration-300 shadow-md"
+                href={hrefs[idx]}
+                className="bg-slate-900/20 border border-slate-900 rounded-2xl p-6 flex items-center justify-between backdrop-blur-md hover:border-slate-800 hover:bg-slate-900/40 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 shadow-md group cursor-pointer"
               >
                 <div className="space-y-1">
-                  <span className="text-xs text-slate-400 font-medium">{stat.label}</span>
-                  <div className="text-2xl font-bold font-mono text-white">{stat.count}</div>
+                  <span className="text-xs text-slate-400 font-medium group-hover:text-slate-300 transition-colors">{stat.label}</span>
+                  <div className="text-2xl font-bold font-mono text-white group-hover:text-cyan-400 transition-colors">{stat.count}</div>
                 </div>
-                <div className={`w-12 h-12 rounded-xl border flex items-center justify-center ${stat.color}`}>
+                <div className={`w-12 h-12 rounded-xl border flex items-center justify-center transition-all duration-300 group-hover:scale-105 ${stat.color}`}>
                   <Icon className="w-5 h-5" />
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
