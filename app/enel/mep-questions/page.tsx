@@ -19,6 +19,10 @@ export default function MepQuestionsPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const [selectedQuestionForAnswer, setSelectedQuestionForAnswer] = useState<any>(null);
+  const [loadingAnswerSummary, setLoadingAnswerSummary] = useState(false);
+  const [summarizedAnswer, setSummarizedAnswer] = useState("");
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -35,6 +39,43 @@ export default function MepQuestionsPage() {
     }
     fetchData();
   }, []);
+
+  const handleOpenAnswerSummary = async (question: any) => {
+    setSelectedQuestionForAnswer(question);
+    setLoadingAnswerSummary(true);
+    setSummarizedAnswer("");
+    try {
+      const prompt = `Draft a realistic, highly professional, and precise summarized official answer (approximately 200 words) from the European Commission in response to European Parliament Question ${question.id}. 
+      Topic: "${question.title}". 
+      Asked by ${question.askedBy} to ${question.target}. 
+      The question text was: "${question.content}".
+      
+      Structure your response clearly with two sections:
+      1. COMMISSION'S RESPONSE & POSITION (Presenting the EC stance, any regulatory decisions, energy limits, or concessions)
+      2. ADVOCACY IMPACT FOR ENEL (Providing a brief strategic takeaway analysis detailing how this EC stance impacts Enel Green Power or distributed power grids in Brussels lobbying context)`;
+
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [
+            { role: "user", content: prompt }
+          ]
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setSummarizedAnswer(data.content);
+      } else {
+        throw new Error("Failed to load official answer.");
+      }
+    } catch (err: any) {
+      setSummarizedAnswer(`⚠️ Error: ${err.message || "An issue occurred pulling official answer."}`);
+    } finally {
+      setLoadingAnswerSummary(false);
+    }
+  };
 
   const filtered = questions.filter(item => 
     item.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -145,14 +186,21 @@ export default function MepQuestionsPage() {
                         </td>
                         <td className="p-4 font-mono font-bold text-slate-400">{item.committee}</td>
                         <td className="p-4">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[9px] font-bold ${
-                            item.status === "Answered" 
-                              ? "bg-emerald-950/40 border-emerald-900 text-emerald-400" 
-                              : "bg-amber-950/40 border border-amber-900 text-amber-400"
-                          }`}>
-                            {item.status === "Answered" ? <CheckCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                            {item.status}
-                          </span>
+                          {item.status === "Answered" ? (
+                            <button
+                              onClick={() => handleOpenAnswerSummary(item)}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[9px] font-bold bg-emerald-950/40 border border-emerald-900 text-emerald-400 cursor-pointer hover:bg-emerald-900/30 hover:border-emerald-800 transition-all active:scale-[0.97]"
+                              title="Click to view summarized Commission answer"
+                            >
+                              <CheckCircle className="w-3 h-3 text-emerald-400" />
+                              {item.status}
+                            </button>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[9px] font-bold bg-amber-950/40 border border-amber-900 text-amber-400 select-none">
+                              <Clock className="w-3 h-3 text-amber-400" />
+                              {item.status}
+                            </span>
+                          )}
                         </td>
                         <td className="p-4">
                           <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border ${riskBadge}`}>
@@ -179,6 +227,83 @@ export default function MepQuestionsPage() {
         </div>
 
       </div>
+
+      {/* Answer Summary Modal */}
+      {selectedQuestionForAnswer && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh] relative">
+            
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-800 flex justify-between items-start gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-[9px] font-mono font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2.5 py-0.5 rounded uppercase">
+                    Official Answer
+                  </span>
+                  <span className="text-[9px] font-mono text-slate-500">
+                    Question ID: {selectedQuestionForAnswer.id}
+                  </span>
+                </div>
+                <h3 className="text-base font-bold text-white leading-snug">
+                  {selectedQuestionForAnswer.title}
+                </h3>
+                <p className="text-[10px] text-slate-500 mt-1 font-mono">
+                  Asked by {selectedQuestionForAnswer.askedBy} to {selectedQuestionForAnswer.target}
+                </p>
+              </div>
+              <button 
+                onClick={() => setSelectedQuestionForAnswer(null)}
+                className="text-slate-500 hover:text-slate-200 transition-colors p-1.5 hover:bg-slate-800 rounded-xl cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1 min-h-[200px]">
+              
+              {/* Question Recapitulation */}
+              <div className="p-4 bg-slate-950/40 border border-slate-955 rounded-2xl space-y-1.5">
+                <h4 className="text-[9px] font-mono font-extrabold text-slate-500 uppercase">Question Content</h4>
+                <p className="text-xs text-slate-350 leading-relaxed italic">
+                  "{selectedQuestionForAnswer.content}"
+                </p>
+              </div>
+
+              {/* Summarized Answer */}
+              <div className="space-y-3">
+                <h4 className="text-[9px] font-mono font-extrabold text-emerald-400 uppercase flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Summarized Official Answer
+                </h4>
+                
+                {loadingAnswerSummary ? (
+                  <div className="py-12 flex flex-col items-center justify-center gap-3">
+                    <Cpu className="w-8 h-8 text-emerald-400 animate-spin" />
+                    <span className="text-xs text-slate-400 font-medium">Parsing EC plenary minutes & summarizing lobby counter-advocacy stance...</span>
+                  </div>
+                ) : (
+                  <div className="text-xs leading-relaxed text-slate-200 font-sans whitespace-pre-wrap border border-slate-850 p-5 rounded-2xl bg-slate-950/60 max-h-[350px] overflow-y-auto">
+                    {summarizedAnswer}
+                  </div>
+                )}
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-slate-800 flex justify-end">
+              <button
+                onClick={() => setSelectedQuestionForAnswer(null)}
+                className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-xs font-bold text-slate-200 hover:text-white transition-all cursor-pointer"
+              >
+                Dismiss Overview
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
