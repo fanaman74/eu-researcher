@@ -9,7 +9,8 @@ import {
   ArrowRight,
   ShieldCheck,
   Layers,
-  Compass
+  Compass,
+  Radio
 } from "lucide-react";
 
 export default function GatewayPage() {
@@ -39,8 +40,8 @@ export default function GatewayPage() {
           </p>
         </div>
 
-        {/* Dual Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        {/* Workspace Portals Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           
           {/* Card 1: EU-Lex Cellar Explorer Portal */}
           <div className="group bg-slate-900/20 border border-slate-900 border-t-4 border-t-emerald-500 hover:border-emerald-500/40 rounded-3xl p-8 flex flex-col justify-between gap-8 backdrop-blur-md transition-all duration-350 hover:shadow-[0_0_50px_-12px_rgba(16,185,129,0.15)] relative overflow-hidden">
@@ -62,7 +63,7 @@ export default function GatewayPage() {
 
             <Link 
               href="/eurlex"
-              className="inline-flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-xs font-bold text-slate-200 hover:text-white transition-all active:scale-[0.98] group-hover:border-emerald-500/30"
+              className="inline-flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-slate-900 hover:bg-slate-855 border border-slate-800 text-xs font-bold text-slate-200 hover:text-white transition-all active:scale-[0.98] group-hover:border-emerald-500/30"
             >
               Enter EU-Lex Explorer <ArrowRight className="w-4 h-4" />
             </Link>
@@ -88,9 +89,35 @@ export default function GatewayPage() {
 
             <Link 
               href="/enel"
-              className="inline-flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-xs font-bold text-slate-200 hover:text-white transition-all active:scale-[0.98] group-hover:border-cyan-500/30"
+              className="inline-flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-slate-900 hover:bg-slate-855 border border-slate-800 text-xs font-bold text-slate-200 hover:text-white transition-all active:scale-[0.98] group-hover:border-cyan-500/30"
             >
               Enter Enel Workspace <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          {/* Card 3: Italian Political Event Tracker */}
+          <div className="group bg-slate-900/20 border border-slate-900 border-t-4 border-t-fuchsia-500 hover:border-fuchsia-500/40 rounded-3xl p-8 flex flex-col justify-between gap-8 backdrop-blur-md transition-all duration-350 hover:shadow-[0_0_50px_-12px_rgba(217,70,239,0.15)] relative overflow-hidden">
+            <div className="absolute top-4 right-4 bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-400 font-mono text-[9px] font-bold uppercase tracking-widest px-3 py-1 rounded-full pointer-events-none">
+              [Civic Watch Portal]
+            </div>
+
+            <div className="space-y-4 text-left">
+              <div className="w-12 h-12 rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center text-fuchsia-400 shrink-0 shadow-lg shadow-fuchsia-500/5">
+                <Radio className="w-6 h-6 stroke-[2]" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+                Italian Policy Watch <span className="text-[10px] font-mono tracking-wider bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-400 px-2 py-0.5 rounded-full">Roma Live Tracker</span>
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Monitor Italian legislative acts, Senate and Chamber votes, Openpolis public figures movement logs, and Italian political news aggregates on a rolling 60-day watch timeline.
+              </p>
+            </div>
+
+            <Link 
+              href="/politics-tracker"
+              className="inline-flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-slate-900 hover:bg-slate-855 border border-slate-800 text-xs font-bold text-slate-200 hover:text-white transition-all active:scale-[0.98] group-hover:border-fuchsia-500/30"
+            >
+              Enter Italian Tracker <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 

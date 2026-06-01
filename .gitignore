@@ -31,3 +31,5 @@ next-env.d.ts
 
 # generated scratch files
 europe-paths-generated.txt
+
+/app/generated/prisma

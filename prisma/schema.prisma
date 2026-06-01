@@ -1,0 +1,69 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Event {
+  id           String          @id @default(uuid())
+  title        String
+  description  String
+  content      String          @db.Text
+  date         DateTime        @default(now())
+  sourceType   String          // "Official" | "News"
+  sourceName   String          // "Dati Camera" | "Dati Senato" | "Openpolis" | "NewsData.io" | "Event Registry"
+  sourceUrl    String
+  category     String          // "Floor Vote" | "Committee Meeting" | "Political Statement" | "Corporate Regulation" | "Legislative Act"
+  impactLevel  String          // "High" | "Medium" | "Low"
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  // Relationships
+  entities     EventEntities[]
+  tags         Tag[]
+
+  @@index([date])
+  @@index([sourceType])
+  @@index([impactLevel])
+}
+
+model Entity {
+  id        String          @id @default(uuid())
+  name      String          @unique
+  party     String          // "FdI" | "PD" | "M5S" | "Lega" | "FI" | "Other"
+  role      String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  // Relationships
+  events    EventEntities[]
+
+  @@index([party])
+}
+
+// Explicit many-to-many join table mapping events to entities/politicians
+model EventEntities {
+  eventId  String
+  entityId String
+  event    Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  entity   Entity @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, entityId])
+  @@index([eventId])
+  @@index([entityId])
+}
+
+model Tag {
+  id        String   @id @default(uuid())
+  name      String
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([name, eventId])
+  @@index([name])
+}
