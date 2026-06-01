@@ -37,6 +37,23 @@ function transformCameraPayload(rdfItem) {
   };
 }
 
+// 2. Data Transformation: Normalize NewsData.io API response
+function transformNewsDataPayload(article) {
+  return {
+    title: article.title || "Untitled Article",
+    description: article.description || "",
+    content: article.content || article.description || "",
+    sourceType: "News",
+    sourceName: "NewsData.io",
+    sourceUrl: article.link || "",
+    category: "Political Statement",
+    impactLevel: computeImpactLevel(article.title || "", (article.description || "") + " " + (article.content || "")),
+    date: article.pubDate ? new Date(article.pubDate) : new Date(),
+    entities: [],
+    tags: article.keywords || ["News", "Politica"]
+  };
+}
+
 // Core Upsert Function: Prevents duplicates and maintains relational associations
 async function upsertPoliticalEvent(normalizedEvent) {
   try {
@@ -115,6 +132,21 @@ async function pruneOldRecords() {
 async function executeIngestionPipeline() {
   console.log("[Worker] Launching ingestion pipeline fetches...");
   try {
+    // 1. Fetch live political news from NewsData.io
+    const apiKey = process.env.NEWSDATA_API_KEY;
+    if (apiKey && !apiKey.includes("[YOUR_")) {
+      console.log("[Worker] Fetching live Italian political news from NewsData.io...");
+      const response = await axios.get(`https://newsdata.io/api/1/news?apikey=${apiKey}&country=it&category=politics`);
+      if (response.data && response.data.results) {
+        console.log(`[Worker] Fetched ${response.data.results.length} live articles from NewsData.io`);
+        for (const article of response.data.results) {
+          const normalized = transformNewsDataPayload(article);
+          await upsertPoliticalEvent(normalized);
+        }
+      }
+    }
+
+    // 2. Fetch mock Chamber of Deputies floor votes
     const mockRdfResponse = [
       {
         titolo: "Voto Camera: Disegno di Legge Tariffario Smart Grid",
