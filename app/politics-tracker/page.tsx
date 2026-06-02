@@ -413,25 +413,25 @@ export default function ItalianTrackerPage() {
           </div>
 
           {/* COLUMN 2 & 3: LIVE STREAM TIMELINE (2/4) */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex justify-between items-center px-2">
+          <div className="lg:col-span-2 flex flex-col h-[680px] gap-4">
+            <div className="flex justify-between items-center px-2 shrink-0">
               <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
                 <Activity className="w-4.5 h-4.5 text-fuchsia-400 animate-pulse" /> Rolling Policy Stream ({events.length})
               </h3>
-              <span className="text-[10px] font-mono text-slate-500">Ordered: Latest First</span>
+              <span className="text-[10px] font-mono text-slate-505">Ordered: Latest First</span>
             </div>
 
             {loading ? (
-              <div className="bg-slate-900/10 border border-slate-900 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-3">
+              <div className="bg-slate-900/10 border border-slate-900 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-3 flex-1">
                 <Radio className="w-8 h-8 text-fuchsia-400 animate-spin" />
                 <span className="text-xs text-slate-400">Syncing Rome legislative feeds...</span>
               </div>
             ) : events.length === 0 ? (
-              <div className="bg-slate-900/10 border border-dashed border-slate-900 rounded-3xl p-12 text-center text-slate-500 italic text-xs">
+              <div className="bg-slate-900/10 border border-dashed border-slate-900 rounded-3xl p-12 text-center text-slate-500 italic text-xs flex-1 flex flex-col items-center justify-center">
                 No active events matching filter criteria in the current {days}-day archive.
               </div>
             ) : (
-              <div className="space-y-4 h-[620px] overflow-y-auto pr-1">
+              <div className="space-y-4 flex-1 overflow-y-auto pr-1">
                 {events.map((evt) => {
                   const isSelected = selectedEvent?.id === evt.id;
                   const eventDate = new Date(evt.date).toLocaleDateString("it-IT", {

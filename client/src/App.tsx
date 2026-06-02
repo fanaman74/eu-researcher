@@ -311,23 +311,23 @@ export default function App() {
           </div>
 
           {/* COLUMN 2 & 3: DYNAMIC TIMELINE STREAM */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex justify-between items-center px-2">
+          <div className="lg:col-span-2 flex flex-col h-[680px] gap-4">
+            <div className="flex justify-between items-center px-2 shrink-0">
               <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
                 <Activity className="w-4.5 h-4.5 text-fuchsia-400 animate-pulse" /> Rolling Policy Stream ({events.length})
               </h3>
             </div>
 
             {loading ? (
-              <div className="bg-slate-900/10 border border-slate-900 rounded-3xl p-12 text-center text-xs text-slate-405">
+              <div className="bg-slate-900/10 border border-slate-900 rounded-3xl p-12 text-center text-xs text-slate-405 flex-1 flex flex-col items-center justify-center">
                 Syncing PostgreSQL database...
               </div>
             ) : events.length === 0 ? (
-              <div className="bg-slate-900/10 border border-dashed border-slate-900 rounded-3xl p-12 text-center text-slate-500 italic text-xs">
+              <div className="bg-slate-900/10 border border-dashed border-slate-900 rounded-3xl p-12 text-center text-slate-500 italic text-xs flex-1 flex flex-col items-center justify-center">
                 No active events matching filter criteria in the current archive.
               </div>
             ) : (
-              <div className="space-y-4 max-h-[620px] overflow-y-auto pr-1">
+              <div className="space-y-4 flex-1 overflow-y-auto pr-1">
                 {events.map((evt) => {
                   const isSelected = selectedEvent?.id === evt.id;
                   return (
@@ -374,15 +374,15 @@ export default function App() {
           </div>
 
           {/* COLUMN 4: EXTRACTED AI DETAIL DRAWER */}
-          <div className="bg-slate-900/20 border border-slate-900 rounded-3xl p-6 md:p-8 space-y-6 backdrop-blur-md h-fit">
-            <div>
+          <div className="bg-slate-900/20 border border-slate-900 rounded-3xl p-6 md:p-8 backdrop-blur-md h-[680px] flex flex-col justify-between gap-4">
+            <div className="shrink-0 border-b border-slate-900 pb-3">
               <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
                 <Sparkles className="w-4 h-4 text-fuchsia-400 animate-pulse" /> Relational Deep Watch
               </h3>
             </div>
 
             {selectedEvent ? (
-              <div className="space-y-6">
+              <div className="space-y-6 overflow-y-auto pr-1 flex-1">
                 <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-xl">
                   <span className="text-[8px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">{selectedEvent.category}</span>
                   <h4 className="text-xs font-bold text-slate-200 mt-2">{selectedEvent.title}</h4>
@@ -414,7 +414,7 @@ export default function App() {
                         <div key={idx} className="flex justify-between items-center bg-slate-950/60 p-2.5 rounded-lg border border-slate-900">
                           <div>
                             <div className="text-xs font-bold text-slate-200">{ent.entity.name}</div>
-                            <div className="text-[9px] text-slate-505">{ent.entity.role}</div>
+                            <div className="text-[9px] text-slate-555">{ent.entity.role}</div>
                           </div>
                           <span className="text-[9px] font-mono font-extrabold uppercase px-2 py-0.5 rounded border bg-slate-900 border-slate-800 text-fuchsia-400">{ent.entity.party}</span>
                         </div>
@@ -435,7 +435,7 @@ export default function App() {
                 </div>
               </div>
             ) : (
-              <div className="p-8 bg-slate-950/30 border border-dashed border-slate-900 rounded-xl text-center text-xs text-slate-500 italic">
+              <div className="p-8 bg-slate-955/30 border border-dashed border-slate-900 rounded-xl text-center text-xs text-slate-500 italic flex-1 flex flex-col items-center justify-center">
                 Select any timeline event to view deep legislative analytics and lobbying risks.
               </div>
             )}

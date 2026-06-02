@@ -67,3 +67,32 @@
   border-color: rgba(20, 184, 166, 0.6); /* teal-500 */
   box-shadow: 0 4px 20px rgba(20, 184, 166, 0.15);
 }
+
+/* Premium Dark & Fuchsia Global Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3); /* dark slate track */
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(217, 70, 239, 0.2); /* semi-transparent fuchsia thumb */
+  border-radius: 9999px;
+  border: 1px solid rgba(217, 70, 239, 0.05);
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(217, 70, 239, 0.5); /* bright fuchsia on hover */
+}
+
+/* Firefox scrollbar compatibility */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 70, 239, 0.2) rgba(15, 23, 42, 0.3);
+}
+
