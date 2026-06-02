@@ -340,7 +340,7 @@ export default function ItalianTrackerPage() {
                 max="60"
                 value={days}
                 onChange={(e) => setDays(parseInt(e.target.value, 10))}
-                className="w-full h-1 bg-slate-905 rounded-lg appearance-none cursor-pointer accent-fuchsia-500"
+                className="w-full h-1 bg-fuchsia-500/20 hover:bg-fuchsia-500/30 rounded-lg appearance-none cursor-pointer accent-fuchsia-500 transition-colors"
               />
               <div className="flex justify-between text-[8px] text-slate-500 font-mono">
                 <span>7 days</span>
