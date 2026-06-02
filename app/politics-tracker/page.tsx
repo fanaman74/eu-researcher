@@ -42,6 +42,13 @@ export default function ItalianTrackerPage() {
   const [simulationLoading, setSimulationLoading] = useState(false);
   const [simulationSuccess, setSimulationSuccess] = useState(false);
 
+  // OpenRouter Analysis Modal States
+  const [analysisModalOpen, setAnalysisModalOpen] = useState(false);
+  const [analyzingEvent, setAnalyzingEvent] = useState<PoliticalEvent | null>(null);
+  const [analysisText, setAnalysisText] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+
   const fetchEvents = async () => {
     setLoading(true);
     try {
@@ -86,6 +93,61 @@ export default function ItalianTrackerPage() {
     setCategory("");
     setParty("");
     setDays(60);
+  };
+
+  const handleAnalyzeEvent = async (evt: PoliticalEvent) => {
+    setAnalyzingEvent(evt);
+    setAnalysisModalOpen(true);
+    setAnalyzing(true);
+    setAnalysisText("");
+    setCopySuccess(false);
+
+    try {
+      const res = await fetch("/api/politics-tracker/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: evt.title,
+          description: evt.description,
+          content: evt.content,
+          sourceName: evt.sourceName,
+          category: evt.category,
+          impactLevel: evt.impactLevel,
+          entities: evt.entities,
+          tags: evt.tags
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to generate public affairs analysis.");
+      }
+
+      const data = await res.json();
+      setAnalysisText(data.analysis);
+    } catch (err: any) {
+      setAnalysisText(`⚠️ Failed to draft political report: ${err.message || "An error occurred."}`);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const copyAnalysisToClipboard = () => {
+    if (!analysisText) return;
+    navigator.clipboard.writeText(analysisText);
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 2000);
+  };
+
+  const downloadAnalysis = () => {
+    if (!analyzingEvent || !analysisText) return;
+    const blob = new Blob([analysisText], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${analyzingEvent.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_political_analysis.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleSimulateIngestion = async (preset: string) => {
@@ -379,14 +441,20 @@ export default function ItalianTrackerPage() {
                   });
 
                   return (
-                    <button
+                    <div
                       key={evt.id}
                       onClick={() => setSelectedEvent(evt)}
-                      className={`w-full text-left p-5 bg-slate-950 border rounded-2xl space-y-3 transition-all hover:border-slate-800 cursor-pointer duration-200 ${isSelected ? "border-fuchsia-500/50 bg-slate-900/40 shadow-[0_0_15px_rgba(217,70,239,0.06)] scale-[1.01]" : "border-slate-900 hover:border-slate-850"}`}
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          setSelectedEvent(evt);
+                        }
+                      }}
+                      className={`w-full text-left p-5 bg-slate-950 border rounded-2xl space-y-3 transition-all hover:border-slate-800 cursor-pointer duration-200 focus:outline-none focus:border-fuchsia-500/50 ${isSelected ? "border-fuchsia-500/50 bg-slate-900/40 shadow-[0_0_15px_rgba(217,70,239,0.06)] scale-[1.01]" : "border-slate-900 hover:border-slate-855"}`}
                     >
                       <div className="flex justify-between items-start gap-4">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">
+                          <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-405">
                             {evt.sourceName}
                           </span>
                           <span className="text-[9px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-855 text-slate-350">
@@ -406,17 +474,28 @@ export default function ItalianTrackerPage() {
                         {evt.description}
                       </p>
 
-                      <div className="flex justify-between items-center text-[10px] text-slate-500 font-mono pt-1">
+                      <div className="flex justify-between items-center text-[10px] text-slate-505 font-mono pt-1">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5 text-slate-600" /> {eventDate}
                         </span>
-                        <span className="flex gap-1">
-                          {evt.tags.slice(0, 2).map((t, idx) => (
-                            <span key={idx} className="text-[9px] bg-slate-900 px-1.5 py-0.5 rounded text-slate-500 border border-slate-855">#{t}</span>
-                          ))}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="flex gap-1">
+                            {evt.tags.slice(0, 2).map((t, idx) => (
+                              <span key={idx} className="text-[9px] bg-slate-900 px-1.5 py-0.5 rounded text-slate-500 border border-slate-855">#{t}</span>
+                            ))}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAnalyzeEvent(evt);
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-fuchsia-500/10 border border-fuchsia-500/30 text-fuchsia-400 hover:bg-fuchsia-500 hover:text-slate-950 transition-all font-bold text-[9px] cursor-pointer"
+                          >
+                            <Sparkles className="w-2.5 h-2.5" /> Analyze
+                          </button>
+                        </div>
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
@@ -514,6 +593,85 @@ export default function ItalianTrackerPage() {
         </div>
 
       </div>
+
+      {analysisModalOpen && analyzingEvent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-fade-in">
+          <div className="bg-slate-900/80 border border-slate-855 rounded-3xl p-6 md:p-8 max-w-4xl w-full max-h-[90vh] flex flex-col justify-between shadow-[0_0_50px_rgba(217,70,239,0.08)] glass-card relative z-50">
+            
+            {/* Header */}
+            <div className="border-b border-slate-800 pb-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center text-fuchsia-400">
+                  <Sparkles className="w-5 h-5 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                    In-Depth Legislative Analysis <span className="text-[9px] font-mono tracking-widest bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-400 px-2 py-0.5 rounded-md uppercase font-bold">OpenRouter AI</span>
+                  </h3>
+                  <p className="text-xs text-slate-450 truncate max-w-lg mt-0.5">Topic: {analyzingEvent.title}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setAnalysisModalOpen(false)}
+                className="p-2 rounded-lg bg-slate-950 border border-slate-800 hover:border-fuchsia-500/50 text-slate-400 hover:text-slate-100 transition-all cursor-pointer text-xs"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Scrollable Body Content */}
+            <div className="flex-1 overflow-y-auto my-6 pr-2 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-slate-950">
+              {analyzing ? (
+                <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-xl border border-slate-800 bg-slate-950 flex items-center justify-center text-fuchsia-400 animate-spin">
+                      <Radio className="w-6 h-6 animate-pulse" />
+                    </div>
+                    <span className="absolute inset-0 w-12 h-12 rounded-xl border-t border-fuchsia-400 animate-ping opacity-75" />
+                  </div>
+                  <div className="text-center space-y-1.5">
+                    <p className="text-sm font-semibold text-slate-300">
+                      Drafting In-Depth Strategic Report...
+                    </p>
+                    <p className="text-xs text-slate-500 max-w-md">
+                      Interfacing with DeepSeek via OpenRouter to analyze strategic parliamentary coalition impacts, extract political party motives, and formulate corporate GR risk advisory recommendations.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm text-slate-300 leading-relaxed font-sans whitespace-pre-line space-y-4 pr-1">
+                  {analysisText}
+                </div>
+              )}
+            </div>
+
+            {/* Footer Controls */}
+            <div className="border-t border-slate-800 pt-4 flex gap-3 justify-end flex-wrap">
+              <button
+                onClick={copyAnalysisToClipboard}
+                disabled={analyzing || !analysisText}
+                className="px-5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-fuchsia-500/50 text-slate-300 hover:text-slate-100 text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+              >
+                {copySuccess ? "✓ Copied!" : "Copy Report"}
+              </button>
+              <button
+                onClick={downloadAnalysis}
+                disabled={analyzing || !analysisText}
+                className="px-5 py-2.5 rounded-xl bg-slate-955 border border-slate-800 hover:border-fuchsia-500/50 text-slate-300 hover:text-slate-100 text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+              >
+                Save Report (.txt)
+              </button>
+              <button
+                onClick={() => setAnalysisModalOpen(false)}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-500 hover:from-fuchsia-400 hover:to-violet-400 text-slate-950 text-xs font-black transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-lg shadow-fuchsia-500/10"
+              >
+                Close Panel
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }
