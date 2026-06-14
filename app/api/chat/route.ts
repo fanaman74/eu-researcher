@@ -39,6 +39,24 @@ const searchTool: OpenAI.Chat.Completions.ChatCompletionTool = {
   }
 };
 
+/**
+ * Sanitize a user-supplied keyword for safe SPARQL string interpolation.
+ * Escapes characters that could break out of a SPARQL string literal and
+ * rejects any keyword containing control characters or query syntax markers.
+ */
+function sanitizeForSparql(raw: string): string {
+  const s = raw
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/\r/g, "")
+    .replace(/\n/g, "");
+  // Whitelist: only alphanumerics, spaces, and safe punctuation
+  if (!/^[a-zA-Z0-9 _\-.,'/]+$/.test(s)) {
+    return s.replace(/[^a-zA-Z0-9 _\-.,']/g, "");
+  }
+  return s;
+}
+
 function getSectorFromCelex(celex: string): string {
   const first = celex.charAt(0);
   switch (first) {
@@ -153,12 +171,13 @@ async function callEURpxSPARQL(q: string, namespace: string = "all", top_k: numb
 
   try {
     // 1. Try high-precision AND search first
-    const andFilters = keywords.map(kw => `CONTAINS(LCASE(?title), "${kw}")`).join(" && ");
+    const safeKeywords = keywords.map(sanitizeForSparql);
+    const andFilters = safeKeywords.map(kw => `CONTAINS(LCASE(?title), "${kw}")`).join(" && ");
     let hits = await executeQuery(andFilters, sectorFilter, harassmentCourtFilter, top_k);
     
     // 2. If no hits, fallback to OR search
-    if (hits.length === 0 && keywords.length > 1) {
-      const orFilters = keywords.map(kw => `CONTAINS(LCASE(?title), "${kw}")`).join(" || ");
+    if (hits.length === 0 && safeKeywords.length > 1) {
+      const orFilters = safeKeywords.map(kw => `CONTAINS(LCASE(?title), "${kw}")`).join(" || ");
       hits = await executeQuery(orFilters, sectorFilter, harassmentCourtFilter, top_k);
     }
     
@@ -196,7 +215,7 @@ export async function POST(req: Request) {
 
     let assistantMessage = response.choices[0].message;
 
-    // Step 2: Handle function calls if Gemini requests it
+    // Step 2: Handle function calls if the LLM requests it
     if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
       const assistantPlainMessage = {
         role: "assistant" as const,

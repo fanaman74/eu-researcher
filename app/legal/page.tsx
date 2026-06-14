@@ -21,18 +21,8 @@ import {
   ChevronRight
 } from "lucide-react";
 
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-  searchLogs?: {
-    q: string;
-    namespace: string;
-    top_k: number;
-    success: boolean;
-    resultsCount: number;
-    results: any;
-  }[];
-}
+import { type Message } from "@/lib/types";
+
 const FALLBACK_LATEST_DOCS = [
   {
     celex: "62023CJ0343",

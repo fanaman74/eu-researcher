@@ -14,18 +14,7 @@ import {
   ExternalLink
 } from "lucide-react";
 
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-  searchLogs?: {
-    q: string;
-    namespace: string;
-    top_k: number;
-    success: boolean;
-    resultsCount: number;
-    results: any;
-  }[];
-}
+import { type Message } from "@/lib/types";
 
 export default function ResearchPage() {
   const [messages, setMessages] = useState<Message[]>([

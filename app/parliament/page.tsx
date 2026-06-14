@@ -61,7 +61,6 @@ export default function ParliamentWatcherPage() {
 
   useEffect(() => {
     fetchQuestions();
-    fetchVoteData(activeVoteId);
   }, []);
 
   useEffect(() => {

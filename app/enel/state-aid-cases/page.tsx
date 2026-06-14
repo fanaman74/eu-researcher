@@ -6,7 +6,6 @@ import {
   ArrowLeft, 
   Scale, 
   Search, 
-  Download, 
   ExternalLink,
   TrendingUp,
   FileText
@@ -97,9 +96,7 @@ export default function StateAidCasesPage() {
               className="w-full pl-11 pr-4 py-2.5 bg-slate-950/60 border border-slate-900 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500/40"
             />
           </div>
-          <button className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-950 hover:bg-slate-900 text-xs font-bold text-slate-300 hover:text-white transition-all cursor-pointer">
-            <Download className="w-4 h-4" /> Export Registry
-          </button>
+
         </div>
 
         {/* Sector Bubble Filters */}

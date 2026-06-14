@@ -63,7 +63,6 @@ export default function HaveYourSayPage() {
 
   useEffect(() => {
     fetchConsultations();
-    fetchActiveConsultation(activePid);
   }, []);
 
   useEffect(() => {

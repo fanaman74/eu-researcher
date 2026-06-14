@@ -23,7 +23,7 @@ import {
   Check,
   RotateCcw
 } from "lucide-react";
-import { PoliticalEvent } from "../api/politics-tracker/route";
+import { type PoliticalEvent } from "@/lib/types";
 
 export default function ItalianTrackerPage() {
   const [events, setEvents] = useState<PoliticalEvent[]>([]);

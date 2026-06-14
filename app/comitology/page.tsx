@@ -55,7 +55,6 @@ export default function ComitologyPage() {
 
   useEffect(() => {
     fetchVotes();
-    fetchActiveVote(activeVoteId);
   }, []);
 
   useEffect(() => {

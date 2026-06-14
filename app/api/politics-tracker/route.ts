@@ -1,27 +1,14 @@
 import { NextResponse } from "next/server";
+import { type PoliticalEvent } from "@/lib/types";
+
+// Re-export for any remaining legacy imports — prefer importing from @/lib/types directly
+export type { PoliticalEvent } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export interface PoliticalEvent {
-  id: string;
-  title: string;
-  description: string;
-  content: string; 
-  date: string; // ISO 8601 string
-  sourceType: "Official" | "News";
-  sourceName: "Dati Camera" | "Dati Senato" | "Openpolis" | "NewsData.io" | "Event Registry";
-  sourceUrl: string;
-  category: "Legislative Act" | "Committee Meeting" | "Floor Vote" | "Political Statement" | "Corporate Regulation";
-  impactLevel: "High" | "Medium" | "Low";
-  entities: {
-    name: string;
-    role: string;
-    party: "FdI" | "PD" | "M5S" | "Lega" | "FI" | "Other";
-  }[];
-  tags: string[];
-}
-
 // Seed the mock database with events spanning the last 60 days
+// TODO: Migrate to Prisma/PostgreSQL persistence — this in-memory array resets on
+// every serverless cold start and is not shared across function instances.
 let POLITICAL_EVENTS_DB: PoliticalEvent[] = [
   {
     id: "it-evt-001",

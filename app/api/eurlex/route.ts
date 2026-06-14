@@ -2,6 +2,21 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Sanitize a user-supplied keyword for safe SPARQL string interpolation.
+ */
+function sanitizeForSparql(raw: string): string {
+  const s = raw
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/\r/g, "")
+    .replace(/\n/g, "");
+  if (!/^[a-zA-Z0-9 _\-.,'/]+$/.test(s)) {
+    return s.replace(/[^a-zA-Z0-9 _\-.,']/g, "");
+  }
+  return s;
+}
+
 function getSectorFromCelex(celex: string): string {
   const first = celex.charAt(0);
   switch (first) {
@@ -80,13 +95,15 @@ export async function GET(req: Request) {
       keywords.push(q.toLowerCase());
     }
 
+    const safeKeywords = keywords.map(sanitizeForSparql);
+
     // 1. Try high-precision AND search first
-    const andFilters = keywords.map(kw => `CONTAINS(LCASE(?title), "${kw}")`).join(" && ");
+    const andFilters = safeKeywords.map(kw => `CONTAINS(LCASE(?title), "${kw}")`).join(" && ");
     let hits = await executeQuery(andFilters, top_k);
     
     // 2. If no hits, fallback to OR search
-    if (hits.length === 0 && keywords.length > 1) {
-      const orFilters = keywords.map(kw => `CONTAINS(LCASE(?title), "${kw}")`).join(" || ");
+    if (hits.length === 0 && safeKeywords.length > 1) {
+      const orFilters = safeKeywords.map(kw => `CONTAINS(LCASE(?title), "${kw}")`).join(" || ");
       hits = await executeQuery(orFilters, top_k);
     }
 
