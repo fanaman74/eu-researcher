@@ -21,9 +21,11 @@ import {
   PlusCircle,
   Database,
   Check,
-  RotateCcw
+  RotateCcw,
+  SlidersHorizontal
 } from "lucide-react";
 import { type PoliticalEvent } from "@/lib/types";
+import { generateAnalysisPptx } from "@/lib/generatePptx";
 
 export default function ItalianTrackerPage() {
   const [events, setEvents] = useState<PoliticalEvent[]>([]);
@@ -48,6 +50,7 @@ export default function ItalianTrackerPage() {
   const [analysisText, setAnalysisText] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [pptxGenerating, setPptxGenerating] = useState(false);
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -148,6 +151,20 @@ export default function ItalianTrackerPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadAsPptx = async () => {
+    if (!analyzingEvent || !analysisText) return;
+    setPptxGenerating(true);
+    try {
+      await generateAnalysisPptx(analyzingEvent, analysisText);
+    } catch (err: any) {
+      console.error("PPTX generation failed:", err);
+      alert(`Failed to generate presentation: ${err.message || "Unknown error"}`);
+    } finally {
+      setPptxGenerating(false);
+    }
   };
 
   const handleSimulateIngestion = async (preset: string) => {
@@ -660,6 +677,21 @@ export default function ItalianTrackerPage() {
                 className="px-5 py-2.5 rounded-xl bg-slate-955 border border-slate-800 hover:border-fuchsia-500/50 text-slate-300 hover:text-slate-100 text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
               >
                 Save Report (.txt)
+              </button>
+              <button
+                onClick={downloadAsPptx}
+                disabled={analyzing || !analysisText || pptxGenerating}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer shadow-lg shadow-fuchsia-500/10"
+              >
+                {pptxGenerating ? (
+                  <>
+                    <Activity className="w-3.5 h-3.5 animate-spin" /> Generating...
+                  </>
+                ) : (
+                  <>
+                    <SlidersHorizontal className="w-3.5 h-3.5" /> Export as PPTX
+                  </>
+                )}
               </button>
               <button
                 onClick={() => setAnalysisModalOpen(false)}
