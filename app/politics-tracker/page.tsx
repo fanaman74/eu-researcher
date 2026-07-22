@@ -140,12 +140,12 @@ export default function ItalianTrackerPage() {
         })
       });
 
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error("Failed to generate public affairs analysis.");
+        throw new Error(data.error || "Failed to generate public affairs analysis.");
       }
 
-      const data = await res.json();
-      setAnalysisText(data.analysis);
+      setAnalysisText(data.analysis || "No report generated.");
     } catch (err: any) {
       setAnalysisText(`⚠️ Failed to draft political report: ${err.message || "An error occurred."}`);
     } finally {
