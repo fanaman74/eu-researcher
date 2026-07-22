@@ -206,12 +206,8 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative selection:bg-teal-500/30 selection:text-teal-200">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative selection:bg-blue-500/30 selection:text-blue-200">
       
-      {/* Animated Background Mesh Spheres */}
-      <div className="absolute top-1/4 left-10 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px] animate-float-1 pointer-events-none animate-float-1" />
-      <div className="absolute top-2/3 right-10 w-96 h-96 bg-cyan-500/10 rounded-full blur-[120px] animate-float-2 pointer-events-none animate-float-2" />
-
       {/* 1. FULL-PAGE HERO SECTION */}
       <section className="min-h-screen flex flex-col justify-center items-center text-center p-8 relative overflow-hidden">
         {/* Subtle grid pattern inside hero */}

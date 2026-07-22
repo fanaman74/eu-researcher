@@ -5,94 +5,59 @@
     scroll-behavior: smooth;
   }
   body {
-    background-color: #020617; /* slate-955 */
-    color: #f8fafc; /* slate-50 */
-    font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: #0b0f19; /* Deep Charcoal Slate */
+    color: #f3f4f6; /* Off-White Text */
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
 
-@keyframes pulseGlow {
-  0%, 100% {
-    opacity: 0.6;
-    box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
-  }
-  50% {
-    opacity: 1;
-    box-shadow: 0 0 24px rgba(16, 185, 129, 0.8);
-  }
+/* Subdued Editorial Container Utility */
+.editorial-card {
+  background-color: rgba(19, 26, 39, 0.7);
+  border: 1px solid #263346;
+  border-radius: 0.5rem; /* Standard 8px radius */
+  transition: border-color 0.15s ease-in-out, background-color 0.15s ease-in-out;
 }
 
-@keyframes floatBg {
-  0%, 100% {
-    transform: translateY(0px) scale(1);
-  }
-  50% {
-    transform: translateY(-20px) scale(1.05);
-  }
+.editorial-card:hover {
+  background-color: rgba(21, 29, 42, 0.9);
+  border-color: #3b82f6; /* Muted corporate blue accent */
 }
 
-@keyframes floatReverse {
-  0%, 100% {
-    transform: translateY(0px) scale(1.05);
-  }
-  50% {
-    transform: translateY(20px) scale(1);
-  }
-}
-
-.pulse-emerald {
-  animation: pulseGlow 2s infinite ease-in-out;
-}
-
-.animate-float-1 {
-  animation: floatBg 8s infinite ease-in-out;
-}
-
-.animate-float-2 {
-  animation: floatReverse 10s infinite ease-in-out;
-}
-
-/* Custom glassmorphism variables */
+/* Legacy utility fallbacks for clean dark styling */
 .glass-card {
-  background: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(51, 65, 85, 0.5);
+  background-color: rgba(19, 26, 39, 0.8);
+  border: 1px solid #263346;
+  border-radius: 0.5rem;
 }
 
 .glass-card-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: border-color 0.15s ease-in-out;
 }
 .glass-card-hover:hover {
-  background: rgba(15, 23, 42, 0.65);
-  border-color: rgba(20, 184, 166, 0.6); /* teal-500 */
-  box-shadow: 0 4px 20px rgba(20, 184, 166, 0.15);
+  border-color: #3b82f6;
 }
 
-/* Premium Dark & Fuchsia Global Scrollbar Customization */
+/* Subtle Neutral Scrollbar Styling */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.3); /* dark slate track */
-  border-radius: 9999px;
+  background: #0b0f19;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(217, 70, 239, 0.2); /* semi-transparent fuchsia thumb */
-  border-radius: 9999px;
-  border: 1px solid rgba(217, 70, 239, 0.05);
-  transition: background-color 0.2s ease;
+  background: #263346;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(217, 70, 239, 0.5); /* bright fuchsia on hover */
+  background: #3b82f6;
 }
 
-/* Firefox scrollbar compatibility */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(217, 70, 239, 0.2) rgba(15, 23, 42, 0.3);
+  scrollbar-color: #263346 #0b0f19;
 }
-

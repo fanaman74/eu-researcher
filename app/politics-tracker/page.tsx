@@ -13,11 +13,9 @@ import {
   AlertTriangle,
   Zap,
   Activity,
-  Layers,
   Radio,
   ExternalLink,
   ChevronRight,
-  Compass,
   PlusCircle,
   Database,
   Check,
@@ -44,7 +42,7 @@ export default function ItalianTrackerPage() {
   const [simulationLoading, setSimulationLoading] = useState(false);
   const [simulationSuccess, setSimulationSuccess] = useState(false);
 
-  // OpenRouter Analysis Modal States
+  // Analysis Modal States
   const [analysisModalOpen, setAnalysisModalOpen] = useState(false);
   const [analyzingEvent, setAnalyzingEvent] = useState<PoliticalEvent | null>(null);
   const [analysisText, setAnalysisText] = useState("");
@@ -52,7 +50,7 @@ export default function ItalianTrackerPage() {
   const [copySuccess, setCopySuccess] = useState(false);
   const [pptxGenerating, setPptxGenerating] = useState(false);
 
-  // Ingestion & Refresh States
+  // Refresh & Sync States
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
 
@@ -85,9 +83,7 @@ export default function ItalianTrackerPage() {
       if (res.ok) {
         const data = await res.json();
         setEvents(data.events || []);
-        // Autoselect first event if none selected
         if (data.events?.length > 0) {
-          // If the previously selected event is still in the new list, keep it selected. Otherwise select the first.
           const stillExists = data.events.find((e: PoliticalEvent) => e.id === selectedEvent?.id);
           if (!stillExists) {
             setSelectedEvent(data.events[0]);
@@ -199,28 +195,28 @@ export default function ItalianTrackerPage() {
         content: "A bipartisan majority in the Chamber's Tenth Committee voted to fast-track self-generation approvals for industrial consumers in Piedmont and Veneto. Spurred by lobbying representing domestic manufacturing interests, the amendment limits Terna's ability to defer connection licenses for distributed battery facilities. This secures key advantages for grid-edge utilities. The vote was championed by Lega and FI, with PD voting in support after environmental audits were added.",
         sourceType: "Official",
         sourceName: "Dati Camera",
-        sourceUrl: "https://dati.camera.it/ocd/votazione.rdf/v20260601-grid-edge",
         category: "Floor Vote",
         impactLevel: "High",
         entities: [
-          { name: "Alberto Gusmeroli", role: "Committee Chairman", party: "Lega" }
+          { name: "Gilberto Pichetto Fratin", party: "FI", role: "Minister of Environment" },
+          { name: "Matteo Salvini", party: "Lega", role: "Minister of Infrastructure" }
         ],
-        tags: ["Distributed Grid", "Microgrids", "Chamber", "Self-Generation"]
+        tags: ["Microgrids", "Chamber", "Self-Sufficiency", "Licensing"]
       };
-    } else {
+    } else if (preset === "news-data") {
       payload = {
-        title: "NewsData.io: Meloni Administration Announces Strategic Tariff Caps Overhaul",
-        description: "Government decrees emergency cap overrides to secure industrial energy pricing corridors.",
-        content: "As reported by NewsData.io, Prime Minister Giorgia Meloni has introduced an emergency decree-law addressing retail energy tariff surges. The measure bypasses regional consultative grids to set standard grid-fee deductions for manufacturing parks. This avoids DG COMP state-aid scrutiny by labeling the funds as regional infrastructure compensation assets.",
+        title: "NewsData.io: Cabinet Approves Emergency Decree on Industrial Tariff Cap Extensions",
+        description: "Council of Ministers signs off on €1.8B buffer package extending energy tax mitigation measures through Q4 2026.",
+        content: "During an emergency late-night session in Palazzo Chigi, the Council of Ministers authorized a targeted emergency decree shielding energy-intensive manufacturing clusters. The measure temporarily freezes grid capacity surcharges for electro-chemical and manufacturing facilities. Initial analysis shows strong alignment with Enel's industrial retail division recommendations, although parliamentary conversion debates are expected to trigger amendments from M5S regarding financing sources.",
         sourceType: "News",
         sourceName: "NewsData.io",
-        sourceUrl: "https://newsdata.io/articles/meloni-decree-tariff-infrastructure",
-        category: "Political Statement",
+        category: "Corporate Regulation",
         impactLevel: "High",
         entities: [
-          { name: "Giorgia Meloni", role: "Prime Minister", party: "FdI" }
+          { name: "Giorgia Meloni", party: "FdI", role: "Prime Minister" },
+          { name: "Giancarlo Giorgetti", party: "Lega", role: "Minister of Economy" }
         ],
-        tags: ["Tariff Cap", "Chamber", "State Aid", "Decarbonization"]
+        tags: ["Tariff Cap", "Cabinet Decree", "State Aid", "Tax Relief"]
       };
     }
 
@@ -244,171 +240,163 @@ export default function ItalianTrackerPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative selection:bg-fuchsia-500/30 selection:text-fuchsia-200">
-      {/* Mesh glow effects */}
-      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-fuchsia-500/5 rounded-full blur-[160px] pointer-events-none" />
-      <div className="absolute top-2/3 right-1/4 w-[500px] h-[500px] bg-violet-500/5 rounded-full blur-[160px] pointer-events-none" />
-
-      {/* Main dashboard content container */}
-      <div className="max-w-7xl mx-auto w-full p-6 md:p-12 space-y-8 z-10">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative selection:bg-blue-500/30 selection:text-blue-200">
+      
+      {/* Main Container */}
+      <div className="max-w-7xl mx-auto w-full p-6 md:p-12 space-y-8">
         
         {/* Navigation Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-900 pb-6 gap-4 border-t-4 border-t-fuchsia-500 pt-4 rounded-t-xl">
+        <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-6 gap-4">
           <div className="flex items-center gap-4">
             <Link 
               href="/"
-              className="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-slate-200 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl transition-all"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-slate-200 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-md transition-colors"
             >
-              ← Portal Gateway
+              ← Gateway
             </Link>
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-fuchsia-500 to-violet-500 flex items-center justify-center text-slate-950 shadow-lg shadow-fuchsia-500/10">
-              <Radio className="w-6 h-6 stroke-[2.5]" />
+            <div className="w-10 h-10 rounded-md bg-slate-900 border border-slate-800 flex items-center justify-center text-blue-400 shrink-0">
+              <Radio className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-black font-sans uppercase tracking-tight text-white">Italian Political Watch</h1>
-                <span className="text-[9px] font-mono tracking-widest bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-400 px-2 py-0.5 rounded-md uppercase font-bold">Roma Tracker</span>
+                <h1 className="text-xl font-bold tracking-tight text-white">Italian Political Watch</h1>
+                <span className="text-[10px] font-mono tracking-wider bg-blue-500/10 border border-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md font-semibold">
+                  Rome Archive
+                </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">National Legislative movements, official committee votes, and policy aggregations</p>
+              <p className="text-xs text-slate-400 mt-0.5">National legislative movements, official committee votes, and policy aggregations</p>
             </div>
           </div>
           
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-slate-900/60 border border-slate-800 px-3.5 py-2 rounded-xl">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
-              <span className="text-[10px] font-mono font-bold text-slate-300">Auto-Refresh: 2x/Day (00:00 & 12:00)</span>
+            <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-md">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-[11px] font-mono font-medium text-slate-300">Auto-Refresh: 2x/Day (00:00 & 12:00)</span>
             </div>
             <button
               onClick={handleSyncData}
               disabled={isSyncing}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-200 bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all px-3 py-2.5 rounded-xl cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-200 bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors px-3 py-1.5 rounded-md cursor-pointer disabled:opacity-50"
               title={lastRefreshed ? `Last refreshed: ${lastRefreshed.toLocaleTimeString()}` : "Trigger twice-daily data refresh"}
             >
-              <RotateCcw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin text-fuchsia-400" : ""}`} />
+              <RotateCcw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin text-blue-400" : ""}`} />
               <span>{isSyncing ? "Syncing..." : "Sync Live Data"}</span>
             </button>
             <button
               onClick={() => setIsSimulatorOpen(!isSimulatorOpen)}
-              className="inline-flex items-center gap-2 text-xs font-bold text-slate-950 bg-fuchsia-400 hover:bg-fuchsia-350 transition-all px-4 py-2.5 rounded-xl shadow-lg shadow-fuchsia-400/10 active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-100 bg-slate-800 border border-slate-700 hover:bg-slate-700 transition-colors px-3 py-1.5 rounded-md cursor-pointer"
             >
-              Simulation Deck <Sparkles className="w-4 h-4 text-slate-950" />
+              <span>Simulation Deck</span> <Sparkles className="w-3.5 h-3.5 text-blue-400" />
             </button>
           </div>
         </div>
 
         {/* Ingestion Simulator Drawer Panel */}
         {isSimulatorOpen && (
-          <div className="bg-slate-900/60 border border-fuchsia-500/20 rounded-2xl p-6 backdrop-blur-md space-y-4 animate-fadeIn">
+          <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 space-y-4">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-sm font-bold text-fuchsia-400 flex items-center gap-2">
-                <Database className="w-4 h-4" /> Live Ingestion Pipeline Simulator
+              <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                <Database className="w-4 h-4 text-blue-400" /> Ingestion Pipeline Simulator
               </h3>
               <button 
                 onClick={() => setIsSimulatorOpen(false)}
-                className="text-xs text-slate-400 hover:text-white font-bold cursor-pointer"
+                className="text-xs text-slate-400 hover:text-white font-semibold cursor-pointer"
               >
                 ✕ Close
               </button>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Inject custom political events directly into the rolling database to test timeline updates and real-time transition physics.
+              Inject custom political events directly into the rolling database to test timeline updates and filter state logic.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
               <button
                 onClick={() => handleSimulateIngestion("camera-vote")}
                 disabled={simulationLoading}
-                className="p-4 bg-slate-950 border border-slate-800 hover:border-fuchsia-500/40 rounded-xl text-left space-y-2 group transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                className="p-4 bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-md text-left space-y-2 group transition-colors cursor-pointer disabled:opacity-50"
               >
                 <div className="flex justify-between items-center">
-                  <span className="text-[9px] font-mono font-bold text-slate-400 uppercase">Preset: Chamber Committee</span>
-                  <PlusCircle className="w-4 h-4 text-fuchsia-400 group-hover:scale-110 transition-all" />
+                  <span className="text-[10px] font-mono font-semibold text-slate-400 uppercase">Preset: Chamber Committee</span>
+                  <PlusCircle className="w-4 h-4 text-blue-400" />
                 </div>
                 <h4 className="text-xs font-bold text-slate-200">Ingest Committee Vote (Renewables)</h4>
-                <p className="text-[10px] text-slate-500">Simulates legislative voting in Rome committee sessions.</p>
+                <p className="text-[11px] text-slate-400">Simulates legislative voting in Rome committee sessions.</p>
               </button>
               <button
                 onClick={() => handleSimulateIngestion("news-data")}
                 disabled={simulationLoading}
-                className="p-4 bg-slate-950 border border-slate-800 hover:border-fuchsia-500/40 rounded-xl text-left space-y-2 group transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                className="p-4 bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-md text-left space-y-2 group transition-colors cursor-pointer disabled:opacity-50"
               >
                 <div className="flex justify-between items-center">
-                  <span className="text-[9px] font-mono font-bold text-slate-400 uppercase">Preset: NewsData.io Aggregator</span>
-                  <PlusCircle className="w-4 h-4 text-fuchsia-400 group-hover:scale-110 transition-all" />
+                  <span className="text-[10px] font-mono font-semibold text-slate-400 uppercase">Preset: NewsData.io Aggregator</span>
+                  <PlusCircle className="w-4 h-4 text-blue-400" />
                 </div>
                 <h4 className="text-xs font-bold text-slate-200">Ingest Breaking Energy Policy Decrees</h4>
-                <p className="text-[10px] text-slate-500">Simulates real-time Italian media coverage of cabinet decrees.</p>
+                <p className="text-[11px] text-slate-400">Simulates real-time Italian media coverage of cabinet decrees.</p>
               </button>
             </div>
           </div>
         )}
 
         {simulationSuccess && (
-          <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs px-4 py-3 rounded-xl flex items-center justify-between animate-fadeIn">
-            <span className="flex items-center gap-2"><Check className="w-4 h-4" /> Real-time Ingestion Successful! Event added at the top of the feed log.</span>
-            <span className="text-[9px] font-mono">200 OK</span>
+          <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs px-4 py-3 rounded-md flex items-center justify-between">
+            <span className="flex items-center gap-2"><Check className="w-4 h-4" /> Real-time Ingestion Successful! Event added to rolling archive.</span>
+            <span className="text-[10px] font-mono">200 OK</span>
           </div>
         )}
 
-        {/* Dashboard 3-Column Grid */}
+        {/* Dashboard 4-Column Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
-          {/* COLUMN 1: FILTERS (1/4) */}
-          <div className="bg-slate-900/20 border border-slate-900 rounded-3xl p-6 space-y-6 backdrop-blur-md h-fit">
-            <div className="flex justify-between items-center">
+          {/* COLUMN 1: CONTROLS & FILTERING */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 space-y-6 h-fit">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
               <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                <Filter className="w-4 h-4 text-fuchsia-400" /> Filters
+                <Filter className="w-3.5 h-3.5 text-blue-400" /> Filter Archive
               </h3>
-              {(search || sourceType || category || party || days !== 60) && (
-                <button
-                  onClick={handleResetFilters}
-                  className="text-[10px] text-fuchsia-400 hover:text-fuchsia-350 font-bold flex items-center gap-1 cursor-pointer"
-                >
-                  <RotateCcw className="w-3 h-3" /> Reset
-                </button>
-              )}
+              <button 
+                onClick={handleResetFilters}
+                className="text-[10px] text-slate-400 hover:text-slate-200 font-mono transition-colors"
+              >
+                Reset
+              </button>
             </div>
 
             {/* Keyword Search */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase">Search Keywords</label>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-slate-300">Keyword Search</label>
               <div className="relative">
-                <input
+                <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-500" />
+                <input 
                   type="text"
+                  placeholder="Search decree, entity, tag..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Query politicians, acts, tags..."
-                  className="w-full bg-slate-950 border border-slate-905 rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-fuchsia-500 transition-colors"
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-md pl-9 pr-3 py-2 text-xs text-slate-200 placeholder:text-slate-500 transition-colors outline-none"
                 />
-                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
               </div>
             </div>
 
             {/* Source Type Filter */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase">Source Stream</label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setSourceType(sourceType === "Official" ? "" : "Official")}
-                  className={`flex-1 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${sourceType === "Official" ? "bg-fuchsia-500/10 border-fuchsia-500/40 text-fuchsia-300" : "bg-slate-950 border-slate-900 text-slate-400 hover:text-slate-250"}`}
-                >
-                  Official Gov
-                </button>
-                <button
-                  onClick={() => setSourceType(sourceType === "News" ? "" : "News")}
-                  className={`flex-1 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${sourceType === "News" ? "bg-fuchsia-500/10 border-fuchsia-500/40 text-fuchsia-300" : "bg-slate-950 border-slate-900 text-slate-400 hover:text-slate-250"}`}
-                >
-                  News Media
-                </button>
-              </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-slate-300">Source Category</label>
+              <select 
+                value={sourceType}
+                onChange={(e) => setSourceType(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-md px-3 py-2 text-xs text-slate-200 transition-colors outline-none cursor-pointer"
+              >
+                <option value="">All Sources (Official + News)</option>
+                <option value="Official">Official (Dati Camera/Senato, Openpolis)</option>
+                <option value="News">News Aggregators (NewsData, Event Registry)</option>
+              </select>
             </div>
 
-            {/* Categories */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase">Legislative Category</label>
-              <select
+            {/* Category Filter */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-slate-300">Event Classification</label>
+              <select 
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-900 rounded-xl py-2 px-3 text-xs text-slate-350 focus:outline-none focus:border-fuchsia-500 cursor-pointer"
+                className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-md px-3 py-2 text-xs text-slate-200 transition-colors outline-none cursor-pointer"
               >
                 <option value="">All Categories</option>
                 <option value="Floor Vote">Floor Vote</option>
@@ -419,37 +407,38 @@ export default function ItalianTrackerPage() {
               </select>
             </div>
 
-            {/* Italian Party Filter */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase">Key Party Involved</label>
-              <div className="grid grid-cols-3 gap-1.5">
-                {["FdI", "PD", "M5S", "Lega", "FI", "Other"].map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setParty(party === p ? "" : p)}
-                    className={`py-1.5 text-[10px] font-bold rounded-lg border transition-all cursor-pointer uppercase ${party === p ? "bg-fuchsia-500/15 border-fuchsia-500/40 text-fuchsia-400" : "bg-slate-950 border-slate-900 text-slate-500 hover:text-slate-350"}`}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
+            {/* Party Alignment Filter */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-slate-300">Political Party</label>
+              <select 
+                value={party}
+                onChange={(e) => setParty(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-md px-3 py-2 text-xs text-slate-200 transition-colors outline-none cursor-pointer"
+              >
+                <option value="">All Factions</option>
+                <option value="FdI">Fratelli d'Italia (FdI)</option>
+                <option value="Lega">Lega</option>
+                <option value="FI">Forza Italia (FI)</option>
+                <option value="PD">Partito Democratico (PD)</option>
+                <option value="M5S">Movimento 5 Stelle (M5S)</option>
+              </select>
             </div>
 
             {/* Time Window Slider */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase">
-                <span>Archive Depth</span>
-                <span className="font-mono text-fuchsia-400 font-bold">{days} Days</span>
+            <div className="space-y-2 pt-2 border-t border-slate-800/80">
+              <div className="flex justify-between text-[11px] font-semibold">
+                <span className="text-slate-300">Retention Window</span>
+                <span className="font-mono text-blue-400">{days} Days</span>
               </div>
-              <input
+              <input 
                 type="range"
-                min="7"
+                min="1"
                 max="60"
                 value={days}
                 onChange={(e) => setDays(parseInt(e.target.value, 10))}
-                className="w-full h-1 bg-fuchsia-500/20 hover:bg-fuchsia-500/30 rounded-lg appearance-none cursor-pointer accent-fuchsia-500 transition-colors"
+                className="w-full h-1 bg-slate-800 rounded-md appearance-none cursor-pointer accent-blue-500"
               />
-              <div className="flex justify-between text-[8px] text-slate-500 font-mono">
+              <div className="flex justify-between text-[9px] text-slate-500 font-mono">
                 <span>7 days</span>
                 <span>30 days</span>
                 <span>60 days</span>
@@ -457,26 +446,26 @@ export default function ItalianTrackerPage() {
             </div>
           </div>
 
-          {/* COLUMN 2 & 3: LIVE STREAM TIMELINE (2/4) */}
-          <div className="lg:col-span-2 flex flex-col h-[680px] gap-4">
-            <div className="flex justify-between items-center px-2 shrink-0">
+          {/* COLUMN 2 & 3: POLICY TIMELINE STREAM */}
+          <div className="lg:col-span-2 flex flex-col h-[700px] gap-4">
+            <div className="flex justify-between items-center px-1 shrink-0">
               <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                <Activity className="w-4.5 h-4.5 text-fuchsia-400 animate-pulse" /> Rolling Policy Stream ({events.length})
+                <Activity className="w-4 h-4 text-blue-400" /> Rolling Legislative Feed ({events.length})
               </h3>
-              <span className="text-[10px] font-mono text-slate-505">Ordered: Latest First</span>
+              <span className="text-[10px] font-mono text-slate-400">Order: Chronological</span>
             </div>
 
             {loading ? (
-              <div className="bg-slate-900/10 border border-slate-900 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-3 flex-1">
-                <Radio className="w-8 h-8 text-fuchsia-400 animate-spin" />
-                <span className="text-xs text-slate-400">Syncing Rome legislative feeds...</span>
+              <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-12 text-center flex flex-col items-center justify-center gap-3 flex-1">
+                <Radio className="w-6 h-6 text-blue-400 animate-spin" />
+                <span className="text-xs text-slate-400">Loading Rome legislative records...</span>
               </div>
             ) : events.length === 0 ? (
-              <div className="bg-slate-900/10 border border-dashed border-slate-900 rounded-3xl p-12 text-center text-slate-500 italic text-xs flex-1 flex flex-col items-center justify-center">
-                No active events matching filter criteria in the current {days}-day archive.
+              <div className="bg-slate-900/60 border border-dashed border-slate-800 rounded-lg p-12 text-center text-slate-400 text-xs flex-1 flex flex-col items-center justify-center">
+                No active events match the filter criteria in the current {days}-day archive.
               </div>
             ) : (
-              <div className="space-y-4 flex-1 overflow-y-auto pr-1">
+              <div className="space-y-3 flex-1 overflow-y-auto pr-1">
                 {events.map((evt) => {
                   const isSelected = selectedEvent?.id === evt.id;
                   const eventDate = new Date(evt.date).toLocaleDateString("it-IT", {
@@ -495,23 +484,33 @@ export default function ItalianTrackerPage() {
                           setSelectedEvent(evt);
                         }
                       }}
-                      className={`w-full text-left p-5 bg-slate-950 border rounded-2xl space-y-3 transition-all hover:border-slate-800 cursor-pointer duration-200 focus:outline-none focus:border-fuchsia-500/50 ${isSelected ? "border-fuchsia-500/50 bg-slate-900/40 shadow-[0_0_15px_rgba(217,70,239,0.06)] scale-[1.01]" : "border-slate-900 hover:border-slate-855"}`}
+                      className={`w-full text-left p-4 rounded-lg space-y-3 transition-colors cursor-pointer border ${
+                        isSelected 
+                          ? "bg-slate-900 border-blue-500/60" 
+                          : "bg-slate-900/60 border-slate-800 hover:border-slate-700"
+                      }`}
                     >
                       <div className="flex justify-between items-start gap-4">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-405">
+                          <span className="text-[10px] font-mono font-semibold uppercase px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-300">
                             {evt.sourceName}
                           </span>
-                          <span className="text-[9px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-855 text-slate-350">
+                          <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">
                             {evt.category}
                           </span>
                         </div>
-                        <span className={`text-[8px] font-bold uppercase px-2 py-0.5 rounded border ${evt.impactLevel === "High" ? "bg-red-500/10 border-red-500/20 text-red-400" : evt.impactLevel === "Medium" ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"}`}>
+                        <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded border ${
+                          evt.impactLevel === "High" 
+                            ? "bg-red-500/10 border-red-500/20 text-red-400" 
+                            : evt.impactLevel === "Medium" 
+                              ? "bg-amber-500/10 border-amber-500/20 text-amber-400" 
+                              : "bg-slate-800 border-slate-700 text-slate-400"
+                        }`}>
                           {evt.impactLevel} Impact
                         </span>
                       </div>
 
-                      <h4 className="text-sm font-bold text-slate-200 leading-snug group-hover:text-fuchsia-400 transition-colors">
+                      <h4 className="text-sm font-bold text-slate-100 leading-snug">
                         {evt.title}
                       </h4>
 
@@ -519,14 +518,14 @@ export default function ItalianTrackerPage() {
                         {evt.description}
                       </p>
 
-                      <div className="flex justify-between items-center text-[10px] text-slate-505 font-mono pt-1">
+                      <div className="flex justify-between items-center text-[10px] text-slate-400 font-mono pt-1">
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5 text-slate-600" /> {eventDate}
+                          <Calendar className="w-3.5 h-3.5 text-slate-500" /> {eventDate}
                         </span>
                         <div className="flex items-center gap-2">
                           <span className="flex gap-1">
                             {evt.tags.slice(0, 2).map((t, idx) => (
-                              <span key={idx} className="text-[9px] bg-slate-900 px-1.5 py-0.5 rounded text-slate-500 border border-slate-855">#{t}</span>
+                              <span key={idx} className="text-[9px] bg-slate-950 px-1.5 py-0.5 rounded text-slate-400 border border-slate-800">#{t}</span>
                             ))}
                           </span>
                           <button
@@ -534,9 +533,9 @@ export default function ItalianTrackerPage() {
                               e.stopPropagation();
                               handleAnalyzeEvent(evt);
                             }}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-fuchsia-500/10 border border-fuchsia-500/30 text-fuchsia-400 hover:bg-fuchsia-500 hover:text-slate-950 transition-all font-bold text-[9px] cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-600/10 border border-blue-500/30 text-blue-400 hover:bg-blue-600 hover:text-white transition-colors font-semibold text-[10px] cursor-pointer"
                           >
-                            <Sparkles className="w-2.5 h-2.5" /> Analyze
+                            <Sparkles className="w-3 h-3" /> Analyze
                           </button>
                         </div>
                       </div>
@@ -547,90 +546,79 @@ export default function ItalianTrackerPage() {
             )}
           </div>
 
-          {/* COLUMN 4: DEEP EXTRACTION PANEL (1/4) */}
-          <div className="bg-slate-900/20 border border-slate-900 rounded-3xl p-6 md:p-8 backdrop-blur-md h-[680px] flex flex-col justify-between gap-4">
-            <div className="shrink-0 border-b border-slate-900 pb-3">
+          {/* COLUMN 4: DEEP EXTRACTION PANEL */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 h-[700px] flex flex-col justify-between gap-4">
+            <div className="shrink-0 border-b border-slate-800 pb-3">
               <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-fuchsia-400 animate-pulse" /> AI Extraction & Risks
+                <Sparkles className="w-4 h-4 text-blue-400" /> Policy Briefing & Extraction
               </h3>
-              <p className="text-[10px] text-slate-500 mt-0.5">Corporate briefing overview & policy analysis</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">Selected event metadata & legislative links</p>
             </div>
 
             {selectedEvent ? (
-              <div className="space-y-6 overflow-y-auto pr-1 flex-1">
-                
-                {/* Event Title Block */}
-                <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2">
-                  <span className="text-[8px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-405">
-                    {selectedEvent.category}
-                  </span>
-                  <h4 className="text-xs font-bold text-slate-200 leading-snug">
-                    {selectedEvent.title}
-                  </h4>
+              <div className="space-y-5 overflow-y-auto pr-1 flex-1 text-xs">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-mono text-slate-500 uppercase">Selected Event Title</span>
+                  <h4 className="font-bold text-slate-100 text-sm leading-snug">{selectedEvent.title}</h4>
                 </div>
 
-                {/* Abstract Text */}
-                <div className="space-y-2">
-                  <h5 className="text-[9px] font-mono font-bold text-fuchsia-400 uppercase tracking-wider">Abstract</h5>
-                  <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-line">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-mono text-slate-500 uppercase">Full Summary</span>
+                  <p className="text-slate-300 leading-relaxed bg-slate-950 p-3 rounded-md border border-slate-800">
                     {selectedEvent.content}
                   </p>
                 </div>
 
-                {/* Lobbying Impact & Risk Analysis */}
-                <div className="space-y-2 border-t border-slate-900 pt-4">
-                  <h5 className="text-[9px] font-mono font-bold text-fuchsia-400 uppercase tracking-wider flex items-center gap-1">
-                    <AlertTriangle className="w-3.5 h-3.5 text-fuchsia-400 shrink-0" /> Liaison Risk Assessment
-                  </h5>
-                  <div className="p-3.5 bg-slate-950 border border-slate-900 rounded-xl text-xs text-slate-400 leading-relaxed space-y-1">
-                    <p>
-                      {selectedEvent.impactLevel === "High" 
-                        ? "🚨 CRITICAL THREAT: Immediately assess portfolio impacts. This decree fast-tracks connections but alters local regional tariffs, potentially destabilizing grid-connected margins."
-                        : selectedEvent.impactLevel === "Medium"
-                        ? "⚠️ MEDIUM ALERT: Monitor policy progression. Active advocacy required in committee levels to ensure protection clauses for large utility storage corridors."
-                        : "ℹ️ LOW ADVISORY: System status nominal. Track personnel shuffling for commission coordinator roles to capture changing sentiments early."}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Extracted Entities Table */}
-                {selectedEvent.entities?.length > 0 && (
-                  <div className="space-y-2 border-t border-slate-900 pt-4">
-                    <h5 className="text-[9px] font-mono font-bold text-fuchsia-400 uppercase tracking-wider flex items-center gap-1">
-                      <Layers className="w-3.5 h-3.5 text-fuchsia-400" /> Extracted Actors
-                    </h5>
-                    <div className="space-y-2">
+                {/* Political Entities Involved */}
+                <div className="space-y-2">
+                  <span className="text-[10px] font-mono text-slate-500 uppercase">Sponsoring Entities / Key Actors</span>
+                  {selectedEvent.entities && selectedEvent.entities.length > 0 ? (
+                    <div className="space-y-1.5">
                       {selectedEvent.entities.map((ent, idx) => (
-                        <div key={idx} className="flex justify-between items-center bg-slate-950/60 p-2.5 rounded-lg border border-slate-900">
+                        <div key={idx} className="p-2 bg-slate-950 border border-slate-800 rounded-md flex justify-between items-center">
                           <div>
-                            <div className="text-xs font-bold text-slate-200">{ent.name}</div>
-                            <div className="text-[9px] text-slate-500">{ent.role}</div>
+                            <span className="font-semibold text-slate-200 block text-[11px]">{ent.name}</span>
+                            <span className="text-[10px] text-slate-500">{ent.role}</span>
                           </div>
-                          <span className={`text-[9px] font-mono font-extrabold uppercase px-2 py-0.5 rounded border ${ent.party === "FdI" ? "bg-red-500/10 border-red-500/20 text-red-400" : ent.party === "PD" ? "bg-blue-500/10 border-blue-500/20 text-blue-400" : ent.party === "M5S" ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : ent.party === "Lega" ? "bg-green-500/10 border-green-500/20 text-green-400" : "bg-cyan-500/10 border-cyan-500/20 text-cyan-400"}`}>
+                          <span className="text-[10px] font-mono font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
                             {ent.party}
                           </span>
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
-
-                {/* Outbound Link */}
-                <div className="border-t border-slate-900 pt-4">
-                  <a
-                    href={selectedEvent.sourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition-all active:scale-[0.98]"
-                  >
-                    View Original SPARQL RDF <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-                  </a>
+                  ) : (
+                    <p className="text-slate-500 italic text-[11px]">No specific individual actors linked.</p>
+                  )}
                 </div>
 
+                {/* Action Trigger */}
+                <div className="pt-2">
+                  <button
+                    onClick={() => handleAnalyzeEvent(selectedEvent)}
+                    className="w-full py-2.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" /> Generate In-Depth Public Affairs Report
+                  </button>
+                </div>
+
+                {/* External Link */}
+                {selectedEvent.sourceUrl && (
+                  <div className="pt-2 border-t border-slate-800">
+                    <a
+                      href={selectedEvent.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-blue-400 transition-colors"
+                    >
+                      <span>View Official Source Document</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="p-8 bg-slate-950/30 border border-dashed border-slate-900 rounded-xl text-center text-xs text-slate-500 italic">
-                Select any timeline event to view deep legislative analytics and lobbying risks.
+              <div className="flex-1 flex flex-col items-center justify-center text-center text-slate-500 text-xs italic">
+                Select any event from the timeline feed to view extraction metadata.
               </div>
             )}
           </div>
@@ -639,99 +627,86 @@ export default function ItalianTrackerPage() {
 
       </div>
 
+      {/* Analysis Report Modal */}
       {analysisModalOpen && analyzingEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-fade-in">
-          <div className="bg-slate-900/80 border border-slate-855 rounded-3xl p-6 md:p-8 max-w-4xl w-full max-h-[90vh] flex flex-col justify-between shadow-[0_0_50px_rgba(217,70,239,0.08)] glass-card relative z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 md:p-8 max-w-4xl w-full max-h-[90vh] flex flex-col justify-between shadow-2xl relative">
             
             {/* Header */}
             <div className="border-b border-slate-800 pb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center text-fuchsia-400">
-                  <Sparkles className="w-5 h-5 animate-pulse" />
+                <div className="w-9 h-9 rounded-md bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                  <Sparkles className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                    In-Depth Legislative Analysis <span className="text-[9px] font-mono tracking-widest bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-400 px-2 py-0.5 rounded-md uppercase font-bold">OpenRouter AI</span>
+                    In-Depth Legislative Analysis Report
                   </h3>
-                  <p className="text-xs text-slate-450 truncate max-w-lg mt-0.5">Topic: {analyzingEvent.title}</p>
+                  <p className="text-xs text-slate-400 truncate max-w-lg mt-0.5">Topic: {analyzingEvent.title}</p>
                 </div>
               </div>
               <button 
                 onClick={() => setAnalysisModalOpen(false)}
-                className="p-2 rounded-lg bg-slate-950 border border-slate-800 hover:border-fuchsia-500/50 text-slate-400 hover:text-slate-100 transition-all cursor-pointer text-xs"
+                className="p-1.5 rounded-md bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-100 transition-colors cursor-pointer text-xs font-semibold"
               >
                 ✕
               </button>
             </div>
 
-            {/* Scrollable Body Content */}
-            <div className="flex-1 overflow-y-auto my-6 pr-2 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-slate-950">
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto my-6 pr-2">
               {analyzing ? (
-                <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                  <div className="relative">
-                    <div className="w-12 h-12 rounded-xl border border-slate-800 bg-slate-950 flex items-center justify-center text-fuchsia-400 animate-spin">
-                      <Radio className="w-6 h-6 animate-pulse" />
-                    </div>
-                    <span className="absolute inset-0 w-12 h-12 rounded-xl border-t border-fuchsia-400 animate-ping opacity-75" />
-                  </div>
-                  <div className="text-center space-y-1.5">
-                    <p className="text-sm font-semibold text-slate-300">
-                      Drafting In-Depth Strategic Report...
-                    </p>
-                    <p className="text-xs text-slate-500 max-w-md">
-                      Interfacing with DeepSeek via OpenRouter to analyze strategic parliamentary coalition impacts, extract political party motives, and formulate corporate GR risk advisory recommendations.
-                    </p>
-                  </div>
+                <div className="flex flex-col items-center justify-center py-20 space-y-3">
+                  <Radio className="w-7 h-7 text-blue-400 animate-spin" />
+                  <p className="text-sm font-semibold text-slate-300">
+                    Generating Strategic Public Affairs Report...
+                  </p>
+                  <p className="text-xs text-slate-500 max-w-md text-center">
+                    Analyzing parliamentary party alignments, regulatory risks, and actionable lobbying recommendations.
+                  </p>
                 </div>
               ) : (
-                <div className="text-sm text-slate-300 leading-relaxed font-sans whitespace-pre-line space-y-4 pr-1">
+                <div className="text-xs text-slate-300 leading-relaxed font-sans whitespace-pre-line space-y-4 pr-1">
                   {analysisText}
                 </div>
               )}
             </div>
 
-            {/* Footer Controls */}
+            {/* Footer */}
             <div className="border-t border-slate-800 pt-4 flex gap-3 justify-end flex-wrap">
               <button
                 onClick={copyAnalysisToClipboard}
                 disabled={analyzing || !analysisText}
-                className="px-5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-fuchsia-500/50 text-slate-300 hover:text-slate-100 text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                className="px-4 py-2 rounded-md bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-slate-100 text-xs font-semibold flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {copySuccess ? "✓ Copied!" : "Copy Report"}
               </button>
               <button
                 onClick={downloadAnalysis}
                 disabled={analyzing || !analysisText}
-                className="px-5 py-2.5 rounded-xl bg-slate-955 border border-slate-800 hover:border-fuchsia-500/50 text-slate-300 hover:text-slate-100 text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                className="px-4 py-2 rounded-md bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-slate-100 text-xs font-semibold flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
               >
-                Save Report (.txt)
+                Save (.txt)
               </button>
               <button
                 onClick={downloadAsPptx}
                 disabled={analyzing || !analysisText || pptxGenerating}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer shadow-lg shadow-fuchsia-500/10"
+                className="px-4 py-2 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-semibold flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
               >
-                {pptxGenerating ? (
-                  <>
-                    <Activity className="w-3.5 h-3.5 animate-spin" /> Generating...
-                  </>
-                ) : (
-                  <>
-                    <SlidersHorizontal className="w-3.5 h-3.5" /> Export as PPTX
-                  </>
-                )}
+                {pptxGenerating ? "Generating..." : "Export PPTX"}
               </button>
               <button
                 onClick={() => setAnalysisModalOpen(false)}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-500 hover:from-fuchsia-400 hover:to-violet-400 text-slate-950 text-xs font-black transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-lg shadow-fuchsia-500/10"
+                className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors cursor-pointer"
               >
-                Close Panel
+                Close Report
               </button>
             </div>
 
           </div>
         </div>
       )}
+
     </div>
   );
 }

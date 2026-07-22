@@ -2,132 +2,176 @@ import Link from "next/link";
 import { 
   Scale, 
   Zap, 
-  Sparkles, 
   ArrowRight,
   ShieldCheck,
-  Layers,
   Compass,
-  Radio
+  Radio,
+  FileText
 } from "lucide-react";
 
 export default function GatewayPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center relative overflow-hidden selection:bg-teal-500/30 selection:text-teal-200 p-6 md:p-12">
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-12 flex flex-col justify-between">
       
-      {/* Visual background ambient pulses */}
-      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute top-2/3 right-1/4 w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-[140px] pointer-events-none" />
-
-      {/* Gateway Content Wrapper */}
-      <div className="max-w-5xl w-full text-center space-y-12 z-10">
+      {/* Header & Main Container */}
+      <div className="max-w-6xl w-full mx-auto space-y-10">
         
-        {/* Branding header */}
-        <div className="space-y-4">
-          <div className="inline-flex items-center gap-2 bg-slate-900/60 px-4 py-2 rounded-full border border-slate-800 text-teal-400 text-xs font-semibold uppercase tracking-wider">
-            <Sparkles className="w-4 h-4 text-emerald-400 animate-pulse" /> Advanced EU Legal AI Gateway
+        {/* Executive Header */}
+        <div className="border-b border-slate-800 pb-6 space-y-2">
+          <div className="flex justify-between items-center flex-wrap gap-4">
+            <div>
+              <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded-md">
+                Multi-Tenant Intelligence Platform
+              </span>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white mt-3">
+                European Union Intelligence Portals
+              </h1>
+              <p className="text-xs md:text-sm text-slate-400 max-w-2xl mt-1 leading-relaxed">
+                Direct access to live CELLAR SPARQL legal databases, European Parliament written questions, DG COMP state-aid tracking, and Italian legislative watch.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 text-xs font-mono text-slate-400">
+              <span className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-md">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" /> Authorized Session
+              </span>
+            </div>
           </div>
-          <h1 className="text-4xl md:text-6xl font-black font-sans uppercase tracking-tight text-white">
-            European Union <br />
-            <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 bg-clip-text text-transparent">
-              Intelligence Portals
-            </span>
-          </h1>
-          <p className="text-sm md:text-base text-slate-400 max-w-xl mx-auto leading-relaxed">
-            Select your strategic division workspace below. Leverage live SPARQL CELLAR queries, European Parliament APIs, and custom advocacy briefing tools.
-          </p>
         </div>
 
-        {/* Workspace Portals Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        {/* Workspace Directory Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
-          {/* Card 1: EU-Lex Cellar Explorer Portal */}
-          <div className="group bg-slate-900/20 border border-slate-900 border-t-4 border-t-emerald-500 hover:border-emerald-500/40 rounded-3xl p-8 flex flex-col justify-between gap-8 backdrop-blur-md transition-all duration-350 hover:shadow-[0_0_50px_-12px_rgba(16,185,129,0.15)] relative overflow-hidden">
-            <div className="absolute top-4 right-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[9px] font-bold uppercase tracking-widest px-3 py-1 rounded-full pointer-events-none">
-              [Semantic Database Portal]
-            </div>
-
-            <div className="space-y-4 text-left">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0 shadow-lg shadow-emerald-500/5">
-                <Scale className="w-6 h-6 stroke-[2]" />
+          {/* Workspace 1: EU-Lex Explorer */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 flex flex-col justify-between hover:border-slate-700 transition-colors">
+            <div className="space-y-4">
+              <div className="flex justify-between items-start">
+                <div className="p-2.5 rounded-md bg-slate-800 border border-slate-700 text-blue-400">
+                  <Scale className="w-5 h-5" />
+                </div>
+                <span className="text-[9px] font-mono text-slate-400 bg-slate-950 border border-slate-800 px-2 py-0.5 rounded">
+                  CELLAR SPARQL
+                </span>
               </div>
-              <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                EU-Lex Explorer <span className="text-[10px] font-mono tracking-wider bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">Publications Office SPARQL</span>
-              </h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Perform live semantic searches across binding European Union regulations, directives, decisions, and precedents directly via the official Cellar Triplestore.
-              </p>
+              <div className="space-y-1">
+                <h2 className="text-base font-bold text-slate-100">
+                  EUR-Lex Directives & Case Law
+                </h2>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Query official EU sector legal acts, treaties, secondary legislation, and Court of Justice precedents directly via the Cellar RDF triplestore.
+                </p>
+              </div>
             </div>
 
-            <Link 
-              href="/eurlex"
-              className="inline-flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-slate-900 hover:bg-slate-855 border border-slate-800 text-xs font-bold text-slate-200 hover:text-white transition-all active:scale-[0.98] group-hover:border-emerald-500/30"
-            >
-              Enter EU-Lex Explorer <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div className="pt-6 border-t border-slate-800/80 mt-6">
+              <Link 
+                href="/eurlex"
+                className="inline-flex items-center justify-between w-full px-4 py-2 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-100 transition-colors"
+              >
+                <span>Launch EUR-Lex Workspace</span>
+                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+              </Link>
+            </div>
           </div>
 
-          {/* Card 2: Enel Strategic Public Affairs Platform */}
-          <div className="group bg-slate-900/20 border border-slate-900 border-t-4 border-t-cyan-500 hover:border-cyan-500/40 rounded-3xl p-8 flex flex-col justify-between gap-8 backdrop-blur-md transition-all duration-350 hover:shadow-[0_0_50px_-12px_rgba(6,182,212,0.15)] relative overflow-hidden">
-            <div className="absolute top-4 right-4 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-mono text-[9px] font-bold uppercase tracking-widest px-3 py-1 rounded-full pointer-events-none">
-              [Corporate Enterprise Workspace]
-            </div>
-
-            <div className="space-y-4 text-left">
-              <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0 shadow-lg shadow-cyan-500/5">
-                <Zap className="w-6 h-6 stroke-[2]" />
+          {/* Workspace 2: Enel Strategic Public Affairs */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 flex flex-col justify-between hover:border-slate-700 transition-colors">
+            <div className="space-y-4">
+              <div className="flex justify-between items-start">
+                <div className="p-2.5 rounded-md bg-slate-800 border border-slate-700 text-amber-400">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <span className="text-[9px] font-mono text-slate-400 bg-slate-950 border border-slate-800 px-2 py-0.5 rounded">
+                  Brussels Hub
+                </span>
               </div>
-              <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                Enel Public Affairs Hub <span className="text-[10px] font-mono tracking-wider bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded-full">Brussels Strategic Watch</span>
-              </h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Automated watch hub tailored for Enel's Brussels team. Monitor DG COMP state aid rules, European Parliament MEP questions, comitology votes, and generate AI advocacy briefs.
-              </p>
+              <div className="space-y-1">
+                <h2 className="text-base font-bold text-slate-100">
+                  Enel Strategic Public Affairs
+                </h2>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Monitor DG COMP state aid decisions, European Parliament MEP questions, comitology votes, and generate formal corporate advocacy briefs.
+                </p>
+              </div>
             </div>
 
-            <Link 
-              href="/enel"
-              className="inline-flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-slate-900 hover:bg-slate-855 border border-slate-800 text-xs font-bold text-slate-200 hover:text-white transition-all active:scale-[0.98] group-hover:border-cyan-500/30"
-            >
-              Enter Enel Workspace <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div className="pt-6 border-t border-slate-800/80 mt-6">
+              <Link 
+                href="/enel"
+                className="inline-flex items-center justify-between w-full px-4 py-2 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-100 transition-colors"
+              >
+                <span>Access Public Affairs Hub</span>
+                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+              </Link>
+            </div>
           </div>
 
-          {/* Card 3: Italian Political Event Tracker */}
-          <div className="group bg-slate-900/20 border border-slate-900 border-t-4 border-t-fuchsia-500 hover:border-fuchsia-500/40 rounded-3xl p-8 flex flex-col justify-between gap-8 backdrop-blur-md transition-all duration-350 hover:shadow-[0_0_50px_-12px_rgba(217,70,239,0.15)] relative overflow-hidden">
-            <div className="absolute top-4 right-4 bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-400 font-mono text-[9px] font-bold uppercase tracking-widest px-3 py-1 rounded-full pointer-events-none">
-              [Civic Watch Portal]
-            </div>
-
-            <div className="space-y-4 text-left">
-              <div className="w-12 h-12 rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center text-fuchsia-400 shrink-0 shadow-lg shadow-fuchsia-500/5">
-                <Radio className="w-6 h-6 stroke-[2]" />
+          {/* Workspace 3: Italian Legislative Watch */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 flex flex-col justify-between hover:border-slate-700 transition-colors">
+            <div className="space-y-4">
+              <div className="flex justify-between items-start">
+                <div className="p-2.5 rounded-md bg-slate-800 border border-slate-700 text-emerald-400">
+                  <Radio className="w-5 h-5" />
+                </div>
+                <span className="text-[9px] font-mono text-slate-400 bg-slate-950 border border-slate-800 px-2 py-0.5 rounded">
+                  Rolling 60-Day Archive
+                </span>
               </div>
-              <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                Italian Policy Watch <span className="text-[10px] font-mono tracking-wider bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-400 px-2 py-0.5 rounded-full">Roma Live Tracker</span>
-              </h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Monitor Italian legislative acts, Senate and Chamber votes, Openpolis public figures movement logs, and Italian political news aggregates on a rolling 60-day watch timeline.
-              </p>
+              <div className="space-y-1">
+                <h2 className="text-base font-bold text-slate-100">
+                  Italian Political Watch
+                </h2>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Track Chamber and Senate floor votes, committee hearings, Openpolis political entity movements, and political news feeds twice daily.
+                </p>
+              </div>
             </div>
 
-            <Link 
-              href="/politics-tracker"
-              className="inline-flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-slate-900 hover:bg-slate-855 border border-slate-800 text-xs font-bold text-slate-200 hover:text-white transition-all active:scale-[0.98] group-hover:border-fuchsia-500/30"
-            >
-              Enter Italian Tracker <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div className="pt-6 border-t border-slate-800/80 mt-6">
+              <Link 
+                href="/politics-tracker"
+                className="inline-flex items-center justify-between w-full px-4 py-2 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-100 transition-colors"
+              >
+                <span>Open Political Watch</span>
+                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+              </Link>
+            </div>
           </div>
 
         </div>
 
-        {/* Footer Badge */}
-        <div className="pt-6 flex justify-center items-center gap-6 text-[10px] text-slate-500 font-mono">
-          <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-emerald-400" /> SECURE ADVOCACY SESSION</span>
-          <span className="w-1 h-1 rounded-full bg-slate-800" />
-          <span className="flex items-center gap-1.5"><Compass className="w-4 h-4 text-cyan-400" /> MULTI-TENANT ROUTING ENABLED</span>
+        {/* System Documentation & Guidance Notes */}
+        <div className="bg-slate-900/40 border border-slate-800/80 rounded-lg p-5 text-xs text-slate-400 space-y-3">
+          <h3 className="font-semibold text-slate-200 uppercase tracking-wider text-[11px] flex items-center gap-2">
+            <FileText className="w-4 h-4 text-blue-400" /> Workspace Data Protocols
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-slate-400 text-[11px] leading-relaxed">
+            <div>
+              <strong className="text-slate-300 block mb-0.5">Cellar RDF SPARQL:</strong>
+              Direct endpoint integration with `publications.europa.eu/webapi/rdf/sparql` supporting sector prefixes 0 through 9.
+            </div>
+            <div>
+              <strong className="text-slate-300 block mb-0.5">Data Ingestion Cycle:</strong>
+              Automated twice-daily synchronization (00:00 & 12:00 UTC) with 60-day historical data retention.
+            </div>
+            <div>
+              <strong className="text-slate-300 block mb-0.5">Corporate Brief Generation:</strong>
+              Structured analytical reporting using multi-model OpenRouter LLM orchestration and offline fallback briefing engines.
+            </div>
+          </div>
         </div>
 
       </div>
+
+      {/* Footer */}
+      <div className="max-w-6xl w-full mx-auto pt-8 mt-12 border-t border-slate-900 flex flex-col md:flex-row justify-between items-center gap-4 text-[11px] text-slate-500">
+        <div>EU Legal & Public Affairs Intelligence Portal &copy; 2026</div>
+        <div className="flex items-center gap-6">
+          <Link href="/eurlex" className="hover:text-slate-300 transition-colors">EUR-Lex</Link>
+          <Link href="/enel" className="hover:text-slate-300 transition-colors">Enel Hub</Link>
+          <Link href="/politics-tracker" className="hover:text-slate-300 transition-colors">Italian Watch</Link>
+        </div>
+      </div>
+
     </div>
   );
 }

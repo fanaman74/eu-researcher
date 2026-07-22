@@ -4,19 +4,11 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { 
   Scale, 
-  BookOpen, 
-  ShieldAlert, 
   Users, 
   BarChart3, 
   Cpu, 
-  FileText, 
-  Settings, 
-  Radio,
-  ExternalLink,
   Sparkles,
   ArrowRight,
-  TrendingUp,
-  AlertTriangle,
   Zap,
   Activity,
   Layers,
@@ -95,12 +87,11 @@ export default function EnelHubPage() {
   }, []);
 
   const statistics = [
-    { label: "Active Consultations", count: activeConsultationsCount, icon: Users, color: "text-amber-400 bg-amber-500/10 border-amber-500/20", dotColor: "bg-amber-400" },
-    { label: "MEP Questions Tracked", count: mepQuestionsCount, icon: BarChart3, color: "text-purple-400 bg-purple-500/10 border-purple-500/20", dotColor: "bg-purple-400" },
-    { label: "DG COMP State Aid Cases", count: stateAidCount, icon: Scale, color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20", dotColor: "bg-emerald-400" },
-    { label: "ACER Grid Revisions", count: acerRevisionsCount, icon: Zap, color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20", dotColor: "bg-cyan-400" }
+    { label: "Active Consultations", count: activeConsultationsCount, icon: Users },
+    { label: "MEP Questions Tracked", count: mepQuestionsCount, icon: BarChart3 },
+    { label: "DG COMP State Aid Cases", count: stateAidCount, icon: Scale },
+    { label: "ACER Grid Revisions", count: acerRevisionsCount, icon: Zap }
   ];
-
 
   const tools = [
     {
@@ -108,36 +99,28 @@ export default function EnelHubPage() {
       description: "Perform raw semantic searches across binding EU regulations, directives, and decisions pre-filtered for DG ENER and DG COMP briefs.",
       href: "/eurlex",
       icon: Scale,
-      badge: "Publications Office SPARQL",
-      badgeColor: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
-      accent: "border-t-emerald-500 hover:shadow-[0_0_50px_-12px_rgba(16,185,129,0.15)]"
+      badge: "Publications Office SPARQL"
     },
     {
       title: "EP Portal Watcher",
-      description: "Monitor parliamentary questions, MEP profiles,sitting vote results, and draft resolutions targeting energy tariffs and state support.",
+      description: "Monitor parliamentary questions, MEP profiles, sitting vote results, and draft resolutions targeting energy tariffs and state support.",
       href: "/parliament",
       icon: BarChart3,
-      badge: "EP Open Data API v2",
-      badgeColor: "bg-purple-500/10 border-purple-500/20 text-purple-400",
-      accent: "border-t-purple-500 hover:shadow-[0_0_50px_-12px_rgba(168,85,247,0.15)]"
+      badge: "EP Open Data API v2"
     },
     {
       title: "Have Your Say Monitor",
       description: "Capture public consultation feedback, parse attached position papers, and track stakeholder sentiment demographics.",
       href: "/have-your-say",
       icon: Users,
-      badge: "EC Consultation API",
-      badgeColor: "bg-amber-500/10 border-amber-500/20 text-amber-400",
-      accent: "border-t-amber-500 hover:shadow-[0_0_50px_-12px_rgba(245,158,11,0.15)]"
+      badge: "EC Consultation API"
     },
     {
       title: "Comitology & Technical Acts",
       description: "Track voting records on delegated acts, technical implementing regulations, and ACER network electricity codes.",
       href: "/comitology",
       icon: Zap,
-      badge: "EC Comitology API",
-      badgeColor: "bg-cyan-500/10 border-cyan-500/20 text-cyan-400",
-      accent: "border-t-cyan-500 hover:shadow-[0_0_50px_-12px_rgba(6,182,212,0.15)]"
+      badge: "EC Comitology API"
     }
   ];
 
@@ -165,32 +148,21 @@ export default function EnelHubPage() {
     setLoadingReport(true);
     setGeneratedReport("");
 
-    // Smooth scroll down to the briefing section
     setTimeout(() => {
       briefingRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
 
     try {
       const prompt = isDetailed
-        ? `Draft an extremely comprehensive, exhaustive, and highly detailed strategic briefing playbook (approximately 1,200 words) on Enel's lobbying risks. Focus on this topic: "${brief.title}" (Type: ${brief.type}, Source: ${brief.source}, Risk Assessment: ${brief.risk}) in Brussels public affairs context. 
-           Your briefing must include these sections:
-           1. EXECUTIVE SUMMARY & STRATEGIC RATIONALE
-           2. DETAILED REGULATORY CONTEXT & POLICY THREATS (Cite specific EU Directives or rules)
-           3. HISTORICAL PRECEDENTS & COMPARABLE CASE LAW
-           4. IMPACT EVALUATION ON ENEL ENERGY PORTFOLIOS
-           5. ADVANCED STRATEGIC RECOMMENDATIONS & BRUSSELS ADVOCACY PLAYBOOK`
-        : `Draft a highly detailed executive briefing paper on Enel strategic lobbying risks. Specifically focus on this topic: "${brief.title}" (Type: ${brief.type}, Source: ${brief.source}, Risk Assessment: ${brief.risk}) in Brussels public affairs context. List key policy threats and Enel's strategic counter-advocacy recommendation.`;
+        ? `Draft an extremely comprehensive strategic briefing playbook (approximately 1,200 words) on lobbying risks. Focus on this topic: "${brief.title}" (Type: ${brief.type}, Source: ${brief.source}, Risk Assessment: ${brief.risk}) in Brussels public affairs context. 
+           Include: 1. EXECUTIVE SUMMARY & STRATEGIC RATIONALE, 2. DETAILED REGULATORY CONTEXT & POLICY THREATS, 3. HISTORICAL PRECEDENTS, 4. IMPACT EVALUATION ON ENERGY PORTFOLIOS, 5. ADVOCACY RECOMMENDATIONS.`
+        : `Draft a detailed executive briefing paper on public affairs policy risks. Topic: "${brief.title}" (Type: ${brief.type}, Source: ${brief.source}, Risk: ${brief.risk}). List policy threats and counter-advocacy recommendations.`;
 
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [
-            { 
-              role: "user", 
-              content: prompt
-            }
-          ]
+          messages: [{ role: "user", content: prompt }]
         })
       });
       if (response.ok) {
@@ -219,7 +191,7 @@ export default function EnelHubPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${selectedInquiry.id.replace(/[^a-z0-9]/gi, '_')}_enel_advocacy_brief.txt`;
+    link.download = `${selectedInquiry.id}_advocacy_brief.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -232,8 +204,6 @@ export default function EnelHubPage() {
     
     for (const line of lines) {
       const trimmed = line.trim();
-      
-      // Pattern 1: [Option: Option Description]
       const optionMatch = trimmed.match(/^\[Option:\s*([\s\S]+?)\]$/i);
       if (optionMatch) {
         const cleanOption = optionMatch[1].trim();
@@ -243,7 +213,6 @@ export default function EnelHubPage() {
         continue;
       }
       
-      // Pattern 2: Normal bullet questions ending in ?
       const match = trimmed.match(/^[-*\d.]+\s+["']?(What|How|Why|Is|Can|Are|Should|Will|Could|Would|Which|Who|Where|When)[\s\S]+\?["']?$/i);
       if (match) {
         const cleanQuestion = trimmed
@@ -270,17 +239,13 @@ export default function EnelHubPage() {
     }, 50);
 
     try {
-      const prompt = `Provide a highly comprehensive, expert-level strategic response (approximately 500-600 words) answering this specific follow-up question: "${question}". 
-      Keep the context focused on Enel's public affairs, lobbying interests, and EU regulatory risk factors. 
-      Use professional headings and clear, structured spacing. Add a closing section called "STRATEGIC RECOMMENDATION FOR ENEL".`;
+      const prompt = `Provide a detailed, expert-level response answering this follow-up question: "${question}". Keep context focused on EU regulatory policy and corporate public affairs. Use headings and add a closing section called "STRATEGIC RECOMMENDATION".`;
 
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [
-            { role: "user", content: prompt }
-          ]
+          messages: [{ role: "user", content: prompt }]
         })
       });
 
@@ -288,10 +253,10 @@ export default function EnelHubPage() {
         const data = await response.json();
         setGeneratedReport(data.content);
       } else {
-        throw new Error("Failed to generate answer to follow-up question.");
+        throw new Error("Failed to generate answer.");
       }
     } catch (err: any) {
-      setGeneratedReport(`⚠️ Error: ${err.message || "An issue occurred answering follow-up question."}`);
+      setGeneratedReport(`⚠️ Error: ${err.message || "An issue occurred answering question."}`);
     } finally {
       setLoadingReport(false);
     }
@@ -303,82 +268,68 @@ export default function EnelHubPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative selection:bg-teal-500/30 selection:text-teal-200">
-      
-      {/* Background Glows */}
-      <div className="absolute top-1/4 left-10 w-[450px] h-[450px] bg-emerald-500/5 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute top-2/3 right-10 w-[450px] h-[450px] bg-cyan-500/5 rounded-full blur-[140px] pointer-events-none" />
-
-      {/* Main Layout Wrap */}
-      <div className="max-w-7xl mx-auto w-full p-6 md:p-12 space-y-12 z-10">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-blue-500/30 selection:text-blue-200">
+      <div className="max-w-7xl mx-auto w-full p-6 md:p-12 space-y-8">
         
         {/* Navigation & Branding Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-900 pb-8 gap-4">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-6 gap-4">
+          <div className="flex items-center gap-3">
             <Link 
               href="/"
-              className="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-slate-200 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl transition-all"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-slate-200 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-md transition-colors"
             >
-              ← Portal Gateway
+              ← Gateway
             </Link>
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-emerald-500 flex items-center justify-center text-slate-950 shadow-lg shadow-cyan-500/10">
-              <Zap className="w-6 h-6 stroke-[2.5]" />
+            <div className="w-9 h-9 rounded-md bg-blue-600 flex items-center justify-center text-white font-bold">
+              <Zap className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-black font-sans uppercase tracking-tight text-white">enel</h1>
-                <span className="text-[10px] font-mono tracking-widest bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded-md uppercase font-bold">Public Affairs</span>
+                <h1 className="text-xl font-bold tracking-tight text-white uppercase">Corporate Intelligence</h1>
+                <span className="text-[10px] font-mono tracking-wider bg-blue-500/10 border border-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md uppercase font-semibold">Public Affairs</span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">EU Policy & Competition Intelligence Platform — Brussels Office</p>
+              <p className="text-xs text-slate-400">EU Policy & Competition Intelligence Platform</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-slate-900/60 border border-slate-800 px-4 py-2 rounded-xl">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
-              <span className="text-[10px] font-mono font-bold text-slate-300">SYSTEM STABLE: Cellar Endpoint Connected</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-md">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-[10px] font-mono font-semibold text-slate-300">CELLAR Triplestore Connected</span>
             </div>
             <Link
               href="/research"
-              className="inline-flex items-center gap-2 text-xs font-bold text-slate-950 bg-teal-400 hover:bg-teal-350 transition-all px-4 py-2.5 rounded-xl shadow-lg shadow-teal-400/10 active:scale-95"
+              className="inline-flex items-center gap-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 transition-colors px-3 py-1.5 rounded-md"
             >
-              Advanced Chat Console <Sparkles className="w-4 h-4 text-slate-950" />
+              <span>AI Console</span> <Sparkles className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>
 
         {/* Live Counters Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {statistics.map((stat, idx) => {
             const Icon = stat.icon;
             const hrefs = [
-              "/enel/active-consultations",
-              "/enel/mep-questions",
-              "/enel/state-aid-cases",
-              "/enel/acer-grid-revisions"
+              "/have-your-say",
+              "/parliament",
+              "/eurlex",
+              "/comitology"
             ];
             return (
               <Link 
                 key={idx}
                 href={hrefs[idx]}
-                className="bg-slate-900/20 border border-slate-900 rounded-2xl p-6 flex items-center justify-between backdrop-blur-md hover:border-slate-800 hover:bg-slate-900/40 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 shadow-md group cursor-pointer"
+                className="bg-slate-900/60 border border-slate-800 rounded-lg p-5 flex items-center justify-between hover:border-slate-700 transition-colors group cursor-pointer"
               >
                 <div className="space-y-1">
-                  <span className="text-xs text-slate-400 font-medium group-hover:text-slate-300 transition-colors">{stat.label}</span>
-                  <div className="text-2xl font-bold font-mono text-white group-hover:text-cyan-400 transition-colors h-8 flex items-center">
-                    {stat.count !== null ? (
-                      stat.count
-                    ) : (
-                      <span className="flex items-center gap-1.5 pt-1">
-                        <span className={`w-1.5 h-1.5 rounded-full ${stat.dotColor} animate-bounce [animation-delay:-0.3s]`} />
-                        <span className={`w-1.5 h-1.5 rounded-full ${stat.dotColor} animate-bounce [animation-delay:-0.15s]`} />
-                        <span className={`w-1.5 h-1.5 rounded-full ${stat.dotColor} animate-bounce`} />
-                      </span>
-                    )}
+                  <span className="text-xs text-slate-400 font-semibold">{stat.label}</span>
+                  <div className="text-xl font-bold font-mono text-white group-hover:text-blue-400 transition-colors">
+                    {stat.count !== null ? stat.count : "..."}
                   </div>
                 </div>
-                <div className={`w-12 h-12 rounded-xl border flex items-center justify-center transition-all duration-300 group-hover:scale-105 ${stat.color}`}>
-                  <Icon className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-md bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-400 group-hover:text-blue-400 transition-colors">
+                  <Icon className="w-4 h-4" />
                 </div>
               </Link>
             );
@@ -386,43 +337,41 @@ export default function EnelHubPage() {
         </div>
 
         {/* Core Tools Division */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Layers className="w-5 h-5 text-cyan-400" /> Authorized Legislative Watchers
-              </h2>
-              <p className="text-xs text-slate-400">Targeted tools to ingest, track, and analyze key EU regulatory frameworks</p>
-            </div>
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-sm font-bold text-slate-200 flex items-center gap-2">
+              <Layers className="w-4 h-4 text-blue-400" /> Authorized Legislative Watchers
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">Targeted workspaces to track and analyze EU regulatory frameworks</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {tools.map((tool, idx) => {
               const Icon = tool.icon;
               return (
                 <div 
                   key={idx}
-                  className={`bg-slate-900/20 border border-slate-900 border-t-4 rounded-3xl p-6 flex flex-col justify-between gap-6 backdrop-blur-md transition-all duration-350 ${tool.accent}`}
+                  className="bg-slate-900/60 border border-slate-800 rounded-lg p-5 flex flex-col justify-between gap-4 hover:border-slate-700 transition-colors"
                 >
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <div className={`w-10 h-10 rounded-xl bg-slate-950 border border-slate-850 flex items-center justify-center text-slate-300`}>
-                        <Icon className="w-5 h-5" />
+                      <div className="w-8 h-8 rounded-md bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-300">
+                        <Icon className="w-4 h-4" />
                       </div>
-                      <span className={`text-[9px] font-mono tracking-wider font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${tool.badgeColor}`}>
+                      <span className="text-[10px] font-mono tracking-wider font-semibold uppercase px-2 py-0.5 rounded-md border bg-slate-950 border-slate-800 text-slate-400">
                         {tool.badge}
                       </span>
                     </div>
                     
-                    <h3 className="text-base font-bold text-slate-200">{tool.title}</h3>
+                    <h3 className="text-sm font-bold text-slate-100">{tool.title}</h3>
                     <p className="text-xs text-slate-400 leading-relaxed">{tool.description}</p>
                   </div>
 
                   <Link 
                     href={tool.href}
-                    className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition-all active:scale-[0.98]"
+                    className="inline-flex items-center justify-center gap-1.5 w-full py-2 rounded-md bg-slate-950 hover:bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
                   >
-                    Enter Workspace <ArrowRight className="w-4 h-4" />
+                    <span>Launch Workspace</span> <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               );
@@ -434,22 +383,22 @@ export default function EnelHubPage() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           
           {/* Recent Legislative Inquiries Brief Stream (2/5 columns) */}
-          <div className="lg:col-span-2 bg-slate-900/20 border border-slate-900 rounded-3xl p-6 md:p-8 space-y-6 backdrop-blur-md flex flex-col justify-between">
+          <div className="lg:col-span-2 bg-slate-900/60 border border-slate-800 rounded-lg p-6 space-y-4 flex flex-col justify-between">
             <div className="space-y-4">
               <div>
-                <h3 className="text-base font-bold text-slate-200 flex items-center gap-2">
-                  <Activity className="w-4.5 h-4.5 text-emerald-400 animate-pulse" /> Live Inquiries Feed
+                <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-blue-400" /> Live Inquiries Feed
                 </h3>
-                <p className="text-[11px] text-slate-455">Weekly legislative movements & regulatory risk assessments</p>
+                <p className="text-xs text-slate-400 mt-0.5">Weekly legislative movements & regulatory risk assessments</p>
               </div>
 
               {/* Inquiries Tabs */}
-              <div className="flex border-b border-slate-900 p-0.5 bg-slate-950 rounded-xl">
+              <div className="flex border border-slate-800 p-1 bg-slate-950 rounded-md">
                 {Object.keys(recentBriefs).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded-lg transition-all cursor-pointer ${activeTab === tab ? "bg-slate-900 text-cyan-400 border border-slate-850" : "text-slate-400 hover:text-slate-200"}`}
+                    className={`flex-1 py-1 text-[10px] font-semibold uppercase rounded transition-colors cursor-pointer ${activeTab === tab ? "bg-slate-800 text-blue-400" : "text-slate-400 hover:text-slate-200"}`}
                   >
                     {tab.replace("_", " ")}
                   </button>
@@ -457,7 +406,7 @@ export default function EnelHubPage() {
               </div>
 
               {/* Brief Cards Stream */}
-              <div className="space-y-3.5 max-h-[350px] overflow-y-auto pr-1">
+              <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
                 {recentBriefs[activeTab as keyof typeof recentBriefs].map((brief) => {
                   const isSelected = selectedInquiry?.id === brief.id && selectedInquiry?.source === brief.source;
                   return (
@@ -465,18 +414,18 @@ export default function EnelHubPage() {
                       key={brief.id} 
                       onClick={() => handleSelectAndGenerate(brief)}
                       disabled={loadingReport}
-                      className={`w-full text-left p-4 bg-slate-950/60 border rounded-xl space-y-2 transition-all hover:border-slate-700 cursor-pointer active:scale-[0.99] disabled:opacity-70 disabled:pointer-events-none ${isSelected ? "border-teal-500/50 bg-slate-900/60 shadow-[0_0_15px_rgba(20,184,166,0.08)]" : "border-slate-900 hover:border-slate-850"}`}
+                      className={`w-full text-left p-3.5 bg-slate-950/60 border rounded-md space-y-2 transition-colors cursor-pointer disabled:opacity-70 ${isSelected ? "border-blue-500 bg-slate-900" : "border-slate-800 hover:border-slate-700"}`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-[9px] font-mono font-extrabold uppercase px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
+                        <span className="text-[10px] font-mono font-semibold uppercase px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
                           {brief.type}
                         </span>
-                        <span className={`text-[9px] font-bold font-sans uppercase px-2 py-0.5 rounded-full border ${brief.risk === "High Risk" ? "bg-red-500/10 border-red-500/20 text-red-400" : brief.risk === "Med Risk" ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"}`}>
+                        <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded border ${brief.risk === "High Risk" ? "bg-red-500/10 border-red-500/20 text-red-400" : brief.risk === "Med Risk" ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-slate-800 border-slate-700 text-slate-300"}`}>
                           {brief.risk}
                         </span>
                       </div>
-                      <h4 className="text-xs font-semibold text-slate-200 leading-snug">{brief.title}</h4>
-                      <div className="flex items-center justify-between text-[9px] text-slate-500 font-mono">
+                      <h4 className="text-xs font-bold text-slate-100 leading-snug">{brief.title}</h4>
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
                         <span>Source: {brief.source}</span>
                         <span>Date: {brief.date}</span>
                       </div>
@@ -485,40 +434,36 @@ export default function EnelHubPage() {
                 })}
               </div>
             </div>
-
-            <div className="pt-4 border-t border-slate-900/60 text-center">
-              <span className="text-[10px] font-mono text-slate-500">Live feed updates automatically via polling</span>
-            </div>
           </div>
 
           {/* AI Executive Advocate Risk Summarizer (3/5 columns) */}
-          <div ref={briefingRef} className="lg:col-span-3 bg-slate-900/20 border border-slate-900 rounded-3xl p-6 md:p-8 space-y-6 backdrop-blur-md flex flex-col justify-between">
+          <div ref={briefingRef} className="lg:col-span-3 bg-slate-900/60 border border-slate-800 rounded-lg p-6 space-y-5 flex flex-col justify-between">
             <div className="space-y-4">
               <div>
-                <h3 className="text-base font-bold text-slate-200 flex items-center gap-2">
-                  <ShieldAlert className="w-4.5 h-4.5 text-amber-400" /> Advocate AI Risk Briefing
+                <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
+                  <Cpu className="w-4 h-4 text-blue-400" /> Advocate AI Risk Briefing
                 </h3>
-                <p className="text-[11px] text-slate-455">Draft strategic position summaries & counter-advocacy memos instantly</p>
+                <p className="text-xs text-slate-400 mt-0.5">Draft strategic position summaries & counter-advocacy memos</p>
               </div>
 
               {/* Active Inquiry Subject Display */}
               {selectedInquiry ? (
-                <div className="p-4 bg-slate-950/80 border border-slate-900 rounded-xl space-y-2">
+                <div className="p-3 bg-slate-950 border border-slate-800 rounded-md space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[8px] font-mono font-extrabold uppercase px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
+                    <span className="text-[10px] font-mono font-semibold uppercase px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
                       {selectedInquiry.type}
                     </span>
-                    <span className={`text-[8px] font-bold font-sans uppercase px-2 py-0.5 rounded-full border ${selectedInquiry.risk === "High Risk" ? "bg-red-500/10 border-red-500/20 text-red-400" : selectedInquiry.risk === "Med Risk" ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"}`}>
+                    <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded border ${selectedInquiry.risk === "High Risk" ? "bg-red-500/10 border-red-500/20 text-red-400" : selectedInquiry.risk === "Med Risk" ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-slate-800 border-slate-700 text-slate-300"}`}>
                       {selectedInquiry.risk}
                     </span>
                   </div>
-                  <h4 className="text-xs font-bold text-slate-200 leading-snug">
-                    <span className="text-slate-500 font-normal">Active Subject:</span> {selectedInquiry.title}
+                  <h4 className="text-xs font-bold text-slate-100 leading-snug mt-1">
+                    <span className="text-slate-400 font-normal">Active Subject:</span> {selectedInquiry.title}
                   </h4>
                 </div>
               ) : (
-                <div className="p-4 bg-slate-950/30 border border-dashed border-slate-900 rounded-xl text-center text-xs text-slate-500 italic">
-                  No inquiry subject selected. Click on a feed card to begin.
+                <div className="p-4 bg-slate-950 border border-dashed border-slate-800 rounded-md text-center text-xs text-slate-400 italic">
+                  Select a live feed card to analyze policy risks.
                 </div>
               )}
 
@@ -526,43 +471,43 @@ export default function EnelHubPage() {
               {originalReport && !loadingReport && (
                 <button
                   onClick={handleBackToMain}
-                  className="mb-4 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[11px] font-bold text-slate-350 hover:text-white transition-all active:scale-95 cursor-pointer"
+                  className="mb-3 inline-flex items-center gap-1 px-3 py-1 rounded-md bg-slate-950 hover:bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300 transition-colors cursor-pointer"
                 >
                   ← Return to Main Briefing
                 </button>
               )}
-              <div className={`bg-slate-950 border border-slate-900 p-5 rounded-2xl min-h-[220px] max-h-[340px] overflow-y-auto flex flex-col relative ${generatedReport || loadingReport ? "justify-start" : "justify-center"}`}>
+              <div className={`bg-slate-950 border border-slate-800 p-4 rounded-md min-h-[220px] max-h-[340px] overflow-y-auto flex flex-col relative ${generatedReport || loadingReport ? "justify-start" : "justify-center"}`}>
                 {loadingReport ? (
-                  <div className="flex flex-col items-center justify-center gap-3">
-                    <Cpu className="w-8 h-8 text-teal-400 animate-spin" />
-                    <span className="text-xs text-slate-400 font-medium">Advocate AI parsing live regulations & drafting lobby briefing...</span>
+                  <div className="flex flex-col items-center justify-center gap-3 py-8">
+                    <Cpu className="w-6 h-6 text-blue-400 animate-spin" />
+                    <span className="text-xs text-slate-400">Advocate AI parsing regulations & drafting briefing...</span>
                   </div>
                 ) : generatedReport ? (
-                  <div className="text-xs leading-relaxed font-sans text-slate-200 whitespace-pre-wrap">
+                  <div className="text-xs leading-relaxed font-sans text-slate-300 whitespace-pre-wrap">
                     {generatedReport}
                   </div>
                 ) : (
-                  <div className="text-center text-slate-500 italic text-xs space-y-2 p-4">
-                    <p>Select any legislative inquiry card on the left to instantly generate a custom strategic counter-advocacy brief.</p>
+                  <div className="text-center text-slate-400 italic text-xs space-y-2 p-4">
+                    <p>Select any legislative inquiry card to instantly generate a custom strategic counter-advocacy brief.</p>
                   </div>
                 )}
               </div>
 
               {/* Follow-up Interactive Questions */}
               {!loadingReport && generatedReport && extractQuestions(generatedReport).length > 0 && (
-                <div className="mt-4 space-y-2.5">
-                  <h4 className="text-[10px] font-mono font-extrabold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Deep Dive Follow-up Questions
+                <div className="mt-3 space-y-2">
+                  <h4 className="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" /> Deep Dive Follow-up Questions
                   </h4>
                   <div className="grid grid-cols-1 gap-2">
                     {extractQuestions(generatedReport).map((question, qIdx) => (
                       <button
                         key={qIdx}
                         onClick={() => handleFollowUpQuestion(question)}
-                        className="w-full text-left p-3.5 bg-slate-900/40 hover:bg-slate-900/80 border border-slate-900 hover:border-slate-800 rounded-xl text-[11px] text-slate-300 hover:text-white transition-all active:scale-[0.99] cursor-pointer flex justify-between items-center gap-2 group"
+                        className="w-full text-left p-3 bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-md text-xs text-slate-300 hover:text-white transition-colors cursor-pointer flex justify-between items-center gap-2 group"
                       >
                         <span>{question}</span>
-                        <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+                        <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-blue-400 transition-colors shrink-0" />
                       </button>
                     ))}
                   </div>
@@ -571,44 +516,43 @@ export default function EnelHubPage() {
             </div>
 
             {selectedInquiry && (
-              <div className="space-y-3.5">
+              <div className="space-y-3 pt-2">
                 
-                {/* Utilities: Copy & Save (Only when report exists) */}
+                {/* Utilities: Copy & Save */}
                 {generatedReport && (
-                  <div className="flex gap-3">
+                  <div className="flex gap-2">
                     <button
                       onClick={copyToClipboard}
-                      className="flex-1 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-950 text-slate-300 text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+                      className="flex-1 py-2 rounded-md border border-slate-800 hover:border-slate-700 bg-slate-950 text-slate-300 text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
                     >
                       {copySuccess ? (
                         <>
-                          <Check className="w-4 h-4 text-emerald-400" /> Copied Brief!
+                          <Check className="w-3.5 h-3.5 text-emerald-400" /> Copied Brief!
                         </>
                       ) : (
                         <>
-                          <Copy className="w-4 h-4 text-slate-400" /> Copy Briefing
+                          <Copy className="w-3.5 h-3.5 text-slate-400" /> Copy Briefing
                         </>
                       )}
                     </button>
                     <button
                       onClick={downloadReport}
-                      className="flex-1 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-950 text-slate-300 text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+                      className="flex-1 py-2 rounded-md border border-slate-800 hover:border-slate-700 bg-slate-950 text-slate-300 text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
                     >
-                      <Download className="w-4 h-4 text-slate-400" /> Save Briefing
+                      <Download className="w-3.5 h-3.5 text-slate-400" /> Save Briefing
                     </button>
                   </div>
                 )}
 
                 {/* Primary Generators */}
                 <div className="flex flex-col gap-2">
-                  {/* Toggle deep-dive or standard */}
                   {generatedReport && !inDepthMode && (
                     <button
                       onClick={() => handleSelectAndGenerate(selectedInquiry, true)}
                       disabled={loadingReport}
-                      className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-450 hover:to-teal-450 text-white font-bold text-xs flex items-center justify-center gap-2 tracking-wide shadow-lg shadow-emerald-500/10 active:scale-[0.98] cursor-pointer"
+                      className="w-full py-2.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
                     >
-                      <Sparkles className="w-4 h-4 text-white" /> Upgrade to In-Depth Briefing
+                      <Sparkles className="w-3.5 h-3.5 text-white" /> Upgrade to In-Depth Briefing
                     </button>
                   )}
 
@@ -616,18 +560,18 @@ export default function EnelHubPage() {
                     <button
                       onClick={() => handleSelectAndGenerate(selectedInquiry, false)}
                       disabled={loadingReport}
-                      className="w-full py-3 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-950 hover:bg-slate-900 text-slate-300 font-bold text-xs flex items-center justify-center gap-2 tracking-wide active:scale-[0.98] cursor-pointer"
+                      className="w-full py-2.5 rounded-md border border-slate-800 hover:border-slate-700 bg-slate-950 text-slate-300 font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
                     >
-                      <Scale className="w-4 h-4 text-slate-400" /> Switch to Standard Briefing
+                      <Scale className="w-3.5 h-3.5 text-slate-400" /> Switch to Standard Briefing
                     </button>
                   )}
 
                   <button
                     onClick={() => handleSelectAndGenerate(selectedInquiry, inDepthMode)}
                     disabled={loadingReport}
-                    className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-750 text-slate-200 font-bold text-xs flex items-center justify-center gap-2 tracking-wide active:scale-[0.98] cursor-pointer"
+                    className="w-full py-2.5 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
                   >
-                    <Cpu className="w-4 h-4 text-slate-400" /> Re-draft Active Briefing
+                    <Cpu className="w-3.5 h-3.5 text-slate-400" /> Re-draft Active Briefing
                   </button>
                 </div>
 
