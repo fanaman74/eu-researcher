@@ -52,6 +52,25 @@ export default function ItalianTrackerPage() {
   const [copySuccess, setCopySuccess] = useState(false);
   const [pptxGenerating, setPptxGenerating] = useState(false);
 
+  // Ingestion & Refresh States
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+
+  const handleSyncData = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await fetch("/api/cron");
+      if (res.ok) {
+        setLastRefreshed(new Date());
+        await fetchEvents();
+      }
+    } catch (err) {
+      console.error("Failed to sync data", err);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const fetchEvents = async () => {
     setLoading(true);
     try {
@@ -255,10 +274,19 @@ export default function ItalianTrackerPage() {
           </div>
           
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-slate-900/60 border border-slate-800 px-4 py-2 rounded-xl">
-              <span className="w-2 h-2 rounded-full bg-fuchsia-400 animate-pulse shadow-[0_0_8px_#d946ef]" />
-              <span className="text-[10px] font-mono font-bold text-slate-300">SYSTEM READY: Local SPARQL Simulator Active</span>
+            <div className="flex items-center gap-2 bg-slate-900/60 border border-slate-800 px-3.5 py-2 rounded-xl">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
+              <span className="text-[10px] font-mono font-bold text-slate-300">Auto-Refresh: 2x/Day (00:00 & 12:00)</span>
             </div>
+            <button
+              onClick={handleSyncData}
+              disabled={isSyncing}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-200 bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all px-3 py-2.5 rounded-xl cursor-pointer disabled:opacity-50"
+              title={lastRefreshed ? `Last refreshed: ${lastRefreshed.toLocaleTimeString()}` : "Trigger twice-daily data refresh"}
+            >
+              <RotateCcw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin text-fuchsia-400" : ""}`} />
+              <span>{isSyncing ? "Syncing..." : "Sync Live Data"}</span>
+            </button>
             <button
               onClick={() => setIsSimulatorOpen(!isSimulatorOpen)}
               className="inline-flex items-center gap-2 text-xs font-bold text-slate-950 bg-fuchsia-400 hover:bg-fuchsia-350 transition-all px-4 py-2.5 rounded-xl shadow-lg shadow-fuchsia-400/10 active:scale-95 cursor-pointer"

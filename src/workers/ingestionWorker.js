@@ -172,8 +172,9 @@ async function executeIngestionPipeline() {
 }
 
 function startIngestionScheduler() {
-  console.log("[Scheduler] Initializing node-cron ingestion worker (Interval: Every 4 Hours)...");
-  cron.schedule("0 */4 * * *", async () => {
+  console.log("[Scheduler] Initializing node-cron ingestion worker (Interval: Twice Daily at 00:00 & 12:00)...");
+  cron.schedule("0 0,12 * * *", async () => {
+    console.log("[Scheduler] Running twice-daily ingestion job...");
     await executeIngestionPipeline();
   });
 }

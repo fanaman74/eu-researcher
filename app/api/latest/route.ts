@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
   try {
     const response = await fetch(url, {
       headers: { 'Accept': 'application/sparql-results+json' },
-      next: { revalidate: 1800 } // Cache for 30 minutes
+      next: { revalidate: 43200 } // Cache for 12 hours (Twice Daily)
     });
 
     if (!response.ok) {
