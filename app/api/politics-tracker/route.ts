@@ -1,14 +1,23 @@
 import { NextResponse } from "next/server";
 import { type PoliticalEvent } from "@/lib/types";
+import { getPrisma } from "@/lib/db";
+import { findEvents, createEventWithRelations, toPoliticalEvent } from "@/lib/eventStore";
+import { validateEventPayload, MAX_BODY_BYTES } from "@/lib/validateEvent";
 
 // Re-export for any remaining legacy imports — prefer importing from @/lib/types directly
 export type { PoliticalEvent } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
-// Seed the mock database with events spanning the last 60 days
-// TODO: Migrate to Prisma/PostgreSQL persistence — this in-memory array resets on
-// every serverless cold start and is not shared across function instances.
+console.log(
+  `[PoliticsTracker API] Storage mode: ${
+    process.env.DATABASE_URL ? "PostgreSQL via Prisma" : "in-memory fallback (DATABASE_URL not set)"
+  }`
+);
+
+// Seed the fallback store with events spanning the last 60 days.
+// Used only when DATABASE_URL is not configured; resets on every cold start.
 let POLITICAL_EVENTS_DB: PoliticalEvent[] = [
   {
     id: "it-evt-001",
@@ -104,9 +113,17 @@ export async function GET(req: Request) {
     const party = searchParams.get("party") || "";
 
     const daysLimit = parseInt(daysStr, 10) || 60;
+
+    const prisma = getPrisma();
+    if (prisma) {
+      const events = await findEvents(prisma, { q, sourceType, category, party, daysLimit });
+      return NextResponse.json({ events });
+    }
+
+    // In-memory fallback (DATABASE_URL not configured)
     const timeLimitMs = Date.now() - daysLimit * 24 * 60 * 60 * 1000;
 
-    let results = POLITICAL_EVENTS_DB.filter(event => {
+    const results = POLITICAL_EVENTS_DB.filter(event => {
       // 60 days rolling age check
       const eventTime = new Date(event.date).getTime();
       if (eventTime < timeLimitMs) return false;
@@ -147,32 +164,62 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ events: results });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to retrieve events." }, { status: 500 });
+    console.error("[PoliticsTracker API] GET failed:", error);
+    return NextResponse.json({ error: "Failed to retrieve events." }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { title, description, content, sourceType, sourceName, sourceUrl, category, impactLevel, entities, tags } = body;
-
-    if (!title || !description || !content || !sourceType || !sourceName || !category || !impactLevel) {
-      return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
+    // Ingestion auth: Bearer token when INGEST_API_KEY is configured.
+    // Fail closed in production when it is not; open only for local development.
+    const ingestApiKey = process.env.INGEST_API_KEY;
+    if (ingestApiKey) {
+      if (req.headers.get("authorization") !== `Bearer ${ingestApiKey}`) {
+        return NextResponse.json({ error: "Unauthorized ingestion request." }, { status: 401 });
+      }
+    } else if (process.env.NODE_ENV === "production") {
+      console.error("[PoliticsTracker API] POST rejected: INGEST_API_KEY is not configured.");
+      return NextResponse.json(
+        { error: "Event ingestion is not configured on this deployment." },
+        { status: 500 }
+      );
     }
 
+    // Body size cap (100KB) — reject early via Content-Length when present
+    const contentLength = Number(req.headers.get("content-length") || 0);
+    if (contentLength > MAX_BODY_BYTES) {
+      return NextResponse.json({ error: "Request body too large." }, { status: 413 });
+    }
+    const rawBody = await req.text();
+    if (rawBody.length > MAX_BODY_BYTES) {
+      return NextResponse.json({ error: "Request body too large." }, { status: 413 });
+    }
+
+    let body: unknown;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
+    }
+
+    const validation = validateEventPayload(body);
+    if (!validation.ok) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
+    const data = validation.data;
+
+    const prisma = getPrisma();
+    if (prisma) {
+      const created = await createEventWithRelations(prisma, data);
+      return NextResponse.json({ success: true, event: toPoliticalEvent(created) });
+    }
+
+    // In-memory fallback (DATABASE_URL not configured)
     const newEvent: PoliticalEvent = {
       id: `it-evt-${Date.now()}`,
-      title,
-      description,
-      content,
-      date: new Date().toISOString(), // Current timestamp for dynamic live simulation
-      sourceType,
-      sourceName,
-      sourceUrl: sourceUrl || "https://dati.camera.it",
-      category,
-      impactLevel,
-      entities: entities || [],
-      tags: tags || []
+      date: data.date || new Date().toISOString(),
+      ...data,
     };
 
     // Prepend to database
@@ -184,6 +231,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, event: newEvent });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to ingest simulated event." }, { status: 500 });
+    console.error("[PoliticsTracker API] POST failed:", error);
+    return NextResponse.json({ error: "Failed to ingest event." }, { status: 500 });
   }
 }

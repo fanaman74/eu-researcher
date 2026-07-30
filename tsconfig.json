@@ -22,6 +22,18 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": [
+    "next-env.d.ts",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "components/**/*.ts",
+    "components/**/*.tsx",
+    "lib/**/*.ts",
+    "tests/**/*.ts",
+    ".next/types/**/*.ts",
+    "next.config.ts",
+    "prisma.config.ts",
+    "vitest.config.ts"
+  ],
   "exclude": ["node_modules"]
 }

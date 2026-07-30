@@ -1,3 +1,4 @@
+// DEMO DATA: hardcoded mock — not connected to a live source.
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -116,11 +117,12 @@ export async function GET(req: Request) {
 
     if (pid) {
       const consultation = CONSULTATIONS_DB.find(item => item.pid === pid);
-      return NextResponse.json({ consultation: consultation || null });
+      return NextResponse.json({ consultation: consultation || null, demo: true });
     }
 
-    return NextResponse.json({ consultations: CONSULTATIONS_DB });
+    return NextResponse.json({ consultations: CONSULTATIONS_DB, demo: true });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to retrieve Have Your Say feed." }, { status: 500 });
+    console.error("Have Your Say Route Error:", error);
+    return NextResponse.json({ error: "Failed to retrieve Have Your Say feed.", demo: true }, { status: 500 });
   }
 }

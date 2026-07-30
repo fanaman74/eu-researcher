@@ -1,39 +1,43 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import { 
-  ArrowLeft, 
-  BarChart3, 
-  Search, 
-  Activity,
+import {
+  BarChart3,
+  Search,
   CheckCircle,
   Clock,
-  Cpu,
   ThumbsUp,
   ThumbsDown
 } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
+import DemoBadge from "@/components/DemoBadge";
+import ErrorBanner from "@/components/ErrorBanner";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { type ParliamentQuestion, type ParliamentVote } from "@/lib/types";
 
 export default function ParliamentWatcherPage() {
-  const [questions, setQuestions] = useState<any[]>([]);
+  const [questions, setQuestions] = useState<ParliamentQuestion[]>([]);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(false);
-  
+  const [loading, setLoading] = useState(true);
+  const [questionsError, setQuestionsError] = useState(false);
+
   // Plenary vote states
   const [activeVoteId, setActiveVoteId] = useState("sitting-202605");
-  const [voteData, setVoteData] = useState<any>(null);
+  const [voteData, setVoteData] = useState<ParliamentVote | null>(null);
   const [loadingVote, setLoadingVote] = useState(false);
+  const [voteError, setVoteError] = useState(false);
 
   const fetchQuestions = async (queryTerm = "") => {
     setLoading(true);
+    setQuestionsError(false);
     try {
       const res = await fetch(`/api/parliament?q=${encodeURIComponent(queryTerm)}`);
-      if (res.ok) {
-        const data = await res.json();
-        setQuestions(data.questions || []);
-      }
+      if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
+      const data = await res.json();
+      setQuestions(data.questions || []);
     } catch (err) {
       console.error("Failed to fetch EP questions:", err);
+      setQuestionsError(true);
     } finally {
       setLoading(false);
     }
@@ -41,14 +45,15 @@ export default function ParliamentWatcherPage() {
 
   const fetchVoteData = async (voteId: string) => {
     setLoadingVote(true);
+    setVoteError(false);
     try {
       const res = await fetch(`/api/parliament?type=votes&id=${voteId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setVoteData(data.vote);
-      }
+      if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
+      const data = await res.json();
+      setVoteData(data.vote);
     } catch (err) {
       console.error("Failed to fetch vote data:", err);
+      setVoteError(true);
     } finally {
       setLoadingVote(false);
     }
@@ -65,37 +70,29 @@ export default function ParliamentWatcherPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-blue-500/30 selection:text-blue-200">
       <div className="max-w-7xl mx-auto w-full p-6 md:p-12 space-y-8">
-        
+
         {/* Navigation Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-6">
-          <Link 
-            href="/enel"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-md"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" /> Back to Public Affairs Hub
-          </Link>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-blue-400" />
-            <span className="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-wider bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded-md">
-              EP Open Data Watch
-            </span>
-          </div>
-        </div>
+        <PageHeader
+          backHref="/enel"
+          backLabel="Back to Public Affairs Hub"
+          badge="EP Open Data Watch"
+          accent="blue"
+        />
 
         {/* Title */}
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <BarChart3 className="w-6 h-6 text-blue-400" /> European Parliament Watcher
+          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2 flex-wrap">
+            <BarChart3 className="w-6 h-6 text-blue-400" /> European Parliament Watcher <DemoBadge />
           </h1>
           <p className="text-xs text-slate-400">Track MEP written inquiries, DG ENER hearings, and plenary voting records</p>
         </div>
 
         {/* Division into two panels */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
+
           {/* Parliamentary Questions Watcher (7/12 columns) */}
           <div className="lg:col-span-7 space-y-5">
-            
+
             <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 space-y-4">
               <div className="space-y-1">
                 <h2 className="text-sm font-bold text-slate-200">Tracked Legislative Inquiries</h2>
@@ -126,10 +123,11 @@ export default function ParliamentWatcherPage() {
 
             {/* Questions Feed */}
             <div className="space-y-3">
-              {loading ? (
-                <div className="p-12 border border-slate-800 rounded-lg bg-slate-900/60 flex flex-col items-center justify-center gap-3">
-                  <Activity className="w-6 h-6 text-blue-400 animate-spin" />
-                  <span className="text-xs text-slate-400">Fetching inquiries feed from EP portal...</span>
+              {questionsError ? (
+                <ErrorBanner onRetry={() => fetchQuestions(search)} />
+              ) : loading ? (
+                <div className="border border-slate-800 rounded-lg bg-slate-900/60">
+                  <LoadingSpinner message="Fetching inquiries feed from EP portal..." accent="blue" size="sm" />
                 </div>
               ) : questions.length === 0 ? (
                 <div className="p-12 text-center border border-slate-800 rounded-lg bg-slate-900/60 text-slate-400 text-xs italic">
@@ -142,9 +140,9 @@ export default function ParliamentWatcherPage() {
                     const isMed = q.risk === "Med Risk";
                     const borderStyle = isHigh ? "border-red-500/20 bg-slate-900/80" : isMed ? "border-amber-500/20 bg-slate-900/80" : "border-slate-800 bg-slate-900/60";
                     const riskBadgeStyle = isHigh ? "text-red-400 bg-red-500/10 border-red-500/20" : isMed ? "text-amber-400 bg-amber-500/10 border-amber-500/20" : "text-slate-300 bg-slate-800 border-slate-700";
-                    
+
                     return (
-                      <div 
+                      <div
                         key={q.id}
                         className={`p-5 border rounded-lg flex flex-col gap-3 hover:border-slate-700 transition-colors ${borderStyle}`}
                       >
@@ -189,7 +187,7 @@ export default function ParliamentWatcherPage() {
 
           {/* Sit Vote Results Tracker (5/12 columns) */}
           <div className="lg:col-span-5 space-y-5">
-            
+
             <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 space-y-5 flex flex-col justify-between min-h-[500px]">
 
               <div className="space-y-4">
@@ -215,11 +213,10 @@ export default function ParliamentWatcherPage() {
                 </div>
 
                 {/* Vote detail box */}
-                {loadingVote ? (
-                  <div className="flex flex-col items-center justify-center gap-3 py-16">
-                    <Cpu className="w-6 h-6 text-blue-400 animate-spin" />
-                    <span className="text-xs text-slate-400">Extracting sitting votes data...</span>
-                  </div>
+                {voteError ? (
+                  <ErrorBanner onRetry={() => fetchVoteData(activeVoteId)} />
+                ) : loadingVote ? (
+                  <LoadingSpinner message="Extracting sitting votes data..." accent="blue" size="md" />
                 ) : voteData ? (
                   <div className="space-y-5">
                     <div className="space-y-1">
@@ -231,7 +228,7 @@ export default function ParliamentWatcherPage() {
                     {/* Chart splits */}
                     <div className="space-y-3 bg-slate-950 p-4 rounded-md border border-slate-800">
                       <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">MEP Vote Splits (Total: {voteData.totalVotes})</div>
-                      
+
                       {/* Yes bar */}
                       <div className="space-y-1">
                         <div className="flex items-center justify-between text-[11px] font-mono">

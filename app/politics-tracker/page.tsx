@@ -1,27 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import { 
-  Scale, 
-  Search, 
-  Filter, 
-  Calendar, 
-  Sparkles, 
-  ArrowRight,
-  TrendingUp,
-  AlertTriangle,
-  Zap,
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Search,
+  Filter,
+  Calendar,
+  Sparkles,
   Activity,
   Radio,
-  ExternalLink,
-  ChevronRight,
-  PlusCircle,
-  Database,
-  Check,
-  RotateCcw,
-  SlidersHorizontal
+  ExternalLink
 } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
+import ErrorBanner from "@/components/ErrorBanner";
 import { type PoliticalEvent } from "@/lib/types";
 import { generateAnalysisPptx } from "@/lib/generatePptx";
 
@@ -29,18 +19,15 @@ export default function ItalianTrackerPage() {
   const [events, setEvents] = useState<PoliticalEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<PoliticalEvent | null>(null);
   const [loading, setLoading] = useState(true);
-  
+  const [loadError, setLoadError] = useState(false);
+
   // Filtering States
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sourceType, setSourceType] = useState("");
   const [category, setCategory] = useState("");
   const [party, setParty] = useState("");
   const [days, setDays] = useState(60);
-
-  // Ingestion Simulator States
-  const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
-  const [simulationLoading, setSimulationLoading] = useState(false);
-  const [simulationSuccess, setSimulationSuccess] = useState(false);
 
   // Analysis Modal States
   const [analysisModalOpen, setAnalysisModalOpen] = useState(false);
@@ -50,60 +37,43 @@ export default function ItalianTrackerPage() {
   const [copySuccess, setCopySuccess] = useState(false);
   const [pptxGenerating, setPptxGenerating] = useState(false);
 
-  // Refresh & Sync States
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  // Debounce free-text search so each keystroke doesn't fire a request
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  const handleSyncData = async () => {
-    setIsSyncing(true);
-    try {
-      const res = await fetch("/api/cron");
-      if (res.ok) {
-        setLastRefreshed(new Date());
-        await fetchEvents();
-      }
-    } catch (err) {
-      console.error("Failed to sync data", err);
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const params = new URLSearchParams();
-      if (search) params.append("q", search);
+      if (debouncedSearch) params.append("q", debouncedSearch);
       if (sourceType) params.append("sourceType", sourceType);
       if (category) params.append("category", category);
       if (party) params.append("party", party);
       params.append("days", days.toString());
 
       const res = await fetch(`/api/politics-tracker?${params.toString()}`);
-      if (res.ok) {
-        const data = await res.json();
-        setEvents(data.events || []);
-        if (data.events?.length > 0) {
-          const stillExists = data.events.find((e: PoliticalEvent) => e.id === selectedEvent?.id);
-          if (!stillExists) {
-            setSelectedEvent(data.events[0]);
-          } else {
-            setSelectedEvent(stillExists);
-          }
-        } else {
-          setSelectedEvent(null);
-        }
-      }
+      if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
+      const data = await res.json();
+      const loaded: PoliticalEvent[] = data.events || [];
+      setEvents(loaded);
+      setSelectedEvent((prev) => {
+        if (loaded.length === 0) return null;
+        return loaded.find((e) => e.id === prev?.id) ?? loaded[0];
+      });
     } catch (err) {
       console.error("Failed to load events", err);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
-  };
+  }, [debouncedSearch, sourceType, category, party, days]);
 
   useEffect(() => {
     fetchEvents();
-  }, [search, sourceType, category, party, days]);
+  }, [fetchEvents]);
 
   const handleResetFilters = () => {
     setSearch("");
@@ -182,178 +152,33 @@ export default function ItalianTrackerPage() {
     }
   };
 
-  const handleSimulateIngestion = async (preset: string) => {
-    setSimulationLoading(true);
-    setSimulationSuccess(false);
-    
-    let payload = {};
-
-    if (preset === "camera-vote") {
-      payload = {
-        title: "Chamber Committee Vote: Regional Energy Self-Sufficiency Framework",
-        description: "Committee X (Productive Activities) passes critical amendment protecting grid priorities for solar microgrids.",
-        content: "A bipartisan majority in the Chamber's Tenth Committee voted to fast-track self-generation approvals for industrial consumers in Piedmont and Veneto. Spurred by lobbying representing domestic manufacturing interests, the amendment limits Terna's ability to defer connection licenses for distributed battery facilities. This secures key advantages for grid-edge utilities. The vote was championed by Lega and FI, with PD voting in support after environmental audits were added.",
-        sourceType: "Official",
-        sourceName: "Dati Camera",
-        category: "Floor Vote",
-        impactLevel: "High",
-        entities: [
-          { name: "Gilberto Pichetto Fratin", party: "FI", role: "Minister of Environment" },
-          { name: "Matteo Salvini", party: "Lega", role: "Minister of Infrastructure" }
-        ],
-        tags: ["Microgrids", "Chamber", "Self-Sufficiency", "Licensing"]
-      };
-    } else if (preset === "news-data") {
-      payload = {
-        title: "NewsData.io: Cabinet Approves Emergency Decree on Industrial Tariff Cap Extensions",
-        description: "Council of Ministers signs off on €1.8B buffer package extending energy tax mitigation measures through Q4 2026.",
-        content: "During an emergency late-night session in Palazzo Chigi, the Council of Ministers authorized a targeted emergency decree shielding energy-intensive manufacturing clusters. The measure temporarily freezes grid capacity surcharges for electro-chemical and manufacturing facilities. Initial analysis shows strong alignment with Enel's industrial retail division recommendations, although parliamentary conversion debates are expected to trigger amendments from M5S regarding financing sources.",
-        sourceType: "News",
-        sourceName: "NewsData.io",
-        category: "Corporate Regulation",
-        impactLevel: "High",
-        entities: [
-          { name: "Giorgia Meloni", party: "FdI", role: "Prime Minister" },
-          { name: "Giancarlo Giorgetti", party: "Lega", role: "Minister of Economy" }
-        ],
-        tags: ["Tariff Cap", "Cabinet Decree", "State Aid", "Tax Relief"]
-      };
-    }
-
-    try {
-      const res = await fetch("/api/politics-tracker", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) {
-        setSimulationSuccess(true);
-        setIsSimulatorOpen(false);
-        fetchEvents();
-        setTimeout(() => setSimulationSuccess(false), 3000);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSimulationLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative selection:bg-blue-500/30 selection:text-blue-200">
-      
+
       {/* Main Container */}
       <div className="max-w-7xl mx-auto w-full p-6 md:p-12 space-y-8">
-        
+
         {/* Navigation Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-6 gap-4">
-          <div className="flex items-center gap-4">
-            <Link 
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-slate-200 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-md transition-colors"
-            >
-              ← Gateway
-            </Link>
-            <div className="w-10 h-10 rounded-md bg-slate-900 border border-slate-800 flex items-center justify-center text-blue-400 shrink-0">
-              <Radio className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold tracking-tight text-white">Italian Political Watch</h1>
-                <span className="text-[10px] font-mono tracking-wider bg-blue-500/10 border border-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md font-semibold">
-                  Rome Archive
-                </span>
-              </div>
-              <p className="text-xs text-slate-400 mt-0.5">National legislative movements, official committee votes, and policy aggregations</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-md">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span className="text-[11px] font-mono font-medium text-slate-300">Auto-Refresh: 2x/Day (00:00 & 12:00)</span>
-            </div>
-            <button
-              onClick={handleSyncData}
-              disabled={isSyncing}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-200 bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors px-3 py-1.5 rounded-md cursor-pointer disabled:opacity-50"
-              title={lastRefreshed ? `Last refreshed: ${lastRefreshed.toLocaleTimeString()}` : "Trigger twice-daily data refresh"}
-            >
-              <RotateCcw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin text-blue-400" : ""}`} />
-              <span>{isSyncing ? "Syncing..." : "Sync Live Data"}</span>
-            </button>
-            <button
-              onClick={() => setIsSimulatorOpen(!isSimulatorOpen)}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-100 bg-slate-800 border border-slate-700 hover:bg-slate-700 transition-colors px-3 py-1.5 rounded-md cursor-pointer"
-            >
-              <span>Simulation Deck</span> <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-            </button>
-          </div>
-        </div>
-
-        {/* Ingestion Simulator Drawer Panel */}
-        {isSimulatorOpen && (
-          <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 space-y-4">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-                <Database className="w-4 h-4 text-blue-400" /> Ingestion Pipeline Simulator
-              </h3>
-              <button 
-                onClick={() => setIsSimulatorOpen(false)}
-                className="text-xs text-slate-400 hover:text-white font-semibold cursor-pointer"
-              >
-                ✕ Close
-              </button>
-            </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Inject custom political events directly into the rolling database to test timeline updates and filter state logic.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-              <button
-                onClick={() => handleSimulateIngestion("camera-vote")}
-                disabled={simulationLoading}
-                className="p-4 bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-md text-left space-y-2 group transition-colors cursor-pointer disabled:opacity-50"
-              >
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-mono font-semibold text-slate-400 uppercase">Preset: Chamber Committee</span>
-                  <PlusCircle className="w-4 h-4 text-blue-400" />
-                </div>
-                <h4 className="text-xs font-bold text-slate-200">Ingest Committee Vote (Renewables)</h4>
-                <p className="text-[11px] text-slate-400">Simulates legislative voting in Rome committee sessions.</p>
-              </button>
-              <button
-                onClick={() => handleSimulateIngestion("news-data")}
-                disabled={simulationLoading}
-                className="p-4 bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-md text-left space-y-2 group transition-colors cursor-pointer disabled:opacity-50"
-              >
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-mono font-semibold text-slate-400 uppercase">Preset: NewsData.io Aggregator</span>
-                  <PlusCircle className="w-4 h-4 text-blue-400" />
-                </div>
-                <h4 className="text-xs font-bold text-slate-200">Ingest Breaking Energy Policy Decrees</h4>
-                <p className="text-[11px] text-slate-400">Simulates real-time Italian media coverage of cabinet decrees.</p>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {simulationSuccess && (
-          <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs px-4 py-3 rounded-md flex items-center justify-between">
-            <span className="flex items-center gap-2"><Check className="w-4 h-4" /> Real-time Ingestion Successful! Event added to rolling archive.</span>
-            <span className="text-[10px] font-mono">200 OK</span>
-          </div>
-        )}
+        <PageHeader
+          backHref="/"
+          backLabel="Gateway"
+          title="Italian Political Watch"
+          badge="Rome Archive"
+          subtitle="National legislative movements, official committee votes, and policy aggregations"
+          icon={Radio}
+          accent="blue"
+        />
 
         {/* Dashboard 4-Column Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          
+
           {/* COLUMN 1: CONTROLS & FILTERING */}
           <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 space-y-6 h-fit">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
               <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
                 <Filter className="w-3.5 h-3.5 text-blue-400" /> Filter Archive
               </h3>
-              <button 
+              <button
                 onClick={handleResetFilters}
                 className="text-[10px] text-slate-400 hover:text-slate-200 font-mono transition-colors"
               >
@@ -366,7 +191,7 @@ export default function ItalianTrackerPage() {
               <label className="text-[11px] font-semibold text-slate-300">Keyword Search</label>
               <div className="relative">
                 <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-500" />
-                <input 
+                <input
                   type="text"
                   placeholder="Search decree, entity, tag..."
                   value={search}
@@ -379,7 +204,7 @@ export default function ItalianTrackerPage() {
             {/* Source Type Filter */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-semibold text-slate-300">Source Category</label>
-              <select 
+              <select
                 value={sourceType}
                 onChange={(e) => setSourceType(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-md px-3 py-2 text-xs text-slate-200 transition-colors outline-none cursor-pointer"
@@ -393,7 +218,7 @@ export default function ItalianTrackerPage() {
             {/* Category Filter */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-semibold text-slate-300">Event Classification</label>
-              <select 
+              <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-md px-3 py-2 text-xs text-slate-200 transition-colors outline-none cursor-pointer"
@@ -410,7 +235,7 @@ export default function ItalianTrackerPage() {
             {/* Party Alignment Filter */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-semibold text-slate-300">Political Party</label>
-              <select 
+              <select
                 value={party}
                 onChange={(e) => setParty(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-md px-3 py-2 text-xs text-slate-200 transition-colors outline-none cursor-pointer"
@@ -430,7 +255,7 @@ export default function ItalianTrackerPage() {
                 <span className="text-slate-300">Retention Window</span>
                 <span className="font-mono text-blue-400">{days} Days</span>
               </div>
-              <input 
+              <input
                 type="range"
                 min="1"
                 max="60"
@@ -455,16 +280,23 @@ export default function ItalianTrackerPage() {
               <span className="text-[10px] font-mono text-slate-400">Order: Chronological</span>
             </div>
 
+            {loadError && (
+              <ErrorBanner
+                message="Failed to load political events. Please try again."
+                onRetry={fetchEvents}
+              />
+            )}
+
             {loading ? (
               <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-12 text-center flex flex-col items-center justify-center gap-3 flex-1">
                 <Radio className="w-6 h-6 text-blue-400 animate-spin" />
                 <span className="text-xs text-slate-400">Loading Rome legislative records...</span>
               </div>
-            ) : events.length === 0 ? (
+            ) : events.length === 0 && !loadError ? (
               <div className="bg-slate-900/60 border border-dashed border-slate-800 rounded-lg p-12 text-center text-slate-400 text-xs flex-1 flex flex-col items-center justify-center">
                 No active events match the filter criteria in the current {days}-day archive.
               </div>
-            ) : (
+            ) : events.length === 0 ? null : (
               <div className="space-y-3 flex-1 overflow-y-auto pr-1">
                 {events.map((evt) => {
                   const isSelected = selectedEvent?.id === evt.id;
@@ -485,8 +317,8 @@ export default function ItalianTrackerPage() {
                         }
                       }}
                       className={`w-full text-left p-4 rounded-lg space-y-3 transition-colors cursor-pointer border ${
-                        isSelected 
-                          ? "bg-slate-900 border-blue-500/60" 
+                        isSelected
+                          ? "bg-slate-900 border-blue-500/60"
                           : "bg-slate-900/60 border-slate-800 hover:border-slate-700"
                       }`}
                     >
@@ -500,10 +332,10 @@ export default function ItalianTrackerPage() {
                           </span>
                         </div>
                         <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded border ${
-                          evt.impactLevel === "High" 
-                            ? "bg-red-500/10 border-red-500/20 text-red-400" 
-                            : evt.impactLevel === "Medium" 
-                              ? "bg-amber-500/10 border-amber-500/20 text-amber-400" 
+                          evt.impactLevel === "High"
+                            ? "bg-red-500/10 border-red-500/20 text-red-400"
+                            : evt.impactLevel === "Medium"
+                              ? "bg-amber-500/10 border-amber-500/20 text-amber-400"
                               : "bg-slate-800 border-slate-700 text-slate-400"
                         }`}>
                           {evt.impactLevel} Impact
@@ -524,8 +356,8 @@ export default function ItalianTrackerPage() {
                         </span>
                         <div className="flex items-center gap-2">
                           <span className="flex gap-1">
-                            {evt.tags.slice(0, 2).map((t, idx) => (
-                              <span key={idx} className="text-[9px] bg-slate-950 px-1.5 py-0.5 rounded text-slate-400 border border-slate-800">#{t}</span>
+                            {evt.tags.slice(0, 2).map((t) => (
+                              <span key={t} className="text-[9px] bg-slate-950 px-1.5 py-0.5 rounded text-slate-400 border border-slate-800">#{t}</span>
                             ))}
                           </span>
                           <button
@@ -574,8 +406,8 @@ export default function ItalianTrackerPage() {
                   <span className="text-[10px] font-mono text-slate-500 uppercase">Sponsoring Entities / Key Actors</span>
                   {selectedEvent.entities && selectedEvent.entities.length > 0 ? (
                     <div className="space-y-1.5">
-                      {selectedEvent.entities.map((ent, idx) => (
-                        <div key={idx} className="p-2 bg-slate-950 border border-slate-800 rounded-md flex justify-between items-center">
+                      {selectedEvent.entities.map((ent) => (
+                        <div key={ent.name} className="p-2 bg-slate-950 border border-slate-800 rounded-md flex justify-between items-center">
                           <div>
                             <span className="font-semibold text-slate-200 block text-[11px]">{ent.name}</span>
                             <span className="text-[10px] text-slate-500">{ent.role}</span>
@@ -631,7 +463,7 @@ export default function ItalianTrackerPage() {
       {analysisModalOpen && analyzingEvent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 md:p-8 max-w-4xl w-full max-h-[90vh] flex flex-col justify-between shadow-2xl relative">
-            
+
             {/* Header */}
             <div className="border-b border-slate-800 pb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -645,8 +477,9 @@ export default function ItalianTrackerPage() {
                   <p className="text-xs text-slate-400 truncate max-w-lg mt-0.5">Topic: {analyzingEvent.title}</p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setAnalysisModalOpen(false)}
+                aria-label="Close"
                 className="p-1.5 rounded-md bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-100 transition-colors cursor-pointer text-xs font-semibold"
               >
                 ✕

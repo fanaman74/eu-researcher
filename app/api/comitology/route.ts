@@ -1,3 +1,4 @@
+// DEMO DATA: hardcoded mock — not connected to a live source.
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -44,11 +45,12 @@ export async function GET(req: Request) {
 
     if (id) {
       const vote = COMITOLOGY_VOTES.find(item => item.id === id);
-      return NextResponse.json({ vote: vote || null });
+      return NextResponse.json({ vote: vote || null, demo: true });
     }
 
-    return NextResponse.json({ votes: COMITOLOGY_VOTES });
+    return NextResponse.json({ votes: COMITOLOGY_VOTES, demo: true });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to retrieve comitology votes." }, { status: 500 });
+    console.error("Comitology Route Error:", error);
+    return NextResponse.json({ error: "Failed to retrieve comitology votes.", demo: true }, { status: 500 });
   }
 }

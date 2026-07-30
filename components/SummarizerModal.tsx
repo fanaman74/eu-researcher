@@ -2,30 +2,63 @@
 
 import React, { useState, useEffect } from "react";
 import { Download, Copy, Check, X, Sparkles, Cpu } from "lucide-react";
+import { type SummarizerConfig } from "@/lib/types";
+
+export type SummarizerAccent = "emerald" | "cyan" | "purple" | "fuchsia" | "amber" | "blue";
 
 export interface SummarizerModalProps {
   isOpen: boolean;
   onClose: () => void;
   /** Document to summarize */
-  document: {
-    title: string;
-    snippet: string;
-    namespace: string;
-    celex: string;
-  } | null;
-  /** Color accent for the modal (emerald, cyan, purple, etc.) */
-  accent?: "emerald" | "cyan" | "purple" | "fuchsia";
+  document: SummarizerConfig | null;
+  /** Color accent for the modal */
+  accent?: SummarizerAccent;
+  /** Label for the identifier line under the title (default "CELEX") */
+  idLabel?: string;
+  /** Small uppercase label in the header (default "AI Document Summarizer") */
+  headerLabel?: string;
+  /** Message shown while generating the summary */
+  loadingMessage?: string;
+  /**
+   * Override the summary fetcher (default POSTs /api/summarize).
+   * Must resolve to the summary text. Receives an AbortSignal that is
+   * aborted when a newer request supersedes this one.
+   */
+  fetchSummary?: (doc: SummarizerConfig, detailed: boolean, signal: AbortSignal) => Promise<string>;
 }
+
+const defaultFetchSummary = async (doc: SummarizerConfig, detailed: boolean, signal: AbortSignal): Promise<string> => {
+  const res = await fetch("/api/summarize", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: doc.title,
+      snippet: doc.snippet,
+      namespace: doc.namespace,
+      celex: doc.celex,
+      detailed,
+    }),
+    signal,
+  });
+
+  if (!res.ok) throw new Error("Failed to generate summary.");
+  const data = await res.json();
+  return data.summary as string;
+};
 
 /**
  * Reusable AI Document Summarizer modal.
- * Replaces the duplicated summarizer UI across eurlex, legal, research, and politics-tracker pages.
+ * Replaces the duplicated summarizer UI across eurlex, legal, research, and mep-questions pages.
  */
 export default function SummarizerModal({
   isOpen,
   onClose,
   document: doc,
   accent = "emerald",
+  idLabel = "CELEX",
+  headerLabel = "AI Document Summarizer",
+  loadingMessage = "Fetching document from EUR-Lex Cellar & generating AI summary...",
+  fetchSummary = defaultFetchSummary,
 }: SummarizerModalProps) {
   const [summaryText, setSummaryText] = useState("");
   const [summarizing, setSummarizing] = useState(false);
@@ -38,14 +71,36 @@ export default function SummarizerModal({
     cyan: { text: "text-cyan-400", bg: "bg-cyan-500", border: "border-cyan-500/30", glow: "shadow-cyan-500/10" },
     purple: { text: "text-purple-400", bg: "bg-purple-500", border: "border-purple-500/30", glow: "shadow-purple-500/10" },
     fuchsia: { text: "text-fuchsia-400", bg: "bg-fuchsia-500", border: "border-fuchsia-500/30", glow: "shadow-fuchsia-500/10" },
+    amber: { text: "text-amber-400", bg: "bg-amber-500", border: "border-amber-500/30", glow: "shadow-amber-500/10" },
+    blue: { text: "text-blue-400", bg: "bg-blue-500", border: "border-blue-500/30", glow: "shadow-blue-500/10" },
   };
   const c = colors[accent];
 
+  // Generate the summary whenever the modal opens, the document changes, or the
+  // Concise/Detailed toggle flips. Stale requests are aborted so a slower earlier
+  // request can never overwrite a newer one.
   useEffect(() => {
-    if (isOpen && doc) {
-      generateSummary();
-    }
-  }, [isOpen, doc, isDetailed]);
+    if (!isOpen || !doc) return;
+
+    const controller = new AbortController();
+    setSummarizing(true);
+    setSummaryText("");
+    setCopySuccess(false);
+
+    (async () => {
+      try {
+        const text = await fetchSummary(doc, isDetailed, controller.signal);
+        if (!controller.signal.aborted) setSummaryText(text);
+      } catch (err: any) {
+        if (controller.signal.aborted) return;
+        setSummaryText(`⚠️ Failed to draft summary: ${err.message || "An error occurred."}`);
+      } finally {
+        if (!controller.signal.aborted) setSummarizing(false);
+      }
+    })();
+
+    return () => controller.abort();
+  }, [isOpen, doc, isDetailed, fetchSummary]);
 
   // Escape key closes modal
   useEffect(() => {
@@ -55,35 +110,6 @@ export default function SummarizerModal({
     if (isOpen) window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, [isOpen, onClose]);
-
-  const generateSummary = async () => {
-    if (!doc) return;
-    setSummarizing(true);
-    setSummaryText("");
-    setCopySuccess(false);
-
-    try {
-      const res = await fetch("/api/summarize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: doc.title,
-          snippet: doc.snippet,
-          namespace: doc.namespace,
-          celex: doc.celex,
-          detailed: isDetailed,
-        }),
-      });
-
-      if (!res.ok) throw new Error("Failed to generate summary.");
-      const data = await res.json();
-      setSummaryText(data.summary);
-    } catch (err: any) {
-      setSummaryText(`⚠️ Failed to draft summary: ${err.message || "An error occurred."}`);
-    } finally {
-      setSummarizing(false);
-    }
-  };
 
   const downloadSummary = () => {
     if (!doc || !summaryText) return;
@@ -122,16 +148,16 @@ export default function SummarizerModal({
             <div className="flex items-center gap-2">
               <Sparkles className={`w-4 h-4 ${c.text}`} />
               <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400">
-                AI Document Summarizer
+                {headerLabel}
               </span>
             </div>
             <h3 className="text-sm font-bold text-white leading-snug truncate">{doc.title}</h3>
-            <p className="text-[10px] font-mono text-slate-500">CELEX: {doc.celex}</p>
+            <p className="text-[10px] font-mono text-slate-500">{idLabel}: {doc.celex}</p>
           </div>
           <button
             onClick={onClose}
             className="text-slate-500 hover:text-slate-200 transition-colors p-1.5 hover:bg-slate-800 rounded-xl cursor-pointer"
-            aria-label="Close summarizer"
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
@@ -144,7 +170,7 @@ export default function SummarizerModal({
             className={`flex-1 py-2 text-[10px] font-bold uppercase rounded-lg border transition-all cursor-pointer ${
               !isDetailed
                 ? `${c.border} ${c.text} bg-slate-950`
-                : "border-slate-800 text-slate-455 hover:text-slate-300"
+                : "border-slate-800 text-slate-400 hover:text-slate-300"
             }`}
           >
             Concise (~250 words)
@@ -154,7 +180,7 @@ export default function SummarizerModal({
             className={`flex-1 py-2 text-[10px] font-bold uppercase rounded-lg border transition-all cursor-pointer ${
               isDetailed
                 ? `${c.border} ${c.text} bg-slate-950`
-                : "border-slate-800 text-slate-455 hover:text-slate-300"
+                : "border-slate-800 text-slate-400 hover:text-slate-300"
             }`}
           >
             Detailed (~1000 words)
@@ -167,7 +193,7 @@ export default function SummarizerModal({
             <div className="flex flex-col items-center justify-center gap-3 py-20">
               <Cpu className={`w-8 h-8 ${c.text} animate-spin`} />
               <span className="text-xs text-slate-400 font-medium">
-                Fetching document from EUR-Lex Cellar & generating AI summary...
+                {loadingMessage}
               </span>
             </div>
           ) : (

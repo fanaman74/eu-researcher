@@ -1,53 +1,70 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import { 
-  ArrowLeft, 
-  Users, 
-  Sparkles, 
-  Activity,
+import React, { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import {
+  Users,
+  Sparkles,
   FileText,
   Globe,
   Download,
   Cpu
 } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
+import DemoBadge from "@/components/DemoBadge";
+import ErrorBanner from "@/components/ErrorBanner";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { type Consultation, type ConsultationSubmission } from "@/lib/types";
 
-export default function HaveYourSayPage() {
-  const [consultations, setConsultations] = useState<any[]>([]);
-  const [activePid, setActivePid] = useState("PID-2026-EMD");
-  const [activeConsultation, setActiveConsultation] = useState<any>(null);
+function HaveYourSayContent() {
+  const searchParams = useSearchParams();
+  const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [activePid, setActivePid] = useState<string | null>(null);
+  const [activeConsultation, setActiveConsultation] = useState<Consultation | null>(null);
   const [loadingConsultation, setLoadingConsultation] = useState(false);
-  
+  const [consultationsError, setConsultationsError] = useState(false);
+  const [consultationError, setConsultationError] = useState(false);
+
   // PDF parsing simulation states
   const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
   const [parsingSub, setParsingSub] = useState(false);
   const [parsedBriefing, setParsedBriefing] = useState<string | null>(null);
 
-  const fetchConsultations = async () => {
+  // Deep link: /have-your-say?pid=PID-... preselects a consultation
+  useEffect(() => {
+    const pid = searchParams.get("pid");
+    if (pid) setActivePid(pid);
+  }, [searchParams]);
+
+  const fetchConsultations = useCallback(async () => {
+    setConsultationsError(false);
     try {
       const res = await fetch("/api/have-your-say");
-      if (res.ok) {
-        const data = await res.json();
-        setConsultations(data.consultations || []);
-      }
+      if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
+      const data = await res.json();
+      const list: Consultation[] = data.consultations || [];
+      setConsultations(list);
+      // Auto-select the first consultation when no deep-linked pid is present
+      setActivePid((prev) => prev ?? (list.length > 0 ? list[0].pid : null));
     } catch (err) {
       console.error("Failed to fetch consultations:", err);
+      setConsultationsError(true);
     }
-  };
+  }, []);
 
   const fetchActiveConsultation = async (pid: string) => {
     setLoadingConsultation(true);
+    setConsultationError(false);
     setParsedBriefing(null);
     setSelectedSubId(null);
     try {
       const res = await fetch(`/api/have-your-say?pid=${pid}`);
-      if (res.ok) {
-        const data = await res.json();
-        setActiveConsultation(data.consultation);
-      }
+      if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
+      const data = await res.json();
+      setActiveConsultation(data.consultation);
     } catch (err) {
       console.error("Failed to fetch active consultation:", err);
+      setConsultationError(true);
     } finally {
       setLoadingConsultation(false);
     }
@@ -55,13 +72,13 @@ export default function HaveYourSayPage() {
 
   useEffect(() => {
     fetchConsultations();
-  }, []);
+  }, [fetchConsultations]);
 
   useEffect(() => {
-    fetchActiveConsultation(activePid);
+    if (activePid) fetchActiveConsultation(activePid);
   }, [activePid]);
 
-  const handleParseSub = async (sub: any) => {
+  const handleParseSub = async (sub: ConsultationSubmission) => {
     setSelectedSubId(sub.id);
     setParsingSub(true);
     setParsedBriefing(null);
@@ -98,30 +115,26 @@ export default function HaveYourSayPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-blue-500/30 selection:text-blue-200">
       <div className="max-w-7xl mx-auto w-full p-6 md:p-12 space-y-8">
-        
+
         {/* Navigation Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-6">
-          <Link 
-            href="/enel"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-md"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" /> Back to Public Affairs Hub
-          </Link>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-blue-400" />
-            <span className="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-wider bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded-md">
-              EC Consultation Watch
-            </span>
-          </div>
-        </div>
+        <PageHeader
+          backHref="/enel"
+          backLabel="Back to Public Affairs Hub"
+          badge="EC Consultation Watch"
+          accent="blue"
+        />
 
         {/* Title */}
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <Users className="w-6 h-6 text-blue-400" /> Have Your Say Consultation Monitor
+          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2 flex-wrap">
+            <Users className="w-6 h-6 text-blue-400" /> Have Your Say Consultation Monitor <DemoBadge />
           </h1>
           <p className="text-xs text-slate-400">Capture Commission proposals feedback, map stakeholder demographics, and parse trade position papers</p>
         </div>
+
+        {consultationsError && (
+          <ErrorBanner onRetry={fetchConsultations} />
+        )}
 
         {/* Selector Header Bar */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -133,8 +146,8 @@ export default function HaveYourSayPage() {
                   key={item.pid}
                   onClick={() => setActivePid(item.pid)}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-md border transition-colors cursor-pointer ${
-                    activePid === item.pid 
-                      ? "border-blue-500 bg-blue-500/10 text-blue-400" 
+                    activePid === item.pid
+                      ? "border-blue-500 bg-blue-500/10 text-blue-400"
                       : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200"
                   }`}
                 >
@@ -143,7 +156,7 @@ export default function HaveYourSayPage() {
               ))}
             </div>
           </div>
-          
+
           {activeConsultation && (
             <div className="bg-slate-950 border border-slate-800 p-3 rounded-md shrink-0 flex items-center gap-4">
               <div className="text-center">
@@ -161,10 +174,10 @@ export default function HaveYourSayPage() {
 
         {/* Division Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
+
           {/* Demographics Metrics (5/12 columns) */}
           <div className="lg:col-span-5 space-y-5">
-            
+
             <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 space-y-5">
               <div>
                 <h2 className="text-sm font-bold text-slate-200 flex items-center gap-1.5"><Globe className="w-4 h-4 text-blue-400" /> Stakeholder Demographics</h2>
@@ -172,19 +185,18 @@ export default function HaveYourSayPage() {
               </div>
 
               {loadingConsultation ? (
-                <div className="flex flex-col items-center justify-center gap-3 py-16">
-                  <Activity className="w-6 h-6 text-blue-400 animate-spin" />
-                  <span className="text-xs text-slate-400">Extracting demographic parameters...</span>
-                </div>
+                <LoadingSpinner message="Extracting demographic parameters..." accent="blue" size="md" />
+              ) : consultationError ? (
+                <ErrorBanner onRetry={() => activePid && fetchActiveConsultation(activePid)} />
               ) : activeConsultation ? (
                 <div className="space-y-4">
-                  
+
                   {/* Country breakdown */}
                   <div className="space-y-2 bg-slate-950 p-4 rounded-md border border-slate-800">
                     <h3 className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">Country Submissions Breakdown</h3>
                     <div className="space-y-2">
-                      {activeConsultation.demographics.countries.map((c: any, idx: number) => (
-                        <div key={idx} className="space-y-1">
+                      {activeConsultation.demographics.countries.map((c) => (
+                        <div key={c.country} className="space-y-1">
                           <div className="flex items-center justify-between text-[11px] font-mono">
                             <span className="text-slate-300">{c.country}</span>
                             <span className="text-slate-400">{c.submissions} ({c.percentage}%)</span>
@@ -201,8 +213,8 @@ export default function HaveYourSayPage() {
                   <div className="space-y-2 bg-slate-950 p-4 rounded-md border border-slate-800">
                     <h3 className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">Stakeholder Sectors Breakdown</h3>
                     <div className="space-y-2">
-                      {activeConsultation.demographics.sectors.map((s: any, idx: number) => (
-                        <div key={idx} className="space-y-1">
+                      {activeConsultation.demographics.sectors.map((s) => (
+                        <div key={s.name} className="space-y-1">
                           <div className="flex items-center justify-between text-[11px] font-mono">
                             <span className="text-slate-300">{s.name}</span>
                             <span className="text-slate-400">{s.count} ({s.percentage}%)</span>
@@ -219,13 +231,13 @@ export default function HaveYourSayPage() {
                   <div className="space-y-2 bg-slate-950 p-4 rounded-md border border-slate-800">
                     <h3 className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">Lobbying Sentiment Splitting</h3>
                     <div className="space-y-2">
-                      {activeConsultation.demographics.sentiments.map((s: any, idx: number) => {
+                      {activeConsultation.demographics.sentiments.map((s) => {
                         const isSupportive = s.label.includes("Supportive");
                         const isHostile = s.label.includes("Hostile");
                         const barColor = isSupportive ? "bg-emerald-500" : isHostile ? "bg-red-500" : "bg-slate-500";
                         const labelColor = isSupportive ? "text-emerald-400" : isHostile ? "text-red-400" : "text-slate-400";
                         return (
-                          <div key={idx} className="space-y-1">
+                          <div key={s.label} className="space-y-1">
                             <div className="flex items-center justify-between text-[11px] font-mono">
                               <span className={`font-semibold ${labelColor}`}>{s.label}</span>
                               <span className="text-slate-400">{s.count} ({s.percentage}%)</span>
@@ -249,7 +261,7 @@ export default function HaveYourSayPage() {
 
           {/* Submissions Stream & Ingestion Parser (7/12 columns) */}
           <div className="lg:col-span-7 space-y-5">
-            
+
             <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 space-y-5 flex flex-col justify-between min-h-[500px]">
 
               <div className="space-y-4 flex-1">
@@ -259,21 +271,20 @@ export default function HaveYourSayPage() {
                 </div>
 
                 {loadingConsultation ? (
-                  <div className="flex flex-col items-center justify-center gap-3 py-16">
-                    <Activity className="w-6 h-6 text-blue-400 animate-spin" />
-                    <span className="text-xs text-slate-400">Loading consultations feed...</span>
-                  </div>
+                  <LoadingSpinner message="Loading consultations feed..." accent="blue" size="md" />
+                ) : consultationError ? (
+                  <ErrorBanner onRetry={() => activePid && fetchActiveConsultation(activePid)} />
                 ) : activeConsultation ? (
                   <div className="space-y-3">
-                    
+
                     {/* Positions Stream List */}
                     <div className="space-y-3">
-                      {activeConsultation.submissions.map((sub: any) => {
+                      {activeConsultation.submissions.map((sub) => {
                         const isSupportive = sub.sentiment === "Supportive";
                         const tagColor = isSupportive ? "bg-slate-900 border-slate-700 text-emerald-400" : "bg-red-500/10 border-red-500/20 text-red-400";
                         const borderStyle = selectedSubId === sub.id ? "border-blue-500/60 bg-slate-900" : "border-slate-800 bg-slate-950/60 hover:border-slate-700";
                         return (
-                          <div 
+                          <div
                             key={sub.id}
                             className={`p-4 border rounded-md flex flex-col gap-3 transition-colors ${borderStyle}`}
                           >
@@ -310,7 +321,7 @@ export default function HaveYourSayPage() {
                     {/* Parser Result Frame */}
                     {(parsingSub || parsedBriefing) && (
                       <div className="p-4 bg-slate-950 border border-slate-800 rounded-md space-y-2">
-                        
+
                         <div className="flex items-center justify-between">
                           <h3 className="text-[10px] font-mono font-bold uppercase text-blue-400">Position Analysis Briefing</h3>
                           <div className="flex items-center gap-1 text-slate-500">
@@ -321,7 +332,7 @@ export default function HaveYourSayPage() {
 
                         {parsingSub ? (
                           <div className="flex flex-col items-center justify-center gap-2 py-6">
-                            <Activity className="w-5 h-5 text-blue-400 animate-spin" />
+                            <Cpu className="w-5 h-5 text-blue-400 animate-spin" />
                             <span className="text-[10px] text-slate-400 font-mono">Parsing attached position paper...</span>
                           </div>
                         ) : (
@@ -347,5 +358,17 @@ export default function HaveYourSayPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function HaveYourSayPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+        <LoadingSpinner message="Loading consultation monitor..." accent="blue" size="lg" />
+      </div>
+    }>
+      <HaveYourSayContent />
+    </Suspense>
   );
 }

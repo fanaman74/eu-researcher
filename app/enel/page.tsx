@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { 
-  Scale, 
-  Users, 
-  BarChart3, 
-  Cpu, 
+import {
+  Scale,
+  Users,
+  BarChart3,
+  Cpu,
   Sparkles,
   ArrowRight,
   Zap,
@@ -16,10 +16,14 @@ import {
   Check,
   Download
 } from "lucide-react";
+import DemoBadge from "@/components/DemoBadge";
+import ErrorBanner from "@/components/ErrorBanner";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { type EnelBrief } from "@/lib/types";
 
 export default function EnelHubPage() {
   const briefingRef = useRef<HTMLDivElement>(null);
-  const [selectedInquiry, setSelectedInquiry] = useState<any>(null);
+  const [selectedInquiry, setSelectedInquiry] = useState<EnelBrief | null>(null);
   const [loadingReport, setLoadingReport] = useState(false);
   const [inDepthMode, setInDepthMode] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -31,66 +35,79 @@ export default function EnelHubPage() {
   const [mepQuestionsCount, setMepQuestionsCount] = useState<number | null>(null);
   const [stateAidCount, setStateAidCount] = useState<number | null>(null);
   const [acerRevisionsCount, setAcerRevisionsCount] = useState<number | null>(null);
+  const [countsError, setCountsError] = useState(false);
+
+  const fetchCounts = async () => {
+    let failed = false;
+    setCountsError(false);
+    try {
+      const resConsultations = await fetch("/api/have-your-say");
+      if (resConsultations.ok) {
+        const data = await resConsultations.json();
+        setActiveConsultationsCount(data.consultations?.length || 0);
+      } else {
+        setActiveConsultationsCount(0);
+        failed = true;
+      }
+    } catch (err) {
+      console.error(err);
+      setActiveConsultationsCount(0);
+      failed = true;
+    }
+    try {
+      const resParliament = await fetch("/api/parliament");
+      if (resParliament.ok) {
+        const data = await resParliament.json();
+        setMepQuestionsCount(data.questions?.length || 0);
+      } else {
+        setMepQuestionsCount(0);
+        failed = true;
+      }
+    } catch (err) {
+      console.error(err);
+      setMepQuestionsCount(0);
+      failed = true;
+    }
+    try {
+      const resEurlex = await fetch("/api/eurlex?q=state aid energy&top_k=15");
+      if (resEurlex.ok) {
+        const data = await resEurlex.json();
+        setStateAidCount(data.hits?.length || 0);
+      } else {
+        setStateAidCount(0);
+        failed = true;
+      }
+    } catch (err) {
+      console.error(err);
+      setStateAidCount(0);
+      failed = true;
+    }
+    try {
+      const resComitology = await fetch("/api/comitology");
+      if (resComitology.ok) {
+        const data = await resComitology.json();
+        setAcerRevisionsCount(data.votes?.length || 0);
+      } else {
+        setAcerRevisionsCount(0);
+        failed = true;
+      }
+    } catch (err) {
+      console.error(err);
+      setAcerRevisionsCount(0);
+      failed = true;
+    }
+    if (failed) setCountsError(true);
+  };
 
   useEffect(() => {
-    async function fetchCounts() {
-      try {
-        const resConsultations = await fetch("/api/have-your-say");
-        if (resConsultations.ok) {
-          const data = await resConsultations.json();
-          setActiveConsultationsCount(data.consultations?.length || 0);
-        } else {
-          setActiveConsultationsCount(0);
-        }
-      } catch (err) {
-        console.error(err);
-        setActiveConsultationsCount(0);
-      }
-      try {
-        const resParliament = await fetch("/api/parliament");
-        if (resParliament.ok) {
-          const data = await resParliament.json();
-          setMepQuestionsCount(data.questions?.length || 0);
-        } else {
-          setMepQuestionsCount(0);
-        }
-      } catch (err) {
-        console.error(err);
-        setMepQuestionsCount(0);
-      }
-      try {
-        const resEurlex = await fetch("/api/eurlex?q=state aid energy&top_k=15");
-        if (resEurlex.ok) {
-          const data = await resEurlex.json();
-          setStateAidCount(data.hits?.length || 0);
-        } else {
-          setStateAidCount(0);
-        }
-      } catch (err) {
-        console.error(err);
-        setStateAidCount(0);
-      }
-      try {
-        const resComitology = await fetch("/api/comitology");
-        if (resComitology.ok) {
-          const data = await resComitology.json();
-          setAcerRevisionsCount(data.votes?.length || 0);
-        } else {
-          setAcerRevisionsCount(0);
-        }
-      } catch (err) {
-        console.error(err);
-        setAcerRevisionsCount(0);
-      }
-    }
     fetchCounts();
   }, []);
 
   const statistics = [
-    { label: "Active Consultations", count: activeConsultationsCount, icon: Users },
-    { label: "MEP Questions Tracked", count: mepQuestionsCount, icon: BarChart3 },
-    { label: "DG COMP State Aid Cases", count: stateAidCount, icon: Scale },
-    { label: "ACER Grid Revisions", count: acerRevisionsCount, icon: Zap }
+    { label: "Active Consultations", count: activeConsultationsCount, icon: Users, href: "/have-your-say" },
+    { label: "MEP Questions Tracked", count: mepQuestionsCount, icon: BarChart3, href: "/parliament" },
+    { label: "DG COMP State Aid Cases", count: stateAidCount, icon: Scale, href: "/eurlex" },
+    { label: "ACER Grid Revisions", count: acerRevisionsCount, icon: Zap, href: "/comitology" }
   ];
 
   const tools = [
@@ -142,7 +159,7 @@ export default function EnelHubPage() {
     ]
   };
 
-  const handleSelectAndGenerate = async (brief: any, isDetailed: boolean = false) => {
+  const handleSelectAndGenerate = async (brief: EnelBrief, isDetailed: boolean = false) => {
     setSelectedInquiry(brief);
     setInDepthMode(isDetailed);
     setLoadingReport(true);
@@ -195,6 +212,7 @@ export default function EnelHubPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const extractQuestions = (text: string) => {
@@ -307,19 +325,19 @@ export default function EnelHubPage() {
         </div>
 
         {/* Live Counters Grid */}
+        {countsError && (
+          <ErrorBanner
+            message="Some live counters failed to load. Values may be incomplete."
+            onRetry={fetchCounts}
+          />
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {statistics.map((stat, idx) => {
+          {statistics.map((stat) => {
             const Icon = stat.icon;
-            const hrefs = [
-              "/have-your-say",
-              "/parliament",
-              "/eurlex",
-              "/comitology"
-            ];
             return (
-              <Link 
-                key={idx}
-                href={hrefs[idx]}
+              <Link
+                key={stat.label}
+                href={stat.href}
                 className="bg-slate-900/60 border border-slate-800 rounded-lg p-5 flex items-center justify-between hover:border-slate-700 transition-colors group cursor-pointer"
               >
                 <div className="space-y-1">
@@ -346,11 +364,11 @@ export default function EnelHubPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {tools.map((tool, idx) => {
+            {tools.map((tool) => {
               const Icon = tool.icon;
               return (
-                <div 
-                  key={idx}
+                <div
+                  key={tool.title}
                   className="bg-slate-900/60 border border-slate-800 rounded-lg p-5 flex flex-col justify-between gap-4 hover:border-slate-700 transition-colors"
                 >
                   <div className="space-y-2">
@@ -386,8 +404,8 @@ export default function EnelHubPage() {
           <div className="lg:col-span-2 bg-slate-900/60 border border-slate-800 rounded-lg p-6 space-y-4 flex flex-col justify-between">
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-blue-400" /> Live Inquiries Feed
+                <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2 flex-wrap">
+                  <Activity className="w-4 h-4 text-blue-400" /> Sample Inquiries Feed <DemoBadge />
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">Weekly legislative movements & regulatory risk assessments</p>
               </div>
@@ -410,8 +428,8 @@ export default function EnelHubPage() {
                 {recentBriefs[activeTab as keyof typeof recentBriefs].map((brief) => {
                   const isSelected = selectedInquiry?.id === brief.id && selectedInquiry?.source === brief.source;
                   return (
-                    <button 
-                      key={brief.id} 
+                    <button
+                      key={`${activeTab}-${brief.id}`} 
                       onClick={() => handleSelectAndGenerate(brief)}
                       disabled={loadingReport}
                       className={`w-full text-left p-3.5 bg-slate-950/60 border rounded-md space-y-2 transition-colors cursor-pointer disabled:opacity-70 ${isSelected ? "border-blue-500 bg-slate-900" : "border-slate-800 hover:border-slate-700"}`}
@@ -478,10 +496,7 @@ export default function EnelHubPage() {
               )}
               <div className={`bg-slate-950 border border-slate-800 p-4 rounded-md min-h-[220px] max-h-[340px] overflow-y-auto flex flex-col relative ${generatedReport || loadingReport ? "justify-start" : "justify-center"}`}>
                 {loadingReport ? (
-                  <div className="flex flex-col items-center justify-center gap-3 py-8">
-                    <Cpu className="w-6 h-6 text-blue-400 animate-spin" />
-                    <span className="text-xs text-slate-400">Advocate AI parsing regulations & drafting briefing...</span>
-                  </div>
+                  <LoadingSpinner message="Advocate AI parsing regulations & drafting briefing..." accent="blue" icon="cpu" size="sm" />
                 ) : generatedReport ? (
                   <div className="text-xs leading-relaxed font-sans text-slate-300 whitespace-pre-wrap">
                     {generatedReport}
@@ -500,9 +515,9 @@ export default function EnelHubPage() {
                     <Sparkles className="w-3.5 h-3.5" /> Deep Dive Follow-up Questions
                   </h4>
                   <div className="grid grid-cols-1 gap-2">
-                    {extractQuestions(generatedReport).map((question, qIdx) => (
+                    {extractQuestions(generatedReport).map((question) => (
                       <button
-                        key={qIdx}
+                        key={question}
                         onClick={() => handleFollowUpQuestion(question)}
                         className="w-full text-left p-3 bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-md text-xs text-slate-300 hover:text-white transition-colors cursor-pointer flex justify-between items-center gap-2 group"
                       >

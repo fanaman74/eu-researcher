@@ -10,7 +10,10 @@ declare global {
   }
 }
 
+// Pinned CDN bundle with SRI: pptxgenjs is loaded client-side at runtime so it
+// (and its jszip dependency) stays out of the Node.js/server bundle entirely.
 const SCRIPT_URL = "https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js";
+const SCRIPT_INTEGRITY = "sha384-Cck14aA9cifjYolcnjebXRfWGkz5ltHMBiG4px/j8GS+xQcb7OhNQWZYyWjQ+UwQ";
 
 function loadPptxScript(): Promise<void> {
   if (window.PptxGenJS) return Promise.resolve();
@@ -23,6 +26,8 @@ function loadPptxScript(): Promise<void> {
     }
     const script = document.createElement("script");
     script.src = SCRIPT_URL;
+    script.integrity = SCRIPT_INTEGRITY;
+    script.crossOrigin = "anonymous";
     script.async = true;
     script.onload = () => resolve();
     script.onerror = reject;

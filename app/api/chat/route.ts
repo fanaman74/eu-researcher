@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { checkRateLimit, getClientIp, isAllowedOrigin } from "@/lib/apiGuard";
+import { sanitizeForSparql, STOP_WORDS, clampTopK, executeQuery, type EurlexHit } from "@/lib/eurlex";
 
 // Prevent handler caching
 export const dynamic = "force-dynamic";
@@ -7,6 +9,8 @@ export const dynamic = "force-dynamic";
 const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY || "",
   baseURL: "https://openrouter.ai/api/v1",
+  timeout: 60000,
+  maxRetries: 1,
   defaultHeaders: {
     "HTTP-Referer": "https://legaldatahunter.com",
     "X-Title": "Legal Data Hunter AI",
@@ -39,91 +43,8 @@ const searchTool: OpenAI.Chat.Completions.ChatCompletionTool = {
   }
 };
 
-/**
- * Sanitize a user-supplied keyword for safe SPARQL string interpolation.
- * Escapes characters that could break out of a SPARQL string literal and
- * rejects any keyword containing control characters or query syntax markers.
- */
-function sanitizeForSparql(raw: string): string {
-  const s = raw
-    .replace(/\\/g, "\\\\")
-    .replace(/"/g, '\\"')
-    .replace(/\r/g, "")
-    .replace(/\n/g, "");
-  // Whitelist: only alphanumerics, spaces, and safe punctuation
-  if (!/^[a-zA-Z0-9 _\-.,'/]+$/.test(s)) {
-    return s.replace(/[^a-zA-Z0-9 _\-.,']/g, "");
-  }
-  return s;
-}
-
-function getSectorFromCelex(celex: string): string {
-  const first = celex.charAt(0);
-  switch (first) {
-    case "0": return "Consolidated Texts";
-    case "1": return "Primary Law & Treaties";
-    case "2": return "International Agreements";
-    case "3": return "Secondary Legislation";
-    case "4": return "Complementary Legislation";
-    case "5": return "Preparatory Documents";
-    case "6": return "Case Law";
-    case "7": return "National Transposition";
-    case "8": return "National Case-Law";
-    case "9": return "Parliamentary Questions";
-    default: return "Other Legal Document";
-  }
-}
-
-async function executeQuery(keywordFilters: string, sectorFilter: string, harassmentCourtFilter: string, top_k: number) {
-  const sparqlQuery = `
-    PREFIX cdm: <http://publications.europa.eu/ontology/cdm#>
-
-    SELECT DISTINCT ?work ?celex ?title ?date
-    WHERE {
-      ?work cdm:resource_legal_id_celex ?celex .
-      ?expr cdm:expression_belongs_to_work ?work .
-      ?expr cdm:expression_uses_language <http://publications.europa.eu/resource/authority/language/ENG> .
-      ?expr cdm:expression_title ?title .
-      
-      OPTIONAL { ?work cdm:work_date_document ?date . }
-      OPTIONAL { ?work cdm:work_created_by_agent ?courtAgent . }
-      
-      ${sectorFilter}
-      ${harassmentCourtFilter}
-      FILTER(${keywordFilters})
-    }
-    ORDER BY DESC(?date)
-    LIMIT ${top_k}
-  `;
-
-  const endpoint = 'https://publications.europa.eu/webapi/rdf/sparql';
-  const url = `${endpoint}?query=${encodeURIComponent(sparqlQuery)}&format=application%2Fsparql-results%2Bjson`;
-
-  const response = await fetch(url, {
-    headers: { 'Accept': 'application/sparql-results+json' }
-  });
-  if (!response.ok) {
-    throw new Error(`SPARQL endpoint returned status: ${response.status}`);
-  }
-  const data = await response.json();
-  
-  return data.results.bindings.map((b: any, idx: number) => {
-    const celex = b.celex.value;
-    const sector = getSectorFromCelex(celex);
-    return {
-      id: celex,
-      title: b.title.value,
-      score: 0.98 - idx * 0.05,
-      country: "EU",
-      sector: sector,
-      url: `https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:${celex}`,
-      snippet: `[${sector}] EUR-Lex official record. CELEX identifier: ${celex}. Document Date: ${b.date ? b.date.value : "N/A"}. Work Cellar URI: ${b.work.value}.`
-    };
-  });
-}
-
-async function callEURpxSPARQL(q: string, namespace: string = "all", top_k: number = 5) {
-  const stopWords = new Set(["the", "a", "an", "and", "or", "of", "in", "on", "at", "to", "for", "with", "by", "about", "against", "eu", "europe", "european", "court", "case", "law", "precedent", "precedents", "ruling", "rulings", "judgement", "judgment", "judgments"]);
+async function callEurLexSPARQL(q: string, namespace: string = "all", top_k: number = 5): Promise<{ hits?: EurlexHit[]; error?: string }> {
+  const stopWords = new Set([...STOP_WORDS, "eu", "europe", "european", "court", "case", "law", "precedent", "precedents", "ruling", "rulings", "judgement", "judgment", "judgments"]);
   const keywords = q.toLowerCase()
     .split(/[\s,.\-\/]+/)
     .filter(word => word.length > 2 && !stopWords.has(word));
@@ -173,27 +94,44 @@ async function callEURpxSPARQL(q: string, namespace: string = "all", top_k: numb
     // 1. Try high-precision AND search first
     const safeKeywords = keywords.map(sanitizeForSparql);
     const andFilters = safeKeywords.map(kw => `CONTAINS(LCASE(?title), "${kw}")`).join(" && ");
-    let hits = await executeQuery(andFilters, sectorFilter, harassmentCourtFilter, top_k);
+    let hits = await executeQuery(andFilters, top_k, sectorFilter, harassmentCourtFilter);
     
     // 2. If no hits, fallback to OR search
     if (hits.length === 0 && safeKeywords.length > 1) {
       const orFilters = safeKeywords.map(kw => `CONTAINS(LCASE(?title), "${kw}")`).join(" || ");
-      hits = await executeQuery(orFilters, sectorFilter, harassmentCourtFilter, top_k);
+      hits = await executeQuery(orFilters, top_k, sectorFilter, harassmentCourtFilter);
     }
     
     return { hits };
   } catch (error: any) {
     console.error("SPARQL Query Fetch Error:", error);
-    return { error: error.message || "Failed to contact EUR-Lex database." };
+    return { error: "Failed to contact EUR-Lex database." };
   }
 }
 
 export async function POST(req: Request) {
+  // Same-host origin guard against cross-site browser abuse.
+  if (!isAllowedOrigin(req)) {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+  // Rate limit: 20 requests per minute per client IP (LLM-costing endpoint).
+  if (!checkRateLimit(`chat:${getClientIp(req)}`, 20, 60_000)) {
+    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  }
+  if (!process.env.OPENROUTER_API_KEY) {
+    console.error("OPENROUTER_API_KEY is not configured.");
+    return NextResponse.json({ error: "AI provider is not configured." }, { status: 500 });
+  }
+
   try {
     const { messages, defaultNamespace = "all", defaultTopK = 5 } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: "Missing messages array." }, { status: 400 });
+    }
+    // Cap request size to bound token cost per call.
+    if (messages.length > 20 || JSON.stringify(messages).length > 16000) {
+      return NextResponse.json({ error: "Request payload too large." }, { status: 400 });
     }
 
     const searchLogs: any[] = [];
@@ -213,7 +151,11 @@ export async function POST(req: Request) {
       tool_choice: "auto"
     });
 
-    let assistantMessage = response.choices[0].message;
+    let assistantMessage = response.choices?.[0]?.message;
+    if (!assistantMessage) {
+      console.error("OpenRouter returned no choices:", JSON.stringify(response));
+      return NextResponse.json({ error: "AI provider returned an invalid response." }, { status: 502 });
+    }
 
     // Step 2: Handle function calls if the LLM requests it
     if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
@@ -226,13 +168,27 @@ export async function POST(req: Request) {
 
       for (const toolCall of assistantMessage.tool_calls) {
         if (toolCall.function.name === "search_legal_data") {
-          const args = JSON.parse(toolCall.function.arguments);
+          let args: any = null;
+          try {
+            args = JSON.parse(toolCall.function.arguments);
+          } catch {
+            console.warn("Skipping tool call with malformed arguments:", toolCall.function.arguments);
+          }
+          if (!args || typeof args.q !== "string" || !args.q.trim()) {
+            // Skip the search but still answer the tool call so the conversation stays valid.
+            updatedMessages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({ error: "Malformed search arguments." })
+            });
+            continue;
+          }
           const query = args.q;
           const namespace = args.namespace || defaultNamespace;
-          const top_k = args.top_k || defaultTopK;
+          const top_k = clampTopK(args.top_k || defaultTopK);
 
           // Execute the live EUR-Lex SPARQL database query
-          const searchResult = await callEURpxSPARQL(query, namespace, top_k);
+          const searchResult = await callEurLexSPARQL(query, namespace, top_k);
 
           const hits = (searchResult && Array.isArray(searchResult.hits)) ? searchResult.hits : [];
 
@@ -260,7 +216,11 @@ export async function POST(req: Request) {
         messages: updatedMessages
       });
 
-      assistantMessage = finalResponse.choices[0].message;
+      assistantMessage = finalResponse.choices?.[0]?.message;
+      if (!assistantMessage) {
+        console.error("OpenRouter returned no choices on final call:", JSON.stringify(finalResponse));
+        return NextResponse.json({ error: "AI provider returned an invalid response." }, { status: 502 });
+      }
     }
 
     let finalContent = assistantMessage.content || "No text response generated.";
@@ -279,6 +239,6 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error("Route Coordinator Error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error." }, { status: 500 });
+    return NextResponse.json({ error: "Failed to process chat request." }, { status: 500 });
   }
 }

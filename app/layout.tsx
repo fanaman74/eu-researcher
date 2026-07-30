@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Enel EU Public Affairs & Competition Intelligence",
-  description: "Automated intelligence hub monitoring EU legislative movements, parsing public consultations, and extracting judicial case law precedents for strategic Brussels engagement.",
+  title: "EU Researcher — European Union Intelligence Portal",
+  description: "Multi-portal intelligence hub monitoring EU legislative movements, EUR-Lex case law, parliamentary activity, public consultations, and Italian political events.",
 };
 
 export default function RootLayout({

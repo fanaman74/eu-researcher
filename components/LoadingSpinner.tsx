@@ -7,7 +7,7 @@ export interface LoadingSpinnerProps {
   /** Loading message to display */
   message?: string;
   /** Accent color for the spinner */
-  accent?: "emerald" | "cyan" | "purple" | "fuchsia" | "amber";
+  accent?: "emerald" | "cyan" | "purple" | "fuchsia" | "amber" | "blue";
   /** Icon variant */
   icon?: "activity" | "cpu";
   /** Extra vertical padding */
@@ -30,6 +30,7 @@ export default function LoadingSpinner({
     purple: "text-purple-400",
     fuchsia: "text-fuchsia-400",
     amber: "text-amber-400",
+    blue: "text-blue-400",
   };
 
   const paddings = {

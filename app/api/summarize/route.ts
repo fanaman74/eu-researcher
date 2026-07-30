@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { checkRateLimit, getClientIp, isAllowedOrigin } from "@/lib/apiGuard";
 
 export const dynamic = "force-dynamic";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY || "",
   baseURL: "https://openrouter.ai/api/v1",
+  timeout: 60000,
+  maxRetries: 1,
   defaultHeaders: {
     "HTTP-Referer": "https://legaldatahunter.com",
     "X-Title": "Legal Data Hunter AI",
@@ -13,20 +16,42 @@ const openai = new OpenAI({
 });
 
 export async function POST(req: Request) {
+  // Same-host origin guard against cross-site browser abuse.
+  if (!isAllowedOrigin(req)) {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+  // Rate limit: 20 requests per minute per client IP (LLM-costing endpoint).
+  if (!checkRateLimit(`summarize:${getClientIp(req)}`, 20, 60_000)) {
+    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  }
+  if (!process.env.OPENROUTER_API_KEY) {
+    console.error("OPENROUTER_API_KEY is not configured.");
+    return NextResponse.json({ error: "AI provider is not configured." }, { status: 500 });
+  }
+
   try {
     const { title, snippet, namespace, celex, detailed } = await req.json();
 
     if (!celex) {
       return NextResponse.json({ error: "Missing CELEX identifier." }, { status: 400 });
     }
+    // CELEX is interpolated into the Cellar URL — validate its shape first.
+    if (typeof celex !== "string" || !/^\d[0-9A-Za-z]{3,14}$/.test(celex)) {
+      return NextResponse.json({ error: "Invalid CELEX identifier." }, { status: 400 });
+    }
 
     // Fetch the actual official document from the EUR-Lex Cellar RESTful web service
     let officialText = snippet || "";
     try {
       const cellarUrl = `https://publications.europa.eu/resource/celex/${celex}?language=ENG&format=HTML`;
-      const res = await fetch(cellarUrl);
+      const res = await fetch(cellarUrl, { signal: AbortSignal.timeout(20000) });
       if (res.ok) {
-        const htmlContent = await res.text();
+        // Bound the read: reject oversized documents, hard-truncate the rest to ~2MB.
+        const contentLength = parseInt(res.headers.get("content-length") || "0", 10);
+        if (contentLength > 5 * 1024 * 1024) {
+          throw new Error(`Cellar response too large (${contentLength} bytes).`);
+        }
+        const htmlContent = (await res.text()).substring(0, 2 * 1024 * 1024);
         // Strip HTML tags and normalize spacing
         const stripped = htmlContent
           .replace(/<[^>]*?>/g, " ")
@@ -108,12 +133,12 @@ ${officialText}`;
       ]
     });
 
-    const summaryText = response.choices[0].message.content || "Failed to generate legal summary.";
+    const summaryText = response.choices?.[0]?.message?.content || "Failed to generate legal summary.";
 
     return NextResponse.json({ summary: summaryText });
 
   } catch (error: any) {
     console.error("Summarize Route Error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error." }, { status: 500 });
+    return NextResponse.json({ error: "Failed to generate legal summary." }, { status: 500 });
   }
 }

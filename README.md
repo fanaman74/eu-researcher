@@ -116,3 +116,20 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to view the 
 npm run build
 npm run start
 ```
+`npm run build` runs `prisma generate` + `next build`; neither needs a live database — `DATABASE_URL` is only used at runtime (and by `prisma migrate` when applying migrations).
+
+---
+
+## ☁️ Deployment & Environment (Railway)
+
+The app deploys to **Railway** (Nixpacks builder, `npm run build` → `npm run start`). Set these variables in the Railway project:
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `OPENROUTER_API_KEY` | Yes | Powers all AI chat & summarization features. |
+| `DATABASE_URL` | Recommended | PostgreSQL connection string (Prisma + pg adapter). Without it, the politics tracker uses in-memory storage and cron ingestion is skipped. Apply the schema with `npx prisma migrate deploy`. |
+| `CRON_SECRET` | Yes | Bearer token protecting `/api/cron`. The endpoint refuses all requests while unset. |
+| `INGEST_API_KEY` | Yes (prod) | Bearer token protecting `POST /api/politics-tracker` event ingestion. |
+| `NEWS_API_KEY` | Optional | NewsData.io key enabling live Italian news ingestion (`NEWSDATA_API_KEY` also accepted). |
+
+**Cron scheduling**: the platform itself does not self-schedule. Point an external scheduler (Railway cron or e.g. cron-job.org) at `POST https://<your-app>/api/cron` on a `0 0,12 * * *` schedule with header `Authorization: Bearer <CRON_SECRET>`.

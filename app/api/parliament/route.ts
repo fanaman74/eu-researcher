@@ -1,3 +1,4 @@
+// DEMO DATA: hardcoded mock — not connected to a live source.
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -90,7 +91,7 @@ export async function GET(req: Request) {
     if (type === "votes") {
       const id = searchParams.get("id") || "sitting-202605";
       const vote = VOTE_RESULTS[id as keyof typeof VOTE_RESULTS];
-      return NextResponse.json({ vote: vote || null });
+      return NextResponse.json({ vote: vote || null, demo: true });
     }
 
     // Default: Return tracked questions
@@ -105,8 +106,9 @@ export async function GET(req: Request) {
       );
     }
 
-    return NextResponse.json({ questions: filteredQuestions });
+    return NextResponse.json({ questions: filteredQuestions, demo: true });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to retrieve EP watch feed." }, { status: 500 });
+    console.error("Parliament Route Error:", error);
+    return NextResponse.json({ error: "Failed to retrieve EP watch feed.", demo: true }, { status: 500 });
   }
 }

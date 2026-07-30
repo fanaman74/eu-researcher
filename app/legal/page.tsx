@@ -2,26 +2,19 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { 
-  Send, 
-  Scale, 
-  BookOpen, 
-  Settings, 
-  Sliders, 
-  MessageSquare, 
-  Globe, 
+import {
+  Scale,
   Activity,
-  ChevronDown,
-  ChevronUp,
-  Shield,
-  Terminal,
   Sparkles,
   ArrowDown,
   ExternalLink,
   ChevronRight
 } from "lucide-react";
 
-import { type Message } from "@/lib/types";
+import SummarizerModal from "@/components/SummarizerModal";
+import ErrorBanner from "@/components/ErrorBanner";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { type LatestDocument, type SummarizerConfig } from "@/lib/types";
 
 const FALLBACK_LATEST_DOCS = [
   {
@@ -94,42 +87,44 @@ export default function ChatPage() {
   // Settings
   const [namespace, setNamespace] = useState("case_law");
 
-  // Summarizer Modal States
-  const [modalOpen, setModalOpen] = useState(false);
-  const [activeSummaryDoc, setActiveSummaryDoc] = useState<{ title: string; snippet: string; namespace: string; celex: string } | null>(null);
-  const [isDetailedSummary, setIsDetailedSummary] = useState(false);
-  const [summaryText, setSummaryText] = useState("");
-  const [summarizing, setSummarizing] = useState(false);
-  const [copySuccess, setCopySuccess] = useState(false);
+  // Summarizer Modal State
+  const [activeSummaryDoc, setActiveSummaryDoc] = useState<SummarizerConfig | null>(null);
 
   // Latest Documents States (Section 1)
-  const [latestDocs, setLatestDocs] = useState<any[]>(FALLBACK_LATEST_DOCS);
-  const [loadingLatest, setLoadingLatest] = useState(false);
+  const [latestDocs, setLatestDocs] = useState<LatestDocument[]>([]);
+  const [loadingLatest, setLoadingLatest] = useState(true);
+  const [latestError, setLatestError] = useState(false);
 
   // Sector Specific Documents States (Section 3)
-  const [sectorDocs, setSectorDocs] = useState<any[]>([]);
+  const [sectorDocs, setSectorDocs] = useState<LatestDocument[]>([]);
   const [loadingSectorDocs, setLoadingSectorDocs] = useState(false);
 
   const dashboardRef = useRef<HTMLDivElement>(null);
 
-  // Fetch default general latest documents (Section 1)
-  useEffect(() => {
-    const fetchLatestDocs = async () => {
-      setLoadingLatest(true);
-      try {
-        const res = await fetch("/api/latest");
-        if (res.ok) {
-          const data = await res.json();
-          if (data.documents && data.documents.length > 0) {
-            setLatestDocs(data.documents.slice(0, 8));
-          }
-        }
-      } catch (err) {
-        console.warn("Failed to fetch latest EUR-Lex documents, using fallback:", err);
-      } finally {
-        setLoadingLatest(false);
+  // Fetch default general latest documents (Section 1).
+  // On failure, fall back to cached sample documents and flag it visibly.
+  const fetchLatestDocs = async () => {
+    setLoadingLatest(true);
+    setLatestError(false);
+    try {
+      const res = await fetch("/api/latest");
+      if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
+      const data = await res.json();
+      if (data.documents && data.documents.length > 0) {
+        setLatestDocs(data.documents.slice(0, 8));
+      } else {
+        throw new Error("No documents returned.");
       }
-    };
+    } catch (err) {
+      console.warn("Failed to fetch latest EUR-Lex documents, using fallback:", err);
+      setLatestDocs(FALLBACK_LATEST_DOCS);
+      setLatestError(true);
+    } finally {
+      setLoadingLatest(false);
+    }
+  };
+
+  useEffect(() => {
     fetchLatestDocs();
   }, []);
 
@@ -158,51 +153,8 @@ export default function ChatPage() {
     dashboardRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleSummarize = async (title: string, snippet: string, docNamespace: string, celex: string, detailed: boolean = false) => {
+  const handleSummarize = (title: string, snippet: string, docNamespace: string, celex: string) => {
     setActiveSummaryDoc({ title, snippet, namespace: docNamespace, celex });
-    setIsDetailedSummary(detailed);
-    setModalOpen(true);
-    setSummarizing(true);
-    setSummaryText("");
-    setCopySuccess(false);
-
-    try {
-      const res = await fetch("/api/summarize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, snippet, namespace: docNamespace, celex, detailed })
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to generate summary.");
-      }
-
-      const data = await res.json();
-      setSummaryText(data.summary);
-    } catch (err: any) {
-      setSummaryText(`⚠️ Failed to draft summary: ${err.message || "An error occurred."}`);
-    } finally {
-      setSummarizing(false);
-    }
-  };
-
-  const downloadSummary = () => {
-    if (!activeSummaryDoc || !summaryText) return;
-    const blob = new Blob([summaryText], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${activeSummaryDoc.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_summary.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const copyToClipboard = () => {
-    if (!summaryText) return;
-    navigator.clipboard.writeText(summaryText);
-    setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 2000);
   };
 
   return (
@@ -215,9 +167,10 @@ export default function ChatPage() {
         
         {/* Stylized animated neural-network vector map of Europe */}
         <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none opacity-65 md:opacity-75 select-none max-w-5xl mx-auto">
-          <svg 
-            viewBox="0 0 800 600" 
+          <svg
+            viewBox="0 0 800 600"
             className="w-full h-full max-h-[85vh] fill-none animate-float-1"
+            aria-hidden="true"
           >
             {/* Stylized background grid representing Europe */}
             <g stroke="#059669" strokeWidth="0.5" strokeOpacity="0.15" strokeDasharray="3 6">
@@ -415,7 +368,7 @@ export default function ChatPage() {
         
         <div className="max-w-4xl mx-auto space-y-8 relative z-10">
           <div className="inline-flex items-center gap-2 bg-slate-900/80 px-4 py-2 rounded-full border border-slate-800 text-teal-400 text-xs font-semibold uppercase tracking-wider pulse-emerald">
-            <Sparkles className="w-4 h-4 text-emerald-400" /> Powered by Gemini 3.5 Flash
+            <Sparkles className="w-4 h-4 text-emerald-400" /> Powered by DeepSeek v4 Flash
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight">
@@ -432,13 +385,13 @@ export default function ChatPage() {
           <div className="flex gap-4 justify-center pt-4">
             <Link 
               href="/research"
-              className="px-8 py-4 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-450 hover:to-cyan-450 text-white font-semibold text-base shadow-[0_0_30px_rgba(20,184,166,0.25)] hover:scale-[1.03] active:scale-[0.98] transition-all flex items-center gap-2.5 cursor-pointer"
+              className="px-8 py-4 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white font-semibold text-base shadow-[0_0_30px_rgba(20,184,166,0.25)] hover:scale-[1.03] active:scale-[0.98] transition-all flex items-center gap-2.5 cursor-pointer"
             >
               Advanced AI Research <ChevronRight className="w-5 h-5" />
             </Link>
             <Link 
               href="/"
-              className="px-8 py-4 rounded-full bg-slate-900 border border-slate-800 hover:border-slate-700 hover:bg-slate-850 text-slate-350 font-semibold text-base hover:scale-[1.03] active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer"
+              className="px-8 py-4 rounded-full bg-slate-900 border border-slate-800 hover:border-slate-700 hover:bg-slate-800 text-slate-300 font-semibold text-base hover:scale-[1.03] active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer"
             >
               ← Portal Gateway
             </Link>
@@ -446,7 +399,7 @@ export default function ChatPage() {
         </div>
 
         {/* Smooth Scroll Arrow Indicator */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-slate-550">
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-slate-500">
           <span className="text-xs tracking-widest uppercase">Scroll Down</span>
           <button 
             onClick={scrollToDashboard}
@@ -476,7 +429,7 @@ export default function ChatPage() {
           <span className="absolute -left-32 -top-32 w-64 h-64 rounded-full bg-gradient-to-br from-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
 
           {/* Section Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-850 pb-4 relative z-10">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4 relative z-10">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                 <Activity className="w-5 h-5 animate-pulse" />
@@ -492,14 +445,27 @@ export default function ChatPage() {
               <span className="text-xs text-teal-400 flex items-center gap-1.5 animate-pulse font-semibold">
                 <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-ping" /> Synchronizing Live Feed...
               </span>
+            ) : latestError ? (
+              <span className="text-[10px] bg-amber-500/10 border border-amber-500/20 text-amber-400 px-3 py-1 rounded-full font-medium">Cached Sample Records</span>
             ) : (
-              <span className="text-[10px] bg-slate-950 border border-slate-800 text-slate-400 px-3 py-1 rounded-full font-medium">8 Fresh Records Loaded</span>
+              <span className="text-[10px] bg-slate-950 border border-slate-800 text-slate-400 px-3 py-1 rounded-full font-medium">{latestDocs.length} Fresh Records Loaded</span>
             )}
           </div>
 
+          {/* Visible notice when the fallback sample documents are shown */}
+          {latestError && !loadingLatest && (
+            <ErrorBanner
+              message="Live feed unavailable — showing cached sample results."
+              onRetry={fetchLatestDocs}
+            />
+          )}
+
           {/* Grid Layout (4 per row) */}
+          {loadingLatest ? (
+            <LoadingSpinner message="Synchronizing the latest EUR-Lex publications..." accent="emerald" size="md" />
+          ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
-            {latestDocs.map((doc, idx) => {
+            {latestDocs.map((doc) => {
               // Color-coded Category pill badges (border and background), neutral plain CELEX text
               let sectorBadgeStyle = "border border-slate-800 bg-slate-950/30 text-slate-400 px-2 py-0.5 rounded-md";
               
@@ -514,8 +480,8 @@ export default function ChatPage() {
               }
 
               return (
-                <div 
-                  key={idx}
+                <div
+                  key={doc.celex}
                   className="bg-slate-900/40 backdrop-blur-md p-5 rounded-2xl border border-slate-800 flex flex-col justify-between hover:border-emerald-500/30 transition-all hover:scale-[1.02] duration-300 group shadow-lg shadow-slate-950/20 relative overflow-hidden"
                 >
                   {/* Visual subtle card glow */}
@@ -523,7 +489,7 @@ export default function ChatPage() {
                   
                   <div>
                     {/* Category Header */}
-                    <div className="flex flex-col items-start gap-1.5 border-b border-slate-850/50 pb-2.5">
+                    <div className="flex flex-col items-start gap-1.5 border-b border-slate-800/50 pb-2.5">
                       <span className="text-[10px] font-mono font-bold text-teal-400 tracking-wide">
                         {doc.celex}
                       </span>
@@ -542,7 +508,7 @@ export default function ChatPage() {
                   </div>
 
                   {/* Footer Controls */}
-                  <div className="border-t border-slate-850/50 pt-2.5 flex items-center justify-between mt-auto">
+                  <div className="border-t border-slate-800/50 pt-2.5 flex items-center justify-between mt-auto">
                     <span className="text-[10px] font-semibold text-slate-500 flex items-center gap-1">
                       🗓️ {doc.date}
                     </span>
@@ -568,6 +534,7 @@ export default function ChatPage() {
               );
             })}
           </div>
+          )}
         </div>
 
 
@@ -577,14 +544,14 @@ export default function ChatPage() {
         <div className="bg-slate-900/20 border border-slate-800/80 border-t-4 border-t-purple-500 rounded-3xl p-6 md:p-8 space-y-6 shadow-[0_0_50px_-12px_rgba(168,85,247,0.15)] backdrop-blur-md relative overflow-hidden">
           {/* Floating glass badge */}
           <div className="absolute top-4 right-4 md:top-6 md:right-8 bg-purple-500/10 border border-purple-500/20 text-purple-400 font-mono text-[9px] font-bold uppercase tracking-widest px-3 py-1 rounded-full backdrop-blur-md pointer-events-none z-10">
-            [03 / Search & Config Console]
+            [02 / Search & Config Console]
           </div>
 
           {/* Subtle purple ambient light glow in the bottom-left */}
           <span className="absolute -left-32 -bottom-32 w-64 h-64 rounded-full bg-gradient-to-tr from-purple-500/5 to-transparent blur-3xl pointer-events-none" />
 
           {/* Section Header */}
-          <div className="border-b border-slate-850 pb-4 relative z-10">
+          <div className="border-b border-slate-800 pb-4 relative z-10">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
                 <Scale className="w-5 h-5 animate-pulse" />
@@ -599,7 +566,7 @@ export default function ChatPage() {
           </div>
 
           {/* Interactive Category/Sector Selector Bubbles & Config Toolbar */}
-          <div className="space-y-6 border-b border-slate-850 pb-6 relative z-10">
+          <div className="space-y-6 border-b border-slate-800 pb-6 relative z-10">
             
             {/* Sector Pills */}
             <div className="space-y-2">
@@ -683,9 +650,9 @@ export default function ChatPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 relative z-10">
-                {sectorDocs.map((doc, idx) => {
+                {sectorDocs.map((doc) => {
                   let themeColorClass = "border-slate-800 text-slate-400";
-                  let bulletColor = "bg-slate-505";
+                  let bulletColor = "bg-slate-500";
                   let badgeStyle = "border-slate-800 bg-slate-950 text-slate-400";
 
                   if (namespace === "case_law") {
@@ -731,14 +698,14 @@ export default function ChatPage() {
                   }
 
                   return (
-                    <div 
-                      key={idx}
+                    <div
+                      key={doc.celex}
                       className={`bg-slate-900/40 backdrop-blur-md p-5 rounded-2xl border border-slate-800 flex flex-col justify-between ${themeColorClass} transition-all hover:scale-[1.02] duration-300 group shadow-lg shadow-slate-950/20 relative overflow-hidden h-[280px]`}
                     >
                       <span className="absolute -right-12 -top-12 w-24 h-24 rounded-full bg-gradient-to-br from-slate-500/5 to-transparent blur-xl pointer-events-none group-hover:from-purple-500/5 transition-all duration-300" />
                       
                       <div>
-                        <div className="flex flex-col items-start gap-1.5 border-b border-slate-850/50 pb-2.5">
+                        <div className="flex flex-col items-start gap-1.5 border-b border-slate-800/50 pb-2.5">
                           <span className="text-[10px] font-mono font-bold text-slate-400 tracking-wide flex items-center gap-1.5">
                             <span className={`w-1.5 h-1.5 rounded-full ${bulletColor}`} /> {doc.celex}
                           </span>
@@ -755,7 +722,7 @@ export default function ChatPage() {
                         </h4>
                       </div>
 
-                      <div className="border-t border-slate-850/50 pt-2.5 flex items-center justify-between mt-auto">
+                      <div className="border-t border-slate-800/50 pt-2.5 flex items-center justify-between mt-auto">
                         <span className="text-[9px] font-semibold text-slate-500 flex items-center gap-1">
                           🗓️ {doc.date}
                         </span>
@@ -764,7 +731,7 @@ export default function ChatPage() {
                             href={doc.url}
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="p-1.5 rounded-lg bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-500 hover:text-slate-350 transition-colors"
+                            className="p-1.5 rounded-lg bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-500 hover:text-slate-300 transition-colors"
                             title="View Official Document"
                           >
                             <ExternalLink className="w-3 h-3" />
@@ -781,7 +748,7 @@ export default function ChatPage() {
                   );
                 })}
                 {sectorDocs.length === 0 && (
-                  <div className="col-span-5 py-12 text-center text-xs text-slate-550 italic bg-slate-950/20 border border-slate-850 rounded-2xl w-full">
+                  <div className="col-span-5 py-12 text-center text-xs text-slate-500 italic bg-slate-950/20 border border-slate-800 rounded-2xl w-full">
                     No recent legislative or case publications returned for this domain authority since 2023.
                   </div>
                 )}
@@ -792,98 +759,16 @@ export default function ChatPage() {
         </div>
       </section>
 
-    {modalOpen && activeSummaryDoc && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-fade-in">
-        <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 md:p-8 max-w-4xl w-full max-h-[90vh] flex flex-col justify-between shadow-2xl glass-card relative z-50">
-          
-          {/* Header */}
-          <div className="border-b border-slate-800 pb-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Scale className="text-emerald-400 w-6 h-6 animate-pulse" />
-              <div>
-                <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                  {isDetailedSummary ? "Senior EU Lawyer Detailed Case Analysis" : "Senior EU Lawyer Quick Overview"} <Sparkles className="w-4 h-4 text-teal-400" />
-                </h3>
-                <p className="text-xs text-slate-400 truncate max-w-lg">Doc: {activeSummaryDoc.title}</p>
-              </div>
-            </div>
-            <button 
-              onClick={() => setModalOpen(false)}
-              className="p-2 rounded-lg bg-slate-950 border border-slate-800 hover:border-emerald-500/50 text-slate-400 hover:text-slate-100 transition-all cursor-pointer text-xs"
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* Scrollable Body Content */}
-          <div className="flex-1 overflow-y-auto my-6 pr-2 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-slate-950">
-            {summarizing ? (
-              <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                <div className="relative">
-                  <div className="w-12 h-12 rounded-xl border border-slate-800 bg-slate-950 flex items-center justify-center text-emerald-400 animate-spin">
-                    <Scale className="w-6 h-6" />
-                  </div>
-                  <span className="absolute inset-0 w-12 h-12 rounded-xl border-t border-emerald-400 animate-ping opacity-75" />
-                </div>
-                <div className="text-center space-y-1.5">
-                  <p className="text-sm font-semibold text-slate-300">
-                    {isDetailedSummary ? "Drafting Comprehensive Case Analysis..." : "Drafting Concise Legal Overview..."}
-                  </p>
-                  <p className="text-xs text-slate-500 max-w-md">
-                    {isDetailedSummary 
-                      ? "Acting as a Senior EU Counsel to construct a thorough ~1000-word legal analysis including citations, dispute facts, directive holdings, and strategic precedents."
-                      : "Acting as a Senior EU Counsel to draft a quick 250-word legal overview covering the factual core and primary holding."}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="text-sm text-slate-300 leading-relaxed font-sans whitespace-pre-line space-y-4 pr-1">
-                {summaryText}
-              </div>
-            )}
-          </div>
-
-          {/* Footer Controls */}
-          <div className="border-t border-slate-800 pt-4 flex gap-3 justify-end flex-wrap">
-            {!isDetailedSummary && (
-              <button
-                onClick={() => handleSummarize(activeSummaryDoc.title, activeSummaryDoc.snippet, activeSummaryDoc.namespace, activeSummaryDoc.celex, true)}
-                disabled={summarizing || !summaryText}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-100 text-xs font-bold flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer shadow-lg shadow-emerald-500/20 mr-auto border border-emerald-500/30 animate-pulse"
-              >
-                <Sparkles className="w-4 h-4 text-teal-200" />
-                Detailed Case Analysis (1000 words)
-              </button>
-            )}
-            <button
-              onClick={copyToClipboard}
-              disabled={summarizing || !summaryText}
-              className="px-5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-teal-500/50 text-slate-300 hover:text-slate-100 text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
-            >
-              {copySuccess ? "✓ Copied!" : "Copy Summary"}
-            </button>
-            <button
-              onClick={downloadSummary}
-              disabled={summarizing || !summaryText}
-              className="px-5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 text-slate-300 hover:text-slate-100 text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
-            >
-              Save Summary (.txt)
-            </button>
-            <button
-              onClick={() => setModalOpen(false)}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-450 hover:to-cyan-450 text-white text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-            >
-              Close Panel
-            </button>
-          </div>
-
-        </div>
-      </div>
-    )}
+    <SummarizerModal
+      isOpen={!!activeSummaryDoc}
+      onClose={() => setActiveSummaryDoc(null)}
+      document={activeSummaryDoc}
+      accent="emerald"
+    />
 
       {/* Footer */}
       <footer className="p-8 border-t border-slate-900 bg-slate-950 text-center text-xs text-slate-500 space-y-2 mt-auto">
-        <p>© 2026 Legal Data Hunter AI. Built on Next.js 15, Tailwind CSS v4, and OpenRouter.</p>
+        <p>© 2026 EU Researcher. Built on Next.js 15, Tailwind CSS v4, and OpenRouter.</p>
         <p>Confidential and secured enterprise environment.</p>
       </footer>
 

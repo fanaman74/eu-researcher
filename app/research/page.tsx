@@ -1,20 +1,20 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import Link from "next/link";
-import { 
-  Send, 
-  Scale, 
-  MessageSquare, 
-  ChevronDown, 
-  ChevronUp, 
-  Terminal, 
-  Sparkles, 
-  ArrowLeft, 
+import {
+  Send,
+  Scale,
+  MessageSquare,
+  ChevronDown,
+  ChevronUp,
+  Terminal,
+  Sparkles,
   ExternalLink
 } from "lucide-react";
 
-import { type Message } from "@/lib/types";
+import PageHeader from "@/components/PageHeader";
+import SummarizerModal from "@/components/SummarizerModal";
+import { type Message, type SearchLog, type EurLexHit, type SummarizerConfig } from "@/lib/types";
 
 export default function ResearchPage() {
   const [messages, setMessages] = useState<Message[]>([
@@ -34,12 +34,7 @@ export default function ResearchPage() {
   const [expandedLog, setExpandedLog] = useState<{ [key: number]: boolean }>({});
 
   // Summarizer Modal States
-  const [modalOpen, setModalOpen] = useState(false);
-  const [activeSummaryDoc, setActiveSummaryDoc] = useState<{ title: string; snippet: string; namespace: string; celex: string } | null>(null);
-  const [isDetailedSummary, setIsDetailedSummary] = useState(false);
-  const [summaryText, setSummaryText] = useState("");
-  const [summarizing, setSummarizing] = useState(false);
-  const [copySuccess, setCopySuccess] = useState(false);
+  const [activeSummaryDoc, setActiveSummaryDoc] = useState<SummarizerConfig | null>(null);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -58,51 +53,8 @@ export default function ResearchPage() {
     setLoading(false);
   };
 
-  const handleSummarize = async (title: string, snippet: string, docNamespace: string, celex: string, detailed: boolean = false) => {
+  const handleSummarize = (title: string, snippet: string, docNamespace: string, celex: string) => {
     setActiveSummaryDoc({ title, snippet, namespace: docNamespace, celex });
-    setIsDetailedSummary(detailed);
-    setModalOpen(true);
-    setSummarizing(true);
-    setSummaryText("");
-    setCopySuccess(false);
-
-    try {
-      const res = await fetch("/api/summarize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, snippet, namespace: docNamespace, celex, detailed })
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to generate summary.");
-      }
-
-      const data = await res.json();
-      setSummaryText(data.summary);
-    } catch (err: any) {
-      setSummaryText(`⚠️ Failed to draft summary: ${err.message || "An error occurred."}`);
-    } finally {
-      setSummarizing(false);
-    }
-  };
-
-  const downloadSummary = () => {
-    if (!activeSummaryDoc || !summaryText) return;
-    const blob = new Blob([summaryText], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${activeSummaryDoc.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_summary.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const copyToClipboard = () => {
-    if (!summaryText) return;
-    navigator.clipboard.writeText(summaryText);
-    setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 2000);
   };
 
   const handleSend = async (textToSend?: string) => {
@@ -132,11 +84,11 @@ export default function ResearchPage() {
 
       const data = await response.json();
       setMessages(prev => [
-        ...prev, 
-        { 
-          role: "assistant", 
+        ...prev,
+        {
+          role: "assistant",
           content: data.content,
-          searchLogs: data.searchLogs 
+          searchLogs: data.searchLogs
         }
       ]);
     } catch (err: any) {
@@ -151,28 +103,20 @@ export default function ResearchPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative selection:bg-teal-500/30 selection:text-teal-200 p-6 md:p-12">
-      
+
       {/* Animated Background Mesh Spheres */}
       <div className="absolute top-1/4 left-10 w-96 h-96 bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute top-2/3 right-10 w-96 h-96 bg-purple-500/5 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto w-full space-y-8 z-10">
-        
+
         {/* Navigation Header */}
-        <div className="flex items-center justify-between border-b border-slate-900 pb-6">
-          <Link 
-            href="/"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 px-4 py-2 rounded-xl"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back to Portal Landing
-          </Link>
-          <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse shadow-[0_0_10px_#a855f7]" />
-            <span className="text-xs font-bold font-mono text-purple-400 uppercase tracking-widest bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full">
-              Advanced AI Research Terminal
-            </span>
-          </div>
-        </div>
+        <PageHeader
+          backHref="/"
+          backLabel="Back to Portal Landing"
+          badge="Advanced AI Research Terminal"
+          accent="purple"
+        />
 
 
 
@@ -185,7 +129,7 @@ export default function ResearchPage() {
             [03 / Search & Config Console]
           </div>
 
-          <div className="border-b border-slate-850 pb-4 relative z-10">
+          <div className="border-b border-slate-800 pb-4 relative z-10">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
                 <Scale className="w-5 h-5 animate-pulse" />
@@ -200,11 +144,11 @@ export default function ResearchPage() {
           </div>
 
           {/* Selector Bubbles & Slider */}
-          <div className="space-y-6 border-b border-slate-850 pb-6 relative z-10">
+          <div className="space-y-6 border-b border-slate-800 pb-6 relative z-10">
 
 
             {/* Slider */}
-            <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 bg-slate-950/40 p-4 border border-slate-850 rounded-2xl">
+            <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 bg-slate-950/40 p-4 border border-slate-800 rounded-2xl">
               <div className="flex flex-col gap-1 col-span-1">
                 <label className="text-[10px] font-bold font-sans text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Database Search Depth (top_k)
@@ -212,12 +156,12 @@ export default function ResearchPage() {
                 <p className="text-[10px] text-slate-500 leading-none">Max matching documents to retrieve for reasoning</p>
               </div>
               <div className="flex items-center gap-4 col-span-2">
-                <input 
+                <input
                   type="range"
                   min="1"
                   max="15"
                   value={topK}
-                  onChange={(e) => setTopK(parseInt(e.target.value))}
+                  onChange={(e) => setTopK(parseInt(e.target.value, 10))}
                   className="flex-1 h-1.5 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-emerald-500"
                 />
                 <span className="text-emerald-400 font-mono font-bold text-xs bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-lg">
@@ -232,7 +176,7 @@ export default function ResearchPage() {
             {messages.map((message, index) => {
               let displayContent = message.content;
               const messageOptions = [];
-              
+
               if (message.role === "assistant") {
                 const optionRegex = /\[Option:\s*(.*?)\]/gi;
                 let match;
@@ -243,8 +187,8 @@ export default function ResearchPage() {
               }
 
               return (
-                <div 
-                  key={index}
+                <div
+                  key={`${message.role}-${index}`}
                   className={`flex gap-4 max-w-6xl ${message.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"}`}
                 >
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${message.role === "user" ? "bg-gradient-to-tr from-emerald-500 to-cyan-500 border-cyan-400 text-white" : "bg-slate-900 border-slate-800 text-teal-400"}`}>
@@ -252,7 +196,7 @@ export default function ResearchPage() {
                   </div>
 
                   <div className="space-y-4 w-[90%]">
-                    <div className={`p-5 rounded-2xl border text-sm leading-relaxed whitespace-pre-wrap ${message.role === "user" ? "bg-gradient-to-br from-emerald-950/40 to-teal-900/40 border-teal-800/80 text-teal-55" : "bg-slate-900/50 border-slate-800 backdrop-blur-md text-slate-100"}`}>
+                    <div className={`p-5 rounded-2xl border text-sm leading-relaxed whitespace-pre-wrap ${message.role === "user" ? "bg-gradient-to-br from-emerald-950/40 to-teal-900/40 border-teal-800/80 text-teal-50" : "bg-slate-900/50 border-slate-800 backdrop-blur-md text-slate-100"}`}>
                       {displayContent}
                     </div>
 
@@ -260,10 +204,10 @@ export default function ResearchPage() {
                       <div className="flex flex-wrap gap-2.5 pt-1">
                         {messageOptions.map((opt, optIdx) => (
                           <button
-                            key={optIdx}
+                            key={`${opt}-${optIdx}`}
                             onClick={() => handleSend(opt)}
                             disabled={loading}
-                            className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-950 border border-slate-850 hover:border-teal-500/50 hover:bg-slate-900/40 text-slate-300 hover:text-slate-100 transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                            className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-950 border border-slate-800 hover:border-teal-500/50 hover:bg-slate-900/40 text-slate-300 hover:text-slate-100 transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                           >
                             {opt}
                           </button>
@@ -273,18 +217,18 @@ export default function ResearchPage() {
 
                     {message.role === "assistant" && message.searchLogs && message.searchLogs.length > 0 && (
                       <div className="space-y-6 pt-2">
-                        {message.searchLogs.map((log: any, logIdx: number) => (
-                          <div key={logIdx} className="border border-slate-800 bg-slate-950/50 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg">
-                            <div 
+                        {message.searchLogs.map((log: SearchLog, logIdx: number) => (
+                          <div key={`${log.q}-${logIdx}`} className="border border-slate-800 bg-slate-950/50 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg">
+                            <div
                               onClick={() => setExpandedLog(prev => ({ ...prev, [logIdx]: !prev[logIdx] }))}
-                              className="px-5 py-4 bg-slate-900/40 border-b border-slate-850 flex items-center justify-between cursor-pointer hover:bg-slate-900/70 transition-colors"
+                              className="px-5 py-4 bg-slate-900/40 border-b border-slate-800 flex items-center justify-between cursor-pointer hover:bg-slate-900/70 transition-colors"
                             >
                               <div className="flex items-center gap-3">
                                 <Terminal className="text-teal-400 w-4 h-4 animate-pulse" />
                                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">EUR-Lex Database Search Event</span>
                               </div>
                               <div className="flex items-center gap-4">
-                                <span className="text-[10px] bg-teal-950/40 border border-teal-850 text-teal-400 px-2.5 py-0.5 rounded-full font-semibold">
+                                <span className="text-[10px] bg-teal-950/40 border border-teal-800 text-teal-400 px-2.5 py-0.5 rounded-full font-semibold">
                                   {log.resultsCount} Hits Found
                                 </span>
                                 {expandedLog[logIdx] ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
@@ -292,7 +236,7 @@ export default function ResearchPage() {
                             </div>
 
                             {expandedLog[logIdx] && (
-                              <div className="p-4 border-b border-slate-850 bg-slate-950 text-[10px] font-mono text-slate-500 space-y-1.5 leading-relaxed">
+                              <div className="p-4 border-b border-slate-800 bg-slate-950 text-[10px] font-mono text-slate-500 space-y-1.5 leading-relaxed">
                                 <div>SPARQL Host URI: <strong className="text-slate-400">publications.europa.eu/webapi/rdf/sparql</strong></div>
                                 <div>Searched Namespace: <strong className="text-teal-400">"{log.namespace}"</strong> for <strong className="text-teal-400">"{log.q}"</strong></div>
                                 <div>Database Query Success: <strong className={log.success ? "text-emerald-400" : "text-red-400"}>{log.success ? "true" : "false"}</strong></div>
@@ -300,25 +244,20 @@ export default function ResearchPage() {
                               </div>
                             )}
 
-                            <div className="divide-y divide-slate-850/50 bg-slate-950/20">
+                            <div className="divide-y divide-slate-800/50 bg-slate-950/20">
                               {Array.isArray(log.results) && log.results.length > 0 ? (
-                                log.results.map((doc: any, docIdx: number) => {
-                                  const score = doc.score || (0.95 - docIdx * 0.08);
-                                  const scorePercent = (score * 100).toFixed(0);
-                                  let scoreColor = "text-emerald-400 bg-emerald-950/20 border-emerald-500/20";
-                                  if (score < 0.8) scoreColor = "text-cyan-400 bg-cyan-950/20 border-cyan-500/20";
-                                  if (score < 0.6) scoreColor = "text-slate-400 bg-slate-900/40 border-slate-800/80";
+                                log.results.map((doc: EurLexHit, docIdx: number) => {
                                   const targetLink = doc.url || `https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:${doc.id}`;
 
                                   return (
-                                    <div 
-                                      key={docIdx}
+                                    <div
+                                      key={doc.id}
                                       className="p-5 hover:bg-slate-900/30 transition-all duration-300 flex flex-col gap-4 relative group"
                                     >
                                       {/* Document Main Block */}
                                       <div className="space-y-3">
-                                        
-                                        {/* Top Meta Line: CELEX & Sector & Score */}
+
+                                        {/* Top Meta Line: CELEX & Sector */}
                                         <div className="flex flex-wrap items-center gap-2">
                                           <span className="text-[10px] font-mono font-bold text-slate-500">
                                             #{docIdx + 1}
@@ -328,9 +267,6 @@ export default function ResearchPage() {
                                               {doc.sector}
                                             </span>
                                           )}
-                                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold border ${scoreColor}`}>
-                                            {scorePercent}% Match
-                                          </span>
                                         </div>
 
                                         {/* Document Title (Extremely readable full-width) */}
@@ -339,7 +275,7 @@ export default function ResearchPage() {
                                         </h4>
 
                                         {/* Document Preview Snippet (Mono, full-width) */}
-                                        <p className="text-[10px] text-slate-455 font-mono leading-relaxed bg-slate-950/50 p-3.5 rounded-xl border border-slate-900/80 whitespace-pre-wrap">
+                                        <p className="text-[10px] text-slate-400 font-mono leading-relaxed bg-slate-950/50 p-3.5 rounded-xl border border-slate-900/80 whitespace-pre-wrap">
                                           {doc.snippet}
                                         </p>
 
@@ -347,17 +283,17 @@ export default function ResearchPage() {
 
                                       {/* Bottom Actions Block */}
                                       <div className="flex items-center justify-start gap-3 pt-2.5 border-t border-slate-900/50">
-                                        <a 
-                                          href={targetLink} 
-                                          target="_blank" 
-                                          rel="noopener noreferrer" 
-                                          className="px-3.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-teal-500/50 text-teal-400 hover:text-teal-350 text-[10px] font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                                        <a
+                                          href={targetLink}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="px-3.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-teal-500/50 text-teal-400 hover:text-teal-300 text-[10px] font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                                         >
                                           View Source <ExternalLink className="w-3 h-3" />
                                         </a>
-                                        <button 
-                                          onClick={() => handleSummarize(doc.title, doc.snippet, log.namespace, doc.id)} 
-                                          className="px-3.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-400 hover:text-emerald-350 text-[10px] font-extrabold transition-all flex items-center gap-1.5 cursor-pointer"
+                                        <button
+                                          onClick={() => handleSummarize(doc.title, doc.snippet, log.namespace, doc.id)}
+                                          className="px-3.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-400 hover:text-emerald-300 text-[10px] font-extrabold transition-all flex items-center gap-1.5 cursor-pointer"
                                         >
                                           Summarise <Sparkles className="w-3 h-3" />
                                         </button>
@@ -391,7 +327,7 @@ export default function ResearchPage() {
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:-0.15s]" />
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-bounce" />
                   </span>
-                  <span className="text-xs text-slate-400 font-medium">Gemini 3.5 Flash is querying database indexes...</span>
+                  <span className="text-xs text-slate-400 font-medium">DeepSeek v4 Flash is querying database indexes...</span>
                 </div>
               </div>
             )}
@@ -399,8 +335,8 @@ export default function ResearchPage() {
           </div>
 
           {/* Form */}
-          <div className="mt-6 border-t border-slate-850 pt-6 relative z-10">
-            <form 
+          <div className="mt-6 border-t border-slate-800 pt-6 relative z-10">
+            <form
               onSubmit={(e) => { e.preventDefault(); handleSend(); }}
               className="max-w-6xl mx-auto flex gap-3 p-2 bg-slate-950/60 border border-slate-800 rounded-2xl focus-within:border-teal-500/80 focus-within:shadow-[0_0_15px_rgba(20,184,166,0.15)] transition-all duration-300 relative z-10"
             >
@@ -414,7 +350,7 @@ export default function ResearchPage() {
               <button type="button" onClick={handleReset} className="px-5 py-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-red-500/50 hover:text-red-400 text-slate-400 text-sm font-medium transition-all cursor-pointer">
                 Reset
               </button>
-              <button type="submit" disabled={!input.trim() || loading} className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-450 hover:to-cyan-450 text-white font-medium text-sm flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none">
+              <button type="submit" disabled={!input.trim() || loading} className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white font-medium text-sm flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none">
                 Query <Send className="w-4 h-4" />
               </button>
             </form>
@@ -423,69 +359,16 @@ export default function ResearchPage() {
 
       </div>
 
-      {/* Senior Lawyer modal */}
-      {modalOpen && activeSummaryDoc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 md:p-8 max-w-4xl w-full max-h-[90vh] flex flex-col justify-between shadow-2xl glass-card relative z-50">
-            <div className="border-b border-slate-800 pb-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Scale className="text-emerald-400 w-6 h-6 animate-pulse" />
-                <div>
-                  <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                    {isDetailedSummary ? "Senior EU Lawyer Detailed Case Analysis" : "Senior EU Lawyer Quick Overview"} <Sparkles className="w-4 h-4 text-teal-400" />
-                  </h3>
-                  <p className="text-xs text-slate-400 truncate max-w-lg">Doc: {activeSummaryDoc.title}</p>
-                </div>
-              </div>
-              <button onClick={() => setModalOpen(false)} className="p-2 rounded-lg bg-slate-950 border border-slate-800 hover:border-emerald-500/50 text-slate-400 hover:text-slate-100 transition-all cursor-pointer text-xs">✕</button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto my-6 pr-2 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-slate-950">
-              {summarizing ? (
-                <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                  <div className="relative animate-spin w-12 h-12 rounded-xl border border-slate-800 bg-slate-950 flex items-center justify-center text-emerald-400">
-                    <Scale className="w-6 h-6" />
-                  </div>
-                  <div className="text-center space-y-1.5">
-                    <p className="text-sm font-semibold text-slate-300">
-                      {isDetailedSummary ? "Drafting Comprehensive Case Analysis..." : "Drafting Concise Legal Overview..."}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-sm text-slate-300 leading-relaxed font-sans whitespace-pre-line space-y-4 pr-1">
-                  {summaryText}
-                </div>
-              )}
-            </div>
-
-            <div className="border-t border-slate-800 pt-4 flex gap-3 justify-end flex-wrap">
-              {!isDetailedSummary && (
-                <button
-                  onClick={() => handleSummarize(activeSummaryDoc.title, activeSummaryDoc.snippet, activeSummaryDoc.namespace, activeSummaryDoc.celex, true)}
-                  disabled={summarizing || !summaryText}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-100 text-xs font-bold flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer shadow-lg shadow-emerald-500/20 mr-auto border border-emerald-500/30"
-                >
-                  <Sparkles className="w-4 h-4 text-teal-200" /> Detailed Case Analysis (1000 words)
-                </button>
-              )}
-              <button onClick={copyToClipboard} disabled={summarizing || !summaryText} className="px-5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-teal-500/50 text-slate-300 hover:text-slate-100 text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-50 disabled:pointer-events-none">
-                {copySuccess ? "✓ Copied!" : "Copy Summary"}
-              </button>
-              <button onClick={downloadSummary} disabled={summarizing || !summaryText} className="px-5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 text-slate-300 hover:text-slate-100 text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-50 disabled:pointer-events-none">
-                Save Summary (.txt)
-              </button>
-              <button onClick={() => setModalOpen(false)} className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-450 hover:to-cyan-450 text-white text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer">
-                Close Panel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SummarizerModal
+        isOpen={!!activeSummaryDoc}
+        onClose={() => setActiveSummaryDoc(null)}
+        document={activeSummaryDoc}
+        accent="purple"
+      />
 
       {/* Footer */}
       <footer className="p-8 border-t border-slate-900 bg-slate-950 text-center text-xs text-slate-500 mt-12">
-        <p>© 2026 Legal Data Hunter AI. Built on Next.js 15, Tailwind CSS v4, and OpenRouter.</p>
+        <p>© 2026 EU Researcher. Built on Next.js 15, Tailwind CSS v4, and OpenRouter.</p>
       </footer>
 
     </div>

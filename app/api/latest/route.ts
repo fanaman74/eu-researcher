@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
-
 const PREFIX_MAP: Record<string, string> = {
   consolidated: "0",
   international: "1",
@@ -61,6 +59,7 @@ export async function GET(request: NextRequest) {
   try {
     const response = await fetch(url, {
       headers: { 'Accept': 'application/sparql-results+json' },
+      signal: AbortSignal.timeout(15000),
       next: { revalidate: 43200 } // Cache for 12 hours (Twice Daily)
     });
 
@@ -84,6 +83,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ documents });
   } catch (error: any) {
     console.error("Latest Documents Route Error:", error);
-    return NextResponse.json({ error: error.message, documents: [] });
+    return NextResponse.json({ error: "Failed to retrieve latest documents.", documents: [] });
   }
 }

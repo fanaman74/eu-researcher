@@ -1,46 +1,62 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import { 
-  ArrowLeft, 
-  Zap, 
-  Activity,
+import React, { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import {
+  Zap,
   CheckCircle,
   XCircle,
   AlertCircle,
-  UserCheck,
-  Cpu
+  UserCheck
 } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
+import DemoBadge from "@/components/DemoBadge";
+import ErrorBanner from "@/components/ErrorBanner";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { type ComitologyVote } from "@/lib/types";
 
-export default function ComitologyPage() {
-  const [votes, setVotes] = useState<any[]>([]);
-  const [activeVoteId, setActiveVoteId] = useState("VOTE-2026-GRID");
-  const [activeVote, setActiveVote] = useState<any>(null);
+function ComitologyContent() {
+  const searchParams = useSearchParams();
+  const [votes, setVotes] = useState<ComitologyVote[]>([]);
+  const [activeVoteId, setActiveVoteId] = useState<string | null>(null);
+  const [activeVote, setActiveVote] = useState<ComitologyVote | null>(null);
   const [loadingVote, setLoadingVote] = useState(false);
+  const [votesError, setVotesError] = useState(false);
+  const [voteError, setVoteError] = useState(false);
 
-  const fetchVotes = async () => {
+  // Deep link: /comitology?id=VOTE-... preselects a committee vote
+  useEffect(() => {
+    const id = searchParams.get("id");
+    if (id) setActiveVoteId(id);
+  }, [searchParams]);
+
+  const fetchVotes = useCallback(async () => {
+    setVotesError(false);
     try {
       const res = await fetch("/api/comitology");
-      if (res.ok) {
-        const data = await res.json();
-        setVotes(data.votes || []);
-      }
+      if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
+      const data = await res.json();
+      const list: ComitologyVote[] = data.votes || [];
+      setVotes(list);
+      // Auto-select the first vote when no deep-linked id is present
+      setActiveVoteId((prev) => prev ?? (list.length > 0 ? list[0].id : null));
     } catch (err) {
       console.error("Failed to fetch votes:", err);
+      setVotesError(true);
     }
-  };
+  }, []);
 
   const fetchActiveVote = async (id: string) => {
     setLoadingVote(true);
+    setVoteError(false);
     try {
       const res = await fetch(`/api/comitology?id=${id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setActiveVote(data.vote);
-      }
+      if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
+      const data = await res.json();
+      setActiveVote(data.vote);
     } catch (err) {
       console.error("Failed to fetch active vote:", err);
+      setVoteError(true);
     } finally {
       setLoadingVote(false);
     }
@@ -48,46 +64,42 @@ export default function ComitologyPage() {
 
   useEffect(() => {
     fetchVotes();
-  }, []);
+  }, [fetchVotes]);
 
   useEffect(() => {
-    fetchActiveVote(activeVoteId);
+    if (activeVoteId) fetchActiveVote(activeVoteId);
   }, [activeVoteId]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-blue-500/30 selection:text-blue-200">
       <div className="max-w-7xl mx-auto w-full p-6 md:p-12 space-y-8">
-        
+
         {/* Navigation Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-6">
-          <Link 
-            href="/enel"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-md"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" /> Back to Public Affairs Hub
-          </Link>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-blue-400" />
-            <span className="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-wider bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded-md">
-              Comitology Watcher
-            </span>
-          </div>
-        </div>
+        <PageHeader
+          backHref="/enel"
+          backLabel="Back to Public Affairs Hub"
+          badge="Comitology Watcher"
+          accent="blue"
+        />
 
         {/* Title */}
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <Zap className="w-6 h-6 text-blue-400" /> Comitology & Technical Acts Monitor
+          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2 flex-wrap">
+            <Zap className="w-6 h-6 text-blue-400" /> Comitology & Technical Acts Monitor <DemoBadge />
           </h1>
           <p className="text-xs text-slate-400">Track voting sheets, smart-grid balancing acts, battery storage standards, and delegated acts</p>
         </div>
 
+        {votesError && (
+          <ErrorBanner onRetry={fetchVotes} />
+        )}
+
         {/* Divisions */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
+
           {/* Active comitology regulations list (5/12 columns) */}
           <div className="lg:col-span-5 space-y-5">
-            
+
             <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 space-y-4">
               <div>
                 <h2 className="text-sm font-bold text-slate-200">Monitored Committee Measures</h2>
@@ -116,6 +128,9 @@ export default function ComitologyPage() {
                     </div>
                   );
                 })}
+                {!votesError && votes.length === 0 && (
+                  <div className="p-8 text-center text-slate-400 text-xs italic">No committee measures tracked.</div>
+                )}
               </div>
             </div>
 
@@ -123,7 +138,7 @@ export default function ComitologyPage() {
 
           {/* Voting Details & Enel Impact (7/12 columns) */}
           <div className="lg:col-span-7 space-y-5">
-            
+
             <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 space-y-5 flex flex-col justify-between min-h-[500px]">
 
               <div className="space-y-5 flex-1">
@@ -132,14 +147,13 @@ export default function ComitologyPage() {
                   <p className="text-xs text-slate-400 mt-0.5">Analyze member states approval patterns and technical alignment targets</p>
                 </div>
 
-                {loadingVote ? (
-                  <div className="flex flex-col items-center justify-center gap-3 py-16">
-                    <Activity className="w-6 h-6 text-blue-400 animate-spin" />
-                    <span className="text-xs text-slate-400">Extracting voting sheet layouts...</span>
-                  </div>
+                {voteError ? (
+                  <ErrorBanner onRetry={() => activeVoteId && fetchActiveVote(activeVoteId)} />
+                ) : loadingVote ? (
+                  <LoadingSpinner message="Extracting voting sheet layouts..." accent="blue" size="md" />
                 ) : activeVote ? (
                   <div className="space-y-5">
-                    
+
                     {/* Voting card stats */}
                     <div className="grid grid-cols-3 gap-4 bg-slate-950 p-4 border border-slate-800 rounded-md">
                       <div className="text-center space-y-1">
@@ -162,13 +176,13 @@ export default function ComitologyPage() {
                     {/* Member state listing splits */}
                     <div className="space-y-3 bg-slate-950 p-4 rounded-md border border-slate-800">
                       <h3 className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">Member States Position Breakdown</h3>
-                      
+
                       <div className="space-y-3 divide-y divide-slate-800">
                         <div className="flex justify-between items-start pt-0 text-xs">
                           <span className="text-[10px] font-mono text-red-400 font-semibold shrink-0 w-28 uppercase">Voted Against:</span>
                           <div className="flex flex-wrap gap-1.5 justify-end">
-                            {activeVote.votingSheet.countriesAgainst.map((c: string, idx: number) => (
-                              <span key={idx} className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-red-400 font-mono text-[10px]">{c}</span>
+                            {activeVote.votingSheet.countriesAgainst.map((c: string) => (
+                              <span key={c} className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-red-400 font-mono text-[10px]">{c}</span>
                             ))}
                           </div>
                         </div>
@@ -176,8 +190,8 @@ export default function ComitologyPage() {
                         <div className="flex justify-between items-start pt-3 text-xs">
                           <span className="text-[10px] font-mono text-slate-400 font-semibold shrink-0 w-28 uppercase">Abstained:</span>
                           <div className="flex flex-wrap gap-1.5 justify-end">
-                            {activeVote.votingSheet.countriesAbstaining.map((c: string, idx: number) => (
-                              <span key={idx} className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400 font-mono text-[10px]">{c}</span>
+                            {activeVote.votingSheet.countriesAbstaining.map((c: string) => (
+                              <span key={c} className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400 font-mono text-[10px]">{c}</span>
                             ))}
                           </div>
                         </div>
@@ -209,5 +223,17 @@ export default function ComitologyPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function ComitologyPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+        <LoadingSpinner message="Loading comitology monitor..." accent="blue" size="lg" />
+      </div>
+    }>
+      <ComitologyContent />
+    </Suspense>
   );
 }

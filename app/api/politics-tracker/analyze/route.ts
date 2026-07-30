@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { checkRateLimit, getClientIp, isAllowedOrigin } from "@/lib/apiGuard";
 
 export const dynamic = "force-dynamic";
 
@@ -77,6 +78,15 @@ ${entityList}
 }
 
 export async function POST(req: Request) {
+  // Same-host origin guard against cross-site browser abuse.
+  if (!isAllowedOrigin(req)) {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+  // Rate limit: 10 requests per minute per client IP (LLM-costing endpoint).
+  if (!checkRateLimit(`analyze:${getClientIp(req)}`, 10, 60_000)) {
+    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  }
+
   let body: any = {};
   try {
     body = await req.json();
@@ -99,12 +109,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing required event title." }, { status: 400 });
   }
 
+  // Normalize untrusted body fields before use.
+  const safeImpactLevel = typeof impactLevel === "string" && impactLevel ? impactLevel : "Medium";
+  const safeEntities = Array.isArray(entities) ? entities : [];
+  const safeTags = Array.isArray(tags) ? tags : [];
+
   const apiKey = process.env.OPENROUTER_API_KEY;
 
-  if (apiKey && apiKey.trim().length > 0 && !apiKey.includes("[YOUR_")) {
+  // Fail fast when the provider key is missing entirely; a placeholder key
+  // still falls through to the deterministic fallback report below.
+  if (!apiKey || apiKey.trim().length === 0) {
+    console.error("OPENROUTER_API_KEY is not configured.");
+    return NextResponse.json({ error: "AI provider is not configured." }, { status: 500 });
+  }
+
+  if (!apiKey.includes("[YOUR_")) {
     const openai = new OpenAI({
       apiKey: apiKey,
       baseURL: "https://openrouter.ai/api/v1",
+      timeout: 60000,
+      maxRetries: 1,
       defaultHeaders: {
         "HTTP-Referer": "https://legaldatahunter.com",
         "X-Title": "Italian Policy Watch Tracker",
@@ -123,11 +147,11 @@ You must structure your report with these exact sections:
 
 Maintain a highly sophisticated, formal, and authoritative advisory tone. Use Markdown headers and clean spacing.`;
 
-    const entityContext = entities && entities.length > 0
-      ? entities.map((ent: any) => `- Name: ${ent.name || ent.entity?.name}, Role: ${ent.role || ent.entity?.role}, Party: ${ent.party || ent.entity?.party}`).join("\n")
+    const entityContext = safeEntities.length > 0
+      ? safeEntities.map((ent: any) => `- Name: ${ent.name || ent.entity?.name}, Role: ${ent.role || ent.entity?.role}, Party: ${ent.party || ent.entity?.party}`).join("\n")
       : "None explicitly identified.";
 
-    const tagContext = tags && tags.length > 0 ? tags.join(", ") : "None";
+    const tagContext = safeTags.length > 0 ? safeTags.join(", ") : "None";
 
     const userMessage = `Please draft the in-depth political policy report for the following event:
 
@@ -172,9 +196,9 @@ ${entityContext}`;
     content,
     sourceName,
     category,
-    impactLevel,
-    entities,
-    tags
+    impactLevel: safeImpactLevel,
+    entities: safeEntities,
+    tags: safeTags
   });
 
   return NextResponse.json({ 
