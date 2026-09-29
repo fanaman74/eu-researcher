@@ -31,6 +31,20 @@ async function handleCron(req: Request) {
     return NextResponse.json({ error: "Data refresh failed." }, { status: 500 });
   }
 
+  // Warm the slow upstream caches (best effort; failures are logged, never fatal).
+  try {
+    const { listConsultations } = await import("@/lib/haveYourSay");
+    await listConsultations();
+  } catch (error) {
+    console.warn("[Cron API] Have Your Say cache warm-up failed:", error);
+  }
+  try {
+    const { warmQuestions } = await import("@/lib/epQuestions");
+    await warmQuestions();
+  } catch (error) {
+    console.warn("[Cron API] EP questions cache warm-up failed:", error);
+  }
+
   // Revalidate Next.js cache paths that display aggregated data
   revalidatePath("/politics-tracker");
   revalidatePath("/api/latest");

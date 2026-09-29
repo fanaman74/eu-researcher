@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { title, snippet, namespace, celex, detailed } = await req.json();
+    const { title, namespace, celex, detailed } = await req.json();
 
     if (!celex) {
       return NextResponse.json({ error: "Missing CELEX identifier." }, { status: 400 });

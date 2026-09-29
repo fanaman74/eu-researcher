@@ -27,7 +27,6 @@ export default function StateAidCasesPage() {
       endpoint="/api/eurlex?q=state aid energy&top_k=15"
       dataKey="hits"
       countLabel={(n) => `${n} Cases Tracked`}
-      demo
       searchPlaceholder="Filter cases by CELEX ID, ruling title, or legal sector..."
       filterItem={(item, search) => {
         const q = search.toLowerCase();

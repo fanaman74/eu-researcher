@@ -127,7 +127,7 @@ export default function EnelHubPage() {
     },
     {
       title: "Have Your Say Monitor",
-      description: "Capture public consultation feedback, parse attached position papers, and track stakeholder sentiment demographics.",
+      description: "Capture public consultation feedback, read published position papers, and see who is responding (countries and organisation types).",
       href: "/have-your-say",
       icon: Users,
       badge: "EC Consultation API"

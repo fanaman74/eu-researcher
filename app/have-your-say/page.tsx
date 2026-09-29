@@ -11,7 +11,6 @@ import {
   Cpu
 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
-import DemoBadge from "@/components/DemoBadge";
 import ErrorBanner from "@/components/ErrorBanner";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { type Consultation, type ConsultationSubmission } from "@/lib/types";
@@ -23,6 +22,7 @@ function HaveYourSayContent() {
   const [activeConsultation, setActiveConsultation] = useState<Consultation | null>(null);
   const [loadingConsultation, setLoadingConsultation] = useState(false);
   const [consultationsError, setConsultationsError] = useState(false);
+  const [consultationsLoading, setConsultationsLoading] = useState(true);
   const [consultationError, setConsultationError] = useState(false);
 
   // PDF parsing simulation states
@@ -38,6 +38,7 @@ function HaveYourSayContent() {
 
   const fetchConsultations = useCallback(async () => {
     setConsultationsError(false);
+    setConsultationsLoading(true);
     try {
       const res = await fetch("/api/have-your-say");
       if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
@@ -49,6 +50,8 @@ function HaveYourSayContent() {
     } catch (err) {
       console.error("Failed to fetch consultations:", err);
       setConsultationsError(true);
+    } finally {
+      setConsultationsLoading(false);
     }
   }, []);
 
@@ -91,10 +94,10 @@ function HaveYourSayContent() {
           messages: [
             {
               role: "user",
-              content: `Analyze this stakeholder consultation feedback snippet and draft a detailed lobbying impact brief for corporate public affairs team:
-              Stakeholder: "${sub.stakeholder}"
-              Paper Content: "${sub.snippet}"
-              Highlight: 1) Strategic lobby alignment score (0-100%). 2) Immediate policy threat or benefit. 3) Counter-advocacy recommendation.`
+              content: `Analyze this stakeholder consultation response (only the excerpt below is available; do not assume anything beyond it) and draft a short brief for a corporate public affairs team:
+              Stakeholder: "${sub.stakeholder}" (${sub.userType}, ${sub.country || "country not stated"})
+              Excerpt: "${sub.snippet}"
+              Cover: 1) The position taken, quoting only what the excerpt says. 2) Possible policy threat or benefit for a grid operator / utility. 3) Suggested follow-up. Label this as AI analysis of an excerpt.`
             }
           ]
         })
@@ -127,9 +130,9 @@ function HaveYourSayContent() {
         {/* Title */}
         <div className="space-y-1">
           <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2 flex-wrap">
-            <Users className="w-6 h-6 text-blue-400" /> Have Your Say Consultation Monitor <DemoBadge />
+            <Users className="w-6 h-6 text-blue-400" /> Have Your Say Consultation Monitor
           </h1>
-          <p className="text-xs text-slate-400">Capture Commission proposals feedback, map stakeholder demographics, and parse trade position papers</p>
+          <p className="text-xs text-slate-400">Live Commission consultations on energy: response counts, who is responding, and published position papers</p>
         </div>
 
         {consultationsError && (
@@ -139,7 +142,13 @@ function HaveYourSayContent() {
         {/* Selector Header Bar */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-2">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold block">Target Consultation PID</span>
+            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold block">Energy Consultations (open first, then recently closed)</span>
+            {consultationsLoading && (
+              <LoadingSpinner message="Loading consultations from the Commission (first load can take ~30s)..." accent="blue" size="sm" />
+            )}
+            {!consultationsLoading && !consultationsError && consultations.length === 0 && (
+              <div className="text-xs text-slate-400 italic">No energy consultations found.</div>
+            )}
             <div className="flex flex-wrap gap-2">
               {consultations.map((item) => (
                 <button
@@ -166,7 +175,7 @@ function HaveYourSayContent() {
               <div className="w-px h-6 bg-slate-800" />
               <div className="text-center">
                 <div className="text-[10px] text-slate-500 font-mono font-semibold uppercase">Closing Date</div>
-                <div className="text-xs font-semibold text-blue-400 font-mono">{activeConsultation.closingDate}</div>
+                <div className="text-xs font-semibold text-blue-400 font-mono">{activeConsultation.closingDate ?? "—"}</div>
               </div>
             </div>
           )}
@@ -181,7 +190,7 @@ function HaveYourSayContent() {
             <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 space-y-5">
               <div>
                 <h2 className="text-sm font-bold text-slate-200 flex items-center gap-1.5"><Globe className="w-4 h-4 text-blue-400" /> Stakeholder Demographics</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Granular splits mapping country, sector, and sentiment dynamics</p>
+                <p className="text-xs text-slate-400 mt-0.5">Country and respondent-type splits from published responses</p>
               </div>
 
               {loadingConsultation ? (
@@ -227,29 +236,24 @@ function HaveYourSayContent() {
                     </div>
                   </div>
 
-                  {/* Advocacy Sentiments breakdown */}
-                  <div className="space-y-2 bg-slate-950 p-4 rounded-md border border-slate-800">
-                    <h3 className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">Lobbying Sentiment Splitting</h3>
-                    <div className="space-y-2">
-                      {activeConsultation.demographics.sentiments.map((s) => {
-                        const isSupportive = s.label.includes("Supportive");
-                        const isHostile = s.label.includes("Hostile");
-                        const barColor = isSupportive ? "bg-emerald-500" : isHostile ? "bg-red-500" : "bg-slate-500";
-                        const labelColor = isSupportive ? "text-emerald-400" : isHostile ? "text-red-400" : "text-slate-400";
-                        return (
-                          <div key={s.label} className="space-y-1">
-                            <div className="flex items-center justify-between text-[11px] font-mono">
-                              <span className={`font-semibold ${labelColor}`}>{s.label}</span>
-                              <span className="text-slate-400">{s.count} ({s.percentage}%)</span>
-                            </div>
-                            <div className="h-1.5 bg-slate-900 rounded-full overflow-hidden">
-                              <div className={`h-full rounded-full ${barColor}`} style={{ width: `${s.percentage}%` }} />
-                            </div>
-                          </div>
-                        );
-                      })}
+                  {activeConsultation.summary && (
+                    <div className="space-y-2 bg-slate-950 p-4 rounded-md border border-slate-800">
+                      <h3 className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">Commission Summary</h3>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">{activeConsultation.summary}</p>
                     </div>
-                  </div>
+                  )}
+
+                  <p className="text-[10px] text-slate-500 font-mono leading-relaxed">
+                    Source: European Commission Have Your Say. Breakdowns are computed from the{" "}
+                    {activeConsultation.demographics.sampleSize} most recent published responses
+                    {activeConsultation.totalSubmissions > activeConsultation.demographics.sampleSize
+                      ? ` (of ${activeConsultation.totalSubmissions})`
+                      : ""}
+                    .{" "}
+                    <a href={activeConsultation.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                      Open on Have Your Say
+                    </a>
+                  </p>
 
                 </div>
               ) : (
@@ -279,9 +283,11 @@ function HaveYourSayContent() {
 
                     {/* Positions Stream List */}
                     <div className="space-y-3">
+                      {activeConsultation.submissions.length === 0 && (
+                        <div className="p-6 text-center text-slate-400 text-xs italic">No published responses yet.</div>
+                      )}
                       {activeConsultation.submissions.map((sub) => {
-                        const isSupportive = sub.sentiment === "Supportive";
-                        const tagColor = isSupportive ? "bg-slate-900 border-slate-700 text-emerald-400" : "bg-red-500/10 border-red-500/20 text-red-400";
+                        const tagColor = "bg-slate-900 border-slate-700 text-slate-300";
                         const borderStyle = selectedSubId === sub.id ? "border-blue-500/60 bg-slate-900" : "border-slate-800 bg-slate-950/60 hover:border-slate-700";
                         return (
                           <div
@@ -295,7 +301,7 @@ function HaveYourSayContent() {
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded border ${tagColor}`}>
-                                  {sub.sentiment}
+                                  {sub.userType}{sub.country ? ` · ${sub.country}` : ""}
                                 </span>
                                 <span className="text-[10px] font-mono text-slate-500 font-semibold">{sub.id}</span>
                               </div>
@@ -304,7 +310,11 @@ function HaveYourSayContent() {
                             <p className="text-xs text-slate-300 leading-relaxed font-sans">{sub.snippet}</p>
 
                             <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono pt-2 border-t border-slate-800">
-                              <span className="flex items-center gap-1"><Download className="w-3.5 h-3.5" /> File: <strong className="text-slate-300">{sub.attachment}</strong></span>
+                              <span className="flex items-center gap-1">
+                                {sub.attachment
+                                  ? <><Download className="w-3.5 h-3.5" /> File: <strong className="text-slate-300">{sub.attachment}</strong></>
+                                  : <span>{sub.date ?? ""}</span>}
+                              </span>
                               <button
                                 onClick={() => handleParseSub(sub)}
                                 disabled={parsingSub}

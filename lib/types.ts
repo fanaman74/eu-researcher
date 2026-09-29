@@ -42,33 +42,54 @@ export interface LatestDocument {
   snippet: string;
 }
 
-/** A written parliamentary question tracked by the EP watcher (mock DB). */
+/** A written parliamentary question (live EP Open Data Portal record). */
 export interface ParliamentQuestion {
+  /** Display id, e.g. "E-003604/2026". */
   id: string;
   title: string;
+  /** Author MEP(s) with political group, as listed by the Parliament. */
   askedBy: string;
   date: string;
-  committee: string;
+  /** Addressee institution. */
   target: string;
-  content: string;
-  status: string;
-  risk: string;
-  riskRationale: string;
+  status: "Answered" | "Answer Pending";
+  answerDate: string | null;
+  /** Public Parliament page for the question. */
+  url: string;
+  /** Public page for the answer (null while pending). */
+  answerUrl: string | null;
 }
 
-/** Plenary sitting vote results from the EP watcher (mock DB). */
+/** One plenary vote in a list (HowTheyVote). */
+export interface ParliamentVoteSummary {
+  id: string;
+  date: string;
+  title: string;
+  reference: string | null;
+}
+
+export interface VoteSplit {
+  yes: number;
+  no: number;
+  abstain: number;
+  didNotVote: number;
+}
+
+/** A plenary roll-call vote with group and Italian splits (HowTheyVote). */
 export interface ParliamentVote {
-  sittingId: string;
-  sittingDate: string;
-  resolution: string;
+  id: string;
+  date: string;
+  title: string;
+  description: string;
+  reference: string | null;
+  result: string | null;
+  committees: string[];
+  total: VoteSplit;
+  /** Votes cast (for + against + abstain). */
   totalVotes: number;
-  split: {
-    yes: number;
-    no: number;
-    abstain: number;
-  };
-  outcome: string;
-  strategicImpact: string;
+  byGroup: ({ group: string } & VoteSplit)[];
+  italy: VoteSplit | null;
+  url: string;
 }
 
 /** A comitology committee voting record (mock DB). */
@@ -89,29 +110,36 @@ export interface ComitologyVote {
   strategicImpact: string;
 }
 
-/** A single stakeholder position paper attached to a consultation. */
+/** A published response to a Have Your Say consultation (live Commission data). */
 export interface ConsultationSubmission {
   id: string;
   stakeholder: string;
   country: string;
+  userType: string;
+  date: string | null;
+  /** Comma-separated attachment file names ("" when none). */
   attachment: string;
   snippet: string;
-  sentiment: string;
-  relevance: string;
 }
 
-/** A Have Your Say public consultation (mock DB). */
+/** A Have Your Say public consultation (live Commission Better Regulation data). */
 export interface Consultation {
+  /** Have Your Say initiative id. */
   pid: string;
   title: string;
   status: string;
   totalSubmissions: number;
-  closingDate: string;
-  enelAlignment: string;
+  closingDate: string | null;
+  summary: string;
+  /** Public Have Your Say page for the initiative. */
+  url: string;
+  actType: string;
+  publicationId: number | null;
   demographics: {
+    /** Number of published responses the breakdowns below are computed from. */
+    sampleSize: number;
     countries: { country: string; percentage: number; submissions: number }[];
     sectors: { name: string; percentage: number; count: number }[];
-    sentiments: { label: string; percentage: number; count: number }[];
   };
   submissions: ConsultationSubmission[];
 }
