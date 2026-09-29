@@ -4,8 +4,7 @@
  * Ported from the legacy src/workers/ingestionWorker.js:
  *  - NewsData.io Italian politics feed (only when an API key is configured;
  *    reads NEWS_API_KEY, falling back to the legacy NEWSDATA_API_KEY name)
- *  - Mock Dati Camera floor-vote payload (placeholder kept from the old worker
- *    until a real open-data source is wired in)
+ *  - Real Dati Camera final votes (lib/cameraVotes.ts)
  *  - 60-day rolling retention cleanup
  *
  * No self-scheduling, no top-level PrismaClient: the cron route triggers
@@ -14,6 +13,7 @@
 import { getPrisma } from "./db";
 import { createEventIfNew, pruneOldEvents } from "./eventStore";
 import { SOURCE_URL_PATTERN, type EventPayload } from "./validateEvent";
+import { fetchCameraFinalVotes, cameraVoteToEvent } from "./cameraVotes";
 
 export type IngestionResult =
   | {
@@ -23,7 +23,7 @@ export type IngestionResult =
       pruned: number;
       sources: {
         newsData: { enabled: boolean; fetched: number };
-        cameraMock: { fetched: number };
+        datiCamera: { fetched: number; error: string | null };
       };
     }
   | { skipped: true; reason: string };
@@ -47,10 +47,15 @@ function computeImpactLevel(title: string, content: string): EventPayload["impac
 
 // Normalize NewsData.io API response into an event payload
 function transformNewsDataPayload(article: any): EventPayload {
+  // NewsData.io's free tier returns a "ONLY AVAILABLE IN PAID PLANS" placeholder as content.
+  const realContent =
+    typeof article.content === "string" && !/only available in/i.test(article.content)
+      ? article.content
+      : "";
   return {
     title: article.title || "Untitled Article",
     description: article.description || "",
-    content: article.content || article.description || "",
+    content: realContent || article.description || "",
     sourceType: "News",
     sourceName: "NewsData.io",
     sourceUrl: article.link || "",
@@ -65,28 +70,8 @@ function transformNewsDataPayload(article: any): EventPayload {
   };
 }
 
-// Normalize a Dati Camera-style payload into an event payload
-function transformCameraPayload(rdfItem: any): EventPayload {
-  return {
-    title: `Chamber Floor Vote: ${rdfItem.titolo || "Legislative Act"}`,
-    description: rdfItem.descrizione || "No description provided.",
-    content: rdfItem.testoCompleto || rdfItem.descrizione || "",
-    sourceType: "Official",
-    sourceName: "Dati Camera",
-    sourceUrl: rdfItem.url || "https://dati.camera.it",
-    category: "Floor Vote",
-    impactLevel: computeImpactLevel(rdfItem.titolo || "", rdfItem.testoCompleto || ""),
-    date: rdfItem.data ? new Date(rdfItem.data).toISOString() : new Date().toISOString(),
-    entities: Array.isArray(rdfItem.politici)
-      ? rdfItem.politici.map((p: any) => ({
-          name: p.nome,
-          party: p.partito || "Other",
-          role: p.ruolo || "Deputato",
-        }))
-      : [],
-    tags: Array.isArray(rdfItem.keywords) ? rdfItem.keywords : ["Camera"],
-  };
-}
+/** Source URL of the fabricated vote the pre-fix ingestion wrote; removed on every run. */
+const LEGACY_MOCK_SOURCE_URL = "https://dati.camera.it/votazione/sg-2026";
 
 export async function runIngestion(): Promise<IngestionResult> {
   const prisma = getPrisma();
@@ -127,28 +112,26 @@ export async function runIngestion(): Promise<IngestionResult> {
     console.log("[Ingestion] NEWS_API_KEY not set — skipping NewsData.io fetch.");
   }
 
-  // 2. Mock Chamber of Deputies floor vote (placeholder preserved from the legacy worker)
-  const mockRdfResponse = [
-    {
-      titolo: "Voto Camera: Disegno di Legge Tariffario Smart Grid",
-      descrizione: "Esenzione fiscale approvata per reti intelligenti e stoccaggi energetici.",
-      testoCompleto:
-        "La Camera ha approvato le modifiche sulle Smart Grid inserendo sgravi tariffari per le imprese energivore.",
-      data: new Date().toISOString(),
-      url: "https://dati.camera.it/votazione/sg-2026",
-      politici: [{ nome: "Matteo Salvini", partito: "Lega", ruolo: "Minister of Infrastructure" }],
-      keywords: ["Smart Grid", "Lega", "Tariffario"],
-    },
-  ];
-  for (const rawItem of mockRdfResponse) {
-    // Mock timestamps are always "now", so dedupe on title only
-    const created = await createEventIfNew(prisma, transformCameraPayload(rawItem), {
-      titleOnly: true,
-    });
-    if (created) ingested++;
+  // 2. Real Chamber of Deputies final votes (official open-data SPARQL endpoint).
+  //    A failure here must not abort the rest of the run; it is reported in the result.
+  let cameraFetched = 0;
+  let cameraError: string | null = null;
+  try {
+    const votes = await fetchCameraFinalVotes(14);
+    cameraFetched = votes.length;
+    for (const vote of votes) {
+      const created = await createEventIfNew(prisma, cameraVoteToEvent(vote));
+      if (created) ingested++;
+    }
+  } catch (error) {
+    cameraError = error instanceof Error ? error.message : String(error);
+    console.error("[Ingestion] Dati Camera fetch failed:", cameraError);
   }
 
-  // 3. Rolling 60-day retention cleanup
+  // 3. Purge the fabricated placeholder vote that earlier versions wrote as "Official".
+  await prisma.event.deleteMany({ where: { sourceUrl: LEGACY_MOCK_SOURCE_URL } });
+
+  // 4. Rolling 60-day retention cleanup
   const pruned = await pruneOldEvents(prisma);
 
   return {
@@ -158,7 +141,7 @@ export async function runIngestion(): Promise<IngestionResult> {
     pruned,
     sources: {
       newsData: { enabled: newsEnabled, fetched: newsFetched },
-      cameraMock: { fetched: mockRdfResponse.length },
+      datiCamera: { fetched: cameraFetched, error: cameraError },
     },
   };
 }

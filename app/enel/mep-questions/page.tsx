@@ -22,7 +22,7 @@ export default function MepQuestionsPage() {
     const question = selectedQuestionForAnswer;
     if (!question) throw new Error("No question selected.");
 
-    const prompt = `Draft a realistic, highly professional, and precise summarized official answer (approximately 200 words) from the European Commission in response to European Parliament Question ${question.id}.
+    const prompt = `IMPORTANT: The actual Commission answer is NOT available to you. Begin your reply with the line "⚠️ AI-GENERATED SCENARIO — NOT THE OFFICIAL COMMISSION ANSWER. Check the European Parliament register for the real reply." Then write a plausible ~200-word scenario of how the Commission might respond to European Parliament Question ${question.id}, clearly framed as speculation ("the Commission could argue…"), never as a statement of fact or a quote.
       Topic: "${question.title}".
       Asked by ${question.askedBy} to ${question.target}.
       The question text was: "${question.content}".
@@ -108,7 +108,7 @@ export default function MepQuestionsPage() {
                   <button
                     onClick={() => setSelectedQuestionForAnswer(item)}
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[9px] font-bold bg-emerald-950/40 border border-emerald-900 text-emerald-400 cursor-pointer hover:bg-emerald-900/30 hover:border-emerald-800 transition-all active:scale-[0.97]"
-                    title="Click to view summarized Commission answer"
+                    title="Click to view an AI-generated scenario (not the official answer)"
                   >
                     <CheckCircle className="w-3 h-3 text-emerald-400" />
                     {item.status}
@@ -151,7 +151,7 @@ export default function MepQuestionsPage() {
         } : null}
         accent="purple"
         idLabel="Question ID"
-        headerLabel="Official Answer Drafter"
+        headerLabel="AI Answer Scenario (not official)"
         loadingMessage="Parsing EC plenary minutes & summarizing lobby counter-advocacy stance..."
         fetchSummary={fetchAnswerSummary}
       />

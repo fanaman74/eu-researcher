@@ -41,8 +41,8 @@ const defaultFetchSummary = async (doc: SummarizerConfig, detailed: boolean, sig
     signal,
   });
 
-  if (!res.ok) throw new Error("Failed to generate summary.");
-  const data = await res.json();
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "Failed to generate summary.");
   return data.summary as string;
 };
 

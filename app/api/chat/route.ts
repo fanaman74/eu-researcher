@@ -92,14 +92,12 @@ async function callEurLexSPARQL(q: string, namespace: string = "all", top_k: num
 
   try {
     // 1. Try high-precision AND search first
-    const safeKeywords = keywords.map(sanitizeForSparql);
-    const andFilters = safeKeywords.map(kw => `CONTAINS(LCASE(?title), "${kw}")`).join(" && ");
-    let hits = await executeQuery(andFilters, top_k, sectorFilter, harassmentCourtFilter);
-    
+    const safeKeywords = keywords.flatMap(kw => sanitizeForSparql(kw).split(/[^a-zA-Z0-9]+/)).filter(Boolean);
+    let hits = await executeQuery(safeKeywords, "AND", top_k, sectorFilter, harassmentCourtFilter);
+
     // 2. If no hits, fallback to OR search
     if (hits.length === 0 && safeKeywords.length > 1) {
-      const orFilters = safeKeywords.map(kw => `CONTAINS(LCASE(?title), "${kw}")`).join(" || ");
-      hits = await executeQuery(orFilters, top_k, sectorFilter, harassmentCourtFilter);
+      hits = await executeQuery(safeKeywords, "OR", top_k, sectorFilter, harassmentCourtFilter);
     }
     
     return { hits };

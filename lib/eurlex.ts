@@ -60,60 +60,114 @@ export interface EurlexHit {
   snippet: string;
 }
 
+export const CELLAR_SPARQL_ENDPOINT = "https://publications.europa.eu/webapi/rdf/sparql";
+
+/** Run a SPARQL query against Cellar with a generous timeout and one retry on timeout/5xx. */
+export async function runCellarQuery(sparqlQuery: string): Promise<any[]> {
+  const url = `${CELLAR_SPARQL_ENDPOINT}?query=${encodeURIComponent(sparqlQuery)}&format=application%2Fsparql-results%2Bjson`;
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const response = await fetch(url, {
+        headers: { Accept: "application/sparql-results+json" },
+        signal: AbortSignal.timeout(25000),
+      });
+      if (!response.ok) {
+        throw new Error(`SPARQL endpoint returned status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data.results.bindings;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError;
+}
+
+/** Tidy Cellar's "#"-delimited judgment titles into readable text. */
+export function cleanTitle(raw: string): string {
+  return raw.replace(/\s*#\s*/g, " — ").replace(/ /g, " ").replace(/\s+/g, " ").trim();
+}
+
 /**
- * Execute a title-keyword search against the EUR-Lex SPARQL endpoint.
+ * Stable key for a court case, so a judgment and its Official Journal notice
+ * (CELEX types CJ/CA, TJ/TA, ...) collapse into one hit. Non-case CELEX ids key on themselves.
+ */
+function caseKey(celex: string): string {
+  const m = /^6(\d{4})([CTF])[A-Z]{1,2}(\d{4})/.exec(celex);
+  return m ? `${m[1]}${m[2]}${m[3]}` : celex;
+}
+
+/** Notice-type CELEX codes (OJ summaries) lose to the primary judgment/order when both exist. */
+function isNotice(celex: string): boolean {
+  return /^6\d{4}[CTF](A|B|C|N|V|X)\d/.test(celex);
+}
+
+/**
+ * Execute a title-keyword search against the EUR-Lex SPARQL endpoint using
+ * Virtuoso's full-text index (bif:contains) — orders of magnitude faster than
+ * CONTAINS(LCASE(?title), ...) scans, which time out on Cellar.
  * `sectorFilter` / `courtFilter` are caller-built SPARQL FILTER clauses
- * (empty string when unused); `keywordFilters` must already be sanitized.
+ * (empty string when unused). `keywords` are sanitized here.
  */
 export async function executeQuery(
-  keywordFilters: string,
+  keywords: string[],
+  mode: "AND" | "OR",
   top_k: number,
   sectorFilter: string,
   courtFilter: string = ""
 ): Promise<EurlexHit[]> {
+  // bif:contains takes a quoted expression; strip anything that isn't a plain word char.
+  const terms = keywords
+    .map((k) => k.toLowerCase().replace(/[^a-z0-9]/g, ""))
+    .filter((k) => k.length > 0);
+  if (terms.length === 0) return [];
+  const expression = terms.map((t) => `'${t}'`).join(` ${mode} `);
+
   const sparqlQuery = `
     PREFIX cdm: <http://publications.europa.eu/ontology/cdm#>
 
     SELECT DISTINCT ?work ?celex ?title ?date
     WHERE {
-      ?work cdm:resource_legal_id_celex ?celex .
-      ?expr cdm:expression_belongs_to_work ?work .
-      ?expr cdm:expression_uses_language <http://publications.europa.eu/resource/authority/language/ENG> .
       ?expr cdm:expression_title ?title .
-      
+      ?title bif:contains "${expression}" .
+      ?expr cdm:expression_uses_language <http://publications.europa.eu/resource/authority/language/ENG> .
+      ?expr cdm:expression_belongs_to_work ?work .
+      ?work cdm:resource_legal_id_celex ?celex .
+
       OPTIONAL { ?work cdm:work_date_document ?date . }
       OPTIONAL { ?work cdm:work_created_by_agent ?courtAgent . }
-      
+
       ${sectorFilter}
       ${courtFilter}
-      FILTER(${keywordFilters})
     }
     ORDER BY DESC(?date)
-    LIMIT ${top_k}
+    LIMIT ${top_k * 3}
   `;
 
-  const endpoint = 'https://publications.europa.eu/webapi/rdf/sparql';
-  const url = `${endpoint}?query=${encodeURIComponent(sparqlQuery)}&format=application%2Fsparql-results%2Bjson`;
+  const bindings = await runCellarQuery(sparqlQuery);
 
-  const response = await fetch(url, {
-    headers: { 'Accept': 'application/sparql-results+json' },
-    signal: AbortSignal.timeout(15000)
-  });
-  if (!response.ok) {
-    throw new Error(`SPARQL endpoint returned status: ${response.status}`);
+  // Collapse judgment + OJ-notice duplicates, preferring the primary document.
+  const byCase = new Map<string, any>();
+  for (const b of bindings) {
+    const key = caseKey(b.celex.value);
+    const existing = byCase.get(key);
+    if (!existing || (isNotice(existing.celex.value) && !isNotice(b.celex.value))) {
+      byCase.set(key, b);
+    }
   }
-  const data = await response.json();
 
-  return data.results.bindings.map((b: any) => {
+  return [...byCase.values()].slice(0, top_k).map((b: any) => {
     const celex = b.celex.value;
     const sector = getSectorFromCelex(celex);
+    const date = b.date ? b.date.value : "N/A";
     return {
       id: celex,
-      title: b.title.value,
+      title: cleanTitle(b.title.value),
       country: "EU",
-      sector: sector,
+      sector,
       url: `https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:${celex}`,
-      snippet: `[${sector}] EUR-Lex official record. CELEX identifier: ${celex}. Document Date: ${b.date ? b.date.value : "N/A"}. Work Cellar URI: ${b.work.value}.`
+      snippet: `[${sector}] EUR-Lex official record. CELEX identifier: ${celex}. Document Date: ${date}. Work Cellar URI: ${b.work.value}.`,
     };
   });
 }

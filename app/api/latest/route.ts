@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { runCellarQuery, cleanTitle } from "@/lib/eurlex";
+
+// Cellar is slow (~15s for these queries), so cache per namespace for 12h (twice-daily refresh).
+const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+const CACHE = new Map<string, { at: number; documents: unknown[] }>();
 
 const PREFIX_MAP: Record<string, string> = {
   consolidated: "0",
@@ -53,26 +58,18 @@ export async function GET(request: NextRequest) {
     LIMIT 10
   `;
 
-  const endpoint = 'https://publications.europa.eu/webapi/rdf/sparql';
-  const url = `${endpoint}?query=${encodeURIComponent(sparqlQuery)}&format=application%2Fsparql-results%2Bjson`;
+  const cached = CACHE.get(namespace);
+  if (cached && Date.now() - cached.at < CACHE_TTL_MS) {
+    return NextResponse.json({ documents: cached.documents, fetchedAt: new Date(cached.at).toISOString() });
+  }
 
   try {
-    const response = await fetch(url, {
-      headers: { 'Accept': 'application/sparql-results+json' },
-      signal: AbortSignal.timeout(15000),
-      next: { revalidate: 43200 } // Cache for 12 hours (Twice Daily)
-    });
-
-    if (!response.ok) {
-      throw new Error(`SPARQL returned status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const documents = data.results.bindings.map((b: any) => {
+    const bindings = await runCellarQuery(sparqlQuery);
+    const documents = bindings.map((b: any) => {
       const celex = b.celex.value;
       return {
         celex,
-        title: b.title.value,
+        title: cleanTitle(b.title.value),
         date: b.date ? b.date.value : "N/A",
         sector: sectorLabel,
         url: `https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:${celex}`,
@@ -80,8 +77,14 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json({ documents });
+    const at = Date.now();
+    CACHE.set(namespace, { at, documents });
+    return NextResponse.json({ documents, fetchedAt: new Date(at).toISOString() });
   } catch (error: any) {
+    // Serve stale data rather than an empty list if Cellar is slow/down.
+    if (cached) {
+      return NextResponse.json({ documents: cached.documents, fetchedAt: new Date(cached.at).toISOString(), stale: true });
+    }
     console.error("Latest Documents Route Error:", error);
     return NextResponse.json({ error: "Failed to retrieve latest documents.", documents: [] });
   }

@@ -41,10 +41,18 @@ export async function POST(req: Request) {
     }
 
     // Fetch the actual official document from the EUR-Lex Cellar RESTful web service
-    let officialText = snippet || "";
+    // Cellar content negotiation: the CELEX resource URI must be requested with
+    // Accept/Accept-Language headers (the ?language=&format= query form returns HTTP 400).
+    let officialText = "";
     try {
-      const cellarUrl = `https://publications.europa.eu/resource/celex/${celex}?language=ENG&format=HTML`;
-      const res = await fetch(cellarUrl, { signal: AbortSignal.timeout(20000) });
+      const cellarUrl = `https://publications.europa.eu/resource/celex/${celex}`;
+      const res = await fetch(cellarUrl, {
+        headers: {
+          Accept: "text/html, application/xhtml+xml;q=0.9",
+          "Accept-Language": "eng",
+        },
+        signal: AbortSignal.timeout(20000),
+      });
       if (res.ok) {
         // Bound the read: reject oversized documents, hard-truncate the rest to ~2MB.
         const contentLength = parseInt(res.headers.get("content-length") || "0", 10);
@@ -52,18 +60,30 @@ export async function POST(req: Request) {
           throw new Error(`Cellar response too large (${contentLength} bytes).`);
         }
         const htmlContent = (await res.text()).substring(0, 2 * 1024 * 1024);
-        // Strip HTML tags and normalize spacing
+        // Strip scripts/styles/tags and normalize spacing
         const stripped = htmlContent
+          .replace(/<(script|style)[\s\S]*?<\/\1>/gi, " ")
           .replace(/<[^>]*?>/g, " ")
+          .replace(/&nbsp;/g, " ")
           .replace(/\s+/g, " ")
           .trim();
-        
+
         if (stripped.length > 500) {
           officialText = stripped.substring(0, 16000); // Extract first 16,000 characters
         }
+      } else {
+        console.warn(`Cellar full-text fetch returned HTTP ${res.status} for ${celex}.`);
       }
     } catch (fetchErr) {
-      console.warn("Failed to fetch official full text from Cellar, falling back to snippet:", fetchErr);
+      console.warn("Failed to fetch official full text from Cellar:", fetchErr);
+    }
+
+    // Never summarize from a title/snippet alone: the model would invent the facts and holding.
+    if (!officialText) {
+      return NextResponse.json(
+        { error: "The official full text for this document could not be retrieved, so no summary was generated. Open the EUR-Lex link to read it directly." },
+        { status: 502 }
+      );
     }
 
     const isDetailed = !!detailed;
