@@ -89,7 +89,7 @@ export default function GatewayPage() {
                   Enel Strategic Public Affairs
                 </h2>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Monitor DG COMP state aid decisions, European Parliament MEP questions, comitology votes, and generate formal corporate advocacy briefs.
+                  Monitor DG COMP state aid decisions, European Parliament MEP questions, plenary votes, Have Your Say consultations, and generate formal corporate advocacy briefs.
                 </p>
               </div>
             </div>

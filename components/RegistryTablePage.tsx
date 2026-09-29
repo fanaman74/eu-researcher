@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ArrowLeft, Search, type LucideIcon } from "lucide-react";
 import LoadingSpinner from "./LoadingSpinner";
 import ErrorBanner from "./ErrorBanner";
-import DemoBadge from "./DemoBadge";
 
 export type RegistryAccent = "emerald" | "cyan" | "purple" | "amber";
 
@@ -40,8 +39,6 @@ export interface RegistryTablePageProps<T> {
   filterItem: (item: T, search: string) => boolean;
   loadingMessage: string;
   emptyMessage: string;
-  /** Show the "Demo data" badge next to the title */
-  demo?: boolean;
   /** Route for the back link (default "/enel") */
   backHref?: string;
   /** Label for the back link (default "Back to Enel Hub") */
@@ -99,7 +96,6 @@ export default function RegistryTablePage<T>({
   filterItem,
   loadingMessage,
   emptyMessage,
-  demo = false,
   backHref = "/enel",
   backLabel = "Back to Enel Hub",
   toolbarExtras,
@@ -157,7 +153,7 @@ export default function RegistryTablePage<T>({
             </Link>
             <div>
               <h1 className="text-xl font-extrabold text-white flex items-center gap-2 flex-wrap">
-                <Icon className={`w-5.5 h-5.5 ${a.icon}`} /> {title} {demo && <DemoBadge />}
+                <Icon className={`w-5.5 h-5.5 ${a.icon}`} /> {title}
               </h1>
               <p className="text-xs text-slate-400 mt-1">{subtitle}</p>
             </div>

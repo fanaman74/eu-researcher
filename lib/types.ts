@@ -92,24 +92,6 @@ export interface ParliamentVote {
   url: string;
 }
 
-/** A comitology committee voting record (mock DB). */
-export interface ComitologyVote {
-  id: string;
-  measure: string;
-  registerId: string;
-  date: string;
-  chairperson: string;
-  status: string;
-  votingSheet: {
-    inFavour: number;
-    against: number;
-    abstentions: number;
-    countriesAgainst: string[];
-    countriesAbstaining: string[];
-  };
-  strategicImpact: string;
-}
-
 /** A published response to a Have Your Say consultation (live Commission data). */
 export interface ConsultationSubmission {
   id: string;
@@ -144,14 +126,14 @@ export interface Consultation {
   submissions: ConsultationSubmission[];
 }
 
-/** A hardcoded sample inquiry brief shown on the Enel hub page. */
+/** An item from the hub's live feed that can be turned into an AI briefing. */
 export interface EnelBrief {
-  id: number;
+  id: string;
   title: string;
   type: string;
-  risk: string;
   date: string;
   source: string;
+  url?: string;
 }
 
 /** An Italian political event tracked by the Politics Tracker module. */

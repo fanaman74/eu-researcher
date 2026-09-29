@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -16,10 +16,16 @@ import {
   Check,
   Download
 } from "lucide-react";
-import DemoBadge from "@/components/DemoBadge";
 import ErrorBanner from "@/components/ErrorBanner";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { type EnelBrief } from "@/lib/types";
+import { type EnelBrief, type Consultation, type ParliamentQuestion, type EurLexHit } from "@/lib/types";
+
+type FeedTab = "questions" | "consultations" | "state_aid";
+const FEED_TABS: { key: FeedTab; label: string }[] = [
+  { key: "questions", label: "MEP questions" },
+  { key: "consultations", label: "Consultations" },
+  { key: "state_aid", label: "State aid" },
+];
 
 export default function EnelHubPage() {
   const briefingRef = useRef<HTMLDivElement>(null);
@@ -29,12 +35,12 @@ export default function EnelHubPage() {
   const [copySuccess, setCopySuccess] = useState(false);
   const [generatedReport, setGeneratedReport] = useState("");
   const [originalReport, setOriginalReport] = useState("");
-  const [activeTab, setActiveTab] = useState("dg_comp");
+  const [activeTab, setActiveTab] = useState<FeedTab>("questions");
 
   const [activeConsultationsCount, setActiveConsultationsCount] = useState<number | null>(null);
   const [mepQuestionsCount, setMepQuestionsCount] = useState<number | null>(null);
   const [stateAidCount, setStateAidCount] = useState<number | null>(null);
-  const [acerRevisionsCount, setAcerRevisionsCount] = useState<number | null>(null);
+  const [feed, setFeed] = useState<Record<FeedTab, EnelBrief[]>>({ questions: [], consultations: [], state_aid: [] });
   const [countsError, setCountsError] = useState(false);
 
   const fetchCounts = async () => {
@@ -45,6 +51,9 @@ export default function EnelHubPage() {
       if (resConsultations.ok) {
         const data = await resConsultations.json();
         setActiveConsultationsCount(data.consultations?.length || 0);
+        setFeed((f) => ({ ...f, consultations: (data.consultations || []).slice(0, 5).map((c: Consultation) => ({
+          id: `hys-${c.pid}`, title: c.title, type: c.status.startsWith("Open") ? "OPEN CONSULTATION" : "CLOSED CONSULTATION",
+          date: c.closingDate ?? "", source: "Have Your Say", url: c.url })) }));
       } else {
         setActiveConsultationsCount(0);
         failed = true;
@@ -59,6 +68,8 @@ export default function EnelHubPage() {
       if (resParliament.ok) {
         const data = await resParliament.json();
         setMepQuestionsCount(data.questions?.length || 0);
+        setFeed((f) => ({ ...f, questions: (data.questions || []).slice(0, 5).map((q: ParliamentQuestion) => ({
+          id: q.id, title: q.title, type: q.status.toUpperCase(), date: q.date, source: `EP question · ${q.askedBy}`, url: q.url })) }));
       } else {
         setMepQuestionsCount(0);
         failed = true;
@@ -73,6 +84,8 @@ export default function EnelHubPage() {
       if (resEurlex.ok) {
         const data = await resEurlex.json();
         setStateAidCount(data.hits?.length || 0);
+        setFeed((f) => ({ ...f, state_aid: (data.hits || []).slice(0, 5).map((h: EurLexHit) => ({
+          id: h.id, title: h.title, type: h.sector.toUpperCase(), date: (/Document Date: (\d{4}-\d{2}-\d{2})/.exec(h.snippet)?.[1]) ?? "", source: "EUR-Lex", url: h.url })) }));
       } else {
         setStateAidCount(0);
         failed = true;
@@ -80,20 +93,6 @@ export default function EnelHubPage() {
     } catch (err) {
       console.error(err);
       setStateAidCount(0);
-      failed = true;
-    }
-    try {
-      const resComitology = await fetch("/api/comitology");
-      if (resComitology.ok) {
-        const data = await resComitology.json();
-        setAcerRevisionsCount(data.votes?.length || 0);
-      } else {
-        setAcerRevisionsCount(0);
-        failed = true;
-      }
-    } catch (err) {
-      console.error(err);
-      setAcerRevisionsCount(0);
       failed = true;
     }
     if (failed) setCountsError(true);
@@ -106,8 +105,7 @@ export default function EnelHubPage() {
   const statistics = [
     { label: "Active Consultations", count: activeConsultationsCount, icon: Users, href: "/have-your-say" },
     { label: "MEP Questions Tracked", count: mepQuestionsCount, icon: BarChart3, href: "/parliament" },
-    { label: "DG COMP State Aid Cases", count: stateAidCount, icon: Scale, href: "/eurlex" },
-    { label: "ACER Grid Revisions", count: acerRevisionsCount, icon: Zap, href: "/comitology" }
+    { label: "State Aid Cases (EUR-Lex)", count: stateAidCount, icon: Scale, href: "/enel/state-aid-cases" }
   ];
 
   const tools = [
@@ -131,33 +129,7 @@ export default function EnelHubPage() {
       href: "/have-your-say",
       icon: Users,
       badge: "EC Consultation API"
-    },
-    {
-      title: "Comitology & Technical Acts",
-      description: "Track voting records on delegated acts, technical implementing regulations, and ACER network electricity codes.",
-      href: "/comitology",
-      icon: Zap,
-      badge: "EC Comitology API"
-    }
-  ];
-
-  const recentBriefs = {
-    dg_comp: [
-      { id: 1, title: "State Aid clearance for 3SUN Catania Gigafactory", type: "RULING", risk: "Low Risk", date: "2026-05-20", source: "DG COMP" },
-      { id: 2, title: "Investigation into grid fee exemptions in Italy", type: "INQUIRY", risk: "High Risk", date: "2026-05-18", source: "DG COMP" },
-      { id: 3, title: "Subsidized power purchasing agreement (PPA) audit", type: "AUDIT", risk: "Med Risk", date: "2026-05-14", source: "DG COMP" }
-    ],
-    dg_ener: [
-      { id: 1, title: "RED III renewable target transposition updates", type: "DIRECTIVE", risk: "Med Risk", date: "2026-05-22", source: "DG ENER" },
-      { id: 2, title: "Cross-border hydrogen corridor infrastructure planning", type: "REGULATION", risk: "Low Risk", date: "2026-05-19", source: "DG ENER" },
-      { id: 3, title: "Review of electricity pricing peak emergency caps", type: "AMENDMENT", risk: "High Risk", date: "2026-05-12", source: "DG ENER" }
-    ],
-    acer: [
-      { id: 1, title: "ACER harmonized electricity transmission tariff codes", type: "GRID CODE", risk: "High Risk", date: "2026-05-24", source: "ACER" },
-      { id: 2, title: "Cross-zonal capacity allocation methodology update", type: "DECISION", risk: "Med Risk", date: "2026-05-15", source: "ACER" },
-      { id: 3, title: "Review of REMIT wholesale energy market disclosures", type: "REPORTING", risk: "Low Risk", date: "2026-05-10", source: "ACER" }
-    ]
-  };
+    }  ];
 
   const handleSelectAndGenerate = async (brief: EnelBrief, isDetailed: boolean = false) => {
     setSelectedInquiry(brief);
@@ -171,9 +143,9 @@ export default function EnelHubPage() {
 
     try {
       const prompt = isDetailed
-        ? `Draft an extremely comprehensive strategic briefing playbook (approximately 1,200 words) on lobbying risks. Focus on this topic: "${brief.title}" (Type: ${brief.type}, Source: ${brief.source}, Risk Assessment: ${brief.risk}) in Brussels public affairs context. 
+        ? `Draft an extremely comprehensive strategic briefing playbook (approximately 1,200 words) on lobbying risks. Focus on this topic: "${brief.title}" (Type: ${brief.type}, Source: ${brief.source}) in Brussels public affairs context. 
            Include: 1. EXECUTIVE SUMMARY & STRATEGIC RATIONALE, 2. DETAILED REGULATORY CONTEXT & POLICY THREATS, 3. HISTORICAL PRECEDENTS, 4. IMPACT EVALUATION ON ENERGY PORTFOLIOS, 5. ADVOCACY RECOMMENDATIONS.`
-        : `Draft a detailed executive briefing paper on public affairs policy risks. Topic: "${brief.title}" (Type: ${brief.type}, Source: ${brief.source}, Risk: ${brief.risk}). List policy threats and counter-advocacy recommendations.`;
+        : `Draft a detailed executive briefing paper on public affairs policy risks. Topic: "${brief.title}" (Type: ${brief.type}, Source: ${brief.source}). List policy threats and counter-advocacy recommendations.`;
 
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -189,7 +161,7 @@ export default function EnelHubPage() {
         throw new Error("Failed to generate brief.");
       }
     } catch (err: any) {
-      setGeneratedReport(`⚠️ Error: ${err.message || "An issue occurred generating report."}`);
+      setGeneratedReport(`âš ï¸ Error: ${err.message || "An issue occurred generating report."}`);
     } finally {
       setLoadingReport(false);
     }
@@ -274,7 +246,7 @@ export default function EnelHubPage() {
         throw new Error("Failed to generate answer.");
       }
     } catch (err: any) {
-      setGeneratedReport(`⚠️ Error: ${err.message || "An issue occurred answering question."}`);
+      setGeneratedReport(`âš ï¸ Error: ${err.message || "An issue occurred answering question."}`);
     } finally {
       setLoadingReport(false);
     }
@@ -296,7 +268,7 @@ export default function EnelHubPage() {
               href="/"
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-slate-200 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-md transition-colors"
             >
-              ← Gateway
+              â† Gateway
             </Link>
             <div className="w-9 h-9 rounded-md bg-blue-600 flex items-center justify-center text-white font-bold">
               <Zap className="w-5 h-5" />
@@ -331,7 +303,7 @@ export default function EnelHubPage() {
             onRetry={fetchCounts}
           />
         )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {statistics.map((stat) => {
             const Icon = stat.icon;
             return (
@@ -405,27 +377,30 @@ export default function EnelHubPage() {
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2 flex-wrap">
-                  <Activity className="w-4 h-4 text-blue-400" /> Sample Inquiries Feed <DemoBadge />
+                  <Activity className="w-4 h-4 text-blue-400" /> Live Regulatory Feed
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">Weekly legislative movements & regulatory risk assessments</p>
+                <p className="text-xs text-slate-400 mt-0.5">Latest items from the European Parliament, the Commission and EUR-Lex</p>
               </div>
 
               {/* Inquiries Tabs */}
               <div className="flex border border-slate-800 p-1 bg-slate-950 rounded-md">
-                {Object.keys(recentBriefs).map((tab) => (
+                {FEED_TABS.map((tab) => (
                   <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`flex-1 py-1 text-[10px] font-semibold uppercase rounded transition-colors cursor-pointer ${activeTab === tab ? "bg-slate-800 text-blue-400" : "text-slate-400 hover:text-slate-200"}`}
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`flex-1 py-1 text-[10px] font-semibold uppercase rounded transition-colors cursor-pointer ${activeTab === tab.key ? "bg-slate-800 text-blue-400" : "text-slate-400 hover:text-slate-200"}`}
                   >
-                    {tab.replace("_", " ")}
+                    {tab.label}
                   </button>
                 ))}
               </div>
 
               {/* Brief Cards Stream */}
               <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
-                {recentBriefs[activeTab as keyof typeof recentBriefs].map((brief) => {
+                {feed[activeTab].length === 0 && (
+                  <div className="p-4 text-center text-xs text-slate-400 italic border border-dashed border-slate-800 rounded-md">Nothing to show yet.</div>
+                )}
+                {feed[activeTab].map((brief) => {
                   const isSelected = selectedInquiry?.id === brief.id && selectedInquiry?.source === brief.source;
                   return (
                     <button
@@ -437,9 +412,6 @@ export default function EnelHubPage() {
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-mono font-semibold uppercase px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
                           {brief.type}
-                        </span>
-                        <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded border ${brief.risk === "High Risk" ? "bg-red-500/10 border-red-500/20 text-red-400" : brief.risk === "Med Risk" ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-slate-800 border-slate-700 text-slate-300"}`}>
-                          {brief.risk}
                         </span>
                       </div>
                       <h4 className="text-xs font-bold text-slate-100 leading-snug">{brief.title}</h4>
@@ -459,7 +431,7 @@ export default function EnelHubPage() {
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                  <Cpu className="w-4 h-4 text-blue-400" /> Advocate AI Risk Briefing
+                  <Cpu className="w-4 h-4 text-blue-400" /> Advocate AI Briefing (AI-generated)
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">Draft strategic position summaries & counter-advocacy memos</p>
               </div>
@@ -471,9 +443,6 @@ export default function EnelHubPage() {
                     <span className="text-[10px] font-mono font-semibold uppercase px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
                       {selectedInquiry.type}
                     </span>
-                    <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded border ${selectedInquiry.risk === "High Risk" ? "bg-red-500/10 border-red-500/20 text-red-400" : selectedInquiry.risk === "Med Risk" ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-slate-800 border-slate-700 text-slate-300"}`}>
-                      {selectedInquiry.risk}
-                    </span>
                   </div>
                   <h4 className="text-xs font-bold text-slate-100 leading-snug mt-1">
                     <span className="text-slate-400 font-normal">Active Subject:</span> {selectedInquiry.title}
@@ -481,7 +450,7 @@ export default function EnelHubPage() {
                 </div>
               ) : (
                 <div className="p-4 bg-slate-950 border border-dashed border-slate-800 rounded-md text-center text-xs text-slate-400 italic">
-                  Select a live feed card to analyze policy risks.
+                  Select an item from the live feed to draft a briefing.
                 </div>
               )}
 
@@ -491,7 +460,7 @@ export default function EnelHubPage() {
                   onClick={handleBackToMain}
                   className="mb-3 inline-flex items-center gap-1 px-3 py-1 rounded-md bg-slate-950 hover:bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300 transition-colors cursor-pointer"
                 >
-                  ← Return to Main Briefing
+                  â† Return to Main Briefing
                 </button>
               )}
               <div className={`bg-slate-950 border border-slate-800 p-4 rounded-md min-h-[220px] max-h-[340px] overflow-y-auto flex flex-col relative ${generatedReport || loadingReport ? "justify-start" : "justify-center"}`}>
@@ -600,3 +569,4 @@ export default function EnelHubPage() {
     </div>
   );
 }
+

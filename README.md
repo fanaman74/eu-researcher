@@ -54,10 +54,12 @@ The platform is split into two specialized strategic workspaces, routing users t
 
 ### 2. ⚡ Enel Public Affairs Hub
 *A premium corporate workspace tailored for the strategic advocacy and public affairs team of Enel in Brussels.*
-* **European Parliament Watch**: Track live parliamentary written questions, MEP sponsors, target committees (ITRE, ENVI, ECON), and risk assessments mapping straight to asset portfolios (e.g., Sicily smart grids, Catania 3SUN gigafactories).
-* **DG COMP & ENER Tracker**: Direct dashboard oversight of state-aid cases and **Comitology votes** (smart grid allocations, safety standards).
-* **"Have Your Say" Dashboard**: Monitor EU public consultations, mapping stakeholder demographics, attachment position papers (eurelectric, EEB, Greenpeace), and sentiment trends (Supportive/Neutral/Hostile).
-* **Advocacy Brief Generator**: Transform complex legislative acts and voting charts into formatted corporate briefs.
+* **European Parliament Watch**: Live written questions to the Commission (EP Open Data Portal) and plenary roll-call votes with political-group and Italian splits (HowTheyVote.eu).
+* **State Aid Watcher**: State-aid judgments, orders and decisions from EUR-Lex (Cellar full-text search).
+* **"Have Your Say" Dashboard**: Monitor EU public consultations, showing live response counts, who is responding (countries and organisation types) and published position papers.
+* **Advocacy Brief Generator**: AI-drafted briefs (clearly labelled as AI-generated) from live feed items.
+
+> Only features backed by real data are included. Sections without a public data source (e.g. comitology votes) were removed rather than mocked.
 
 ---
 
