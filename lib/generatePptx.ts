@@ -15,7 +15,7 @@ declare global {
 const SCRIPT_URL = "https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js";
 const SCRIPT_INTEGRITY = "sha384-Cck14aA9cifjYolcnjebXRfWGkz5ltHMBiG4px/j8GS+xQcb7OhNQWZYyWjQ+UwQ";
 
-function loadPptxScript(): Promise<void> {
+export function loadPptxScript(): Promise<void> {
   if (window.PptxGenJS) return Promise.resolve();
   return new Promise((resolve, reject) => {
     const existing = document.querySelector(`script[src="${SCRIPT_URL}"]`);

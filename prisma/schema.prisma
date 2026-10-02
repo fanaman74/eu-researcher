@@ -65,3 +65,33 @@ model Tag {
   @@unique([name, eventId])
   @@index([name])
 }
+
+
+// Last seen state of an item from a monitored source (see lib/changeFeed.ts).
+model TrackedItem {
+  id          String   @id @default(uuid())
+  source      String   // "radar" | "dossier" | "press" | "meeting"
+  externalId  String
+  title       String
+  url         String
+  fields      Json     // tracked field values; a difference produces a ChangeEvent
+  firstSeenAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([source, externalId])
+}
+
+// One detected change: an item appeared, or a tracked field changed.
+model ChangeEvent {
+  id         String   @id @default(uuid())
+  source     String
+  externalId String
+  kind       String   // "new" | "changed"
+  title      String
+  summary    String   @db.Text
+  url        String
+  detectedAt DateTime @default(now())
+
+  @@index([detectedAt])
+  @@index([source])
+}

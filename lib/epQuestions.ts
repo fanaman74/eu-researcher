@@ -1,4 +1,4 @@
-﻿/**
+/**
  * European Parliament written questions from the EP Open Data Portal API v2
  * (https://data.europarl.europa.eu/api/v2, no key).
  *
@@ -16,11 +16,11 @@ const UNANSWERED_RECHECK_MS = 12 * 60 * 60 * 1000;
 const WINDOW = 300; // newest questions tracked (~3 weeks); fills over successive refreshes
 const LIST_PAGE = 1000;
 const CONCURRENCY = 4;
-const REQUEST_BUDGET = 130; // the API allows ~150 requests before answering HTTP 429 (Retry-After: 60)
+const REQUEST_BUDGET = 110; // the API allows ~150 requests before answering HTTP 429 (Retry-After: 60); the rest is left for dossiers and MEP lookups
 const REQUEST_WAIT_MS = 20000; // never make a page load wait longer than this for a refresh
 const MAX_RESULTS = 60;
 /** Title keywords that make a question relevant to an electricity / grid / energy-policy team. */
-const ENERGY_RE =
+export const ENERGY_RE =
   /\b(energy|electric\w*|grid\w*|renewable\w*|solar|photovoltaic\w*|wind|hydrogen|nuclear|gas|power|tariff\w*|state aid|climate|emission\w*|decarbon\w*|battery|batteries|storage|interconnect\w*|permitting|pylon\w*|transmission|smart meter\w*|heat pump\w*|data cent\w*|ACER|REMIT|RED III|net[- ]zero|hydropower|biomass|biogas|LNG)\b/i;
 
 class RateLimitedError extends Error {}
@@ -182,6 +182,11 @@ function startRefresh(): Promise<void> {
       });
   }
   return refreshing;
+}
+
+/** Questions already in the cache, newest first. Never calls the API. */
+export function trackedQuestions(): ParliamentQuestion[] {
+  return [...details.values()].map((d) => d.q).sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
 }
 
 /** Populate the cache fully (used by the cron job, which may take as long as it needs). */

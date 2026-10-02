@@ -31,6 +31,17 @@ async function handleCron(req: Request) {
     return NextResponse.json({ error: "Data refresh failed." }, { status: 500 });
   }
 
+  // Snapshot the monitored sources and record what changed (see lib/monitor.ts).
+  // Runs before the warm-up, which uses most of the Parliament API's request budget.
+  let monitoring;
+  try {
+    const { runMonitoring } = await import("@/lib/monitor");
+    monitoring = await runMonitoring();
+  } catch (error) {
+    console.error("[Cron API] Monitoring failed:", error);
+    monitoring = { error: "Monitoring run failed." };
+  }
+
   // Warm the slow upstream caches (best effort; failures are logged, never fatal).
   try {
     const { listConsultations } = await import("@/lib/haveYourSay");
@@ -57,6 +68,7 @@ async function handleCron(req: Request) {
       success: true,
       skipped: true,
       reason: ingestion.reason,
+      monitoring,
       timestamp,
       schedule: CRON_SCHEDULE,
     });
@@ -67,6 +79,7 @@ async function handleCron(req: Request) {
     skipped: false,
     message: "Twice-daily data refresh executed successfully.",
     ingestion,
+    monitoring,
     timestamp,
     schedule: CRON_SCHEDULE,
   });

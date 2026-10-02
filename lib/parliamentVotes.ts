@@ -53,6 +53,58 @@ export async function listPlenaryVotes(q = "energy"): Promise<ParliamentVoteSumm
   });
 }
 
+interface VoteRecord extends ParliamentVoteSummary {
+  procedure: string | null;
+  /** EP person id -> "FOR" | "AGAINST" | "ABSTENTION" | "DID_NOT_VOTE". */
+  positions: Map<string, string>;
+}
+
+/** Main votes matching `q`, each with its procedure reference and every member's position. */
+async function voteRecords(q: string, max: number): Promise<VoteRecord[]> {
+  return cached(`records:${q}:${max}`, async () => {
+    const data = await getJson(`${HTV}/votes?q=${encodeURIComponent(q)}&page_size=40&sort_by=timestamp&sort_order=desc`);
+    const main = (data.results as any[]).filter((v) => v.is_main).slice(0, max);
+    const records = await Promise.all(
+      main.map(async (v) => {
+        const detail = await getJson(`${HTV}/votes/${v.id}`);
+        return {
+          id: String(v.id),
+          date: String(v.timestamp).slice(0, 10),
+          title: v.display_title,
+          reference: v.reference ?? null,
+          procedure: detail.procedure?.reference ?? null,
+          positions: new Map<string, string>(
+            (detail.member_votes ?? []).map((m: any) => [String(m.member?.id), String(m.position)])
+          ),
+        };
+      })
+    );
+    return records;
+  });
+}
+
+/** Main plenary votes held on one legislative file, e.g. "2025/0180(COD)". */
+export async function listVotesForProcedure(reference: string, q: string): Promise<ParliamentVoteSummary[]> {
+  const records = await voteRecords(q, 8);
+  return records
+    .filter((r) => r.procedure === reference)
+    .map(({ id, date, title, reference: ref }) => ({ id, date, title, reference: ref }));
+}
+
+/** How one MEP voted in the most recent main energy votes. */
+export async function memberEnergyVotes(
+  mepId: string
+): Promise<{ id: string; date: string; title: string; position: string; url: string }[]> {
+  const records = await voteRecords("energy", 10);
+  return records.map((r) => ({
+    id: r.id,
+    date: r.date,
+    title: r.title,
+    position: r.positions.get(mepId) ?? "NOT_A_MEMBER",
+    url: `https://howtheyvote.eu/votes/${r.id}`,
+  }));
+}
+
 export async function getPlenaryVote(id: string): Promise<ParliamentVote | null> {
   if (!/^\d{1,9}$/.test(id)) return null;
   return cached(`vote:${id}`, async () => {

@@ -59,6 +59,24 @@ The platform is split into two specialized strategic workspaces, routing users t
 * **"Have Your Say" Dashboard**: Monitor EU public consultations, showing live response counts, who is responding (countries and organisation types) and published position papers.
 * **Advocacy Brief Generator**: AI-drafted briefs (clearly labelled as AI-generated) from live feed items.
 
+The hub is also organised the way an EU-affairs office works — by file, by date and by what changed:
+
+| Page | What it shows | Source |
+| --- | --- | --- |
+| `/enel/digest` | What changed since yesterday (pipeline, watched files, announcements, peer meetings) and deadlines in the next 14 days; copy as text or export to Word. | Change feed (`lib/changeFeed.ts`, `lib/monitor.ts`) |
+| `/enel/radar` | The Commission's energy pipeline: act type, stage, planned quarter, feedback periods. | Have Your Say |
+| `/enel/dossiers` | Watched legislative files: stage, lead committee, rapporteur and shadows with groups, timeline, linked initiatives, MEP questions and votes. | EP Open Data, HowTheyVote.eu |
+| `/enel/calendar` | Consultation deadlines, planned adoptions (on the quarter's last day) and plenary sittings, with `.ics` export for Outlook. | Have Your Say, EP Open Data |
+| `/enel/peers` | Peer utilities' and associations' responses to a consultation, with full text and position-paper links. | Have Your Say |
+| `/enel/meetings` | Commission cabinet and DG meetings since 1 December 2024, with a peer benchmark. | Commission transparency register exports |
+| `/enel/mep-briefing` | One-page MEP record (committees, file roles, questions, energy votes) with Word and PowerPoint export. | EP Open Data, HowTheyVote.eu |
+| `/enel/context` | Commission press announcements on energy (state aid flagged), Italian day-ahead prices and generation mix. | Press corner, Energy-Charts |
+
+Hand-made mappings live in code: the dossier watchlist and its linking keywords in `lib/dossiers.ts`, the peer list in `lib/peers.ts`.
+Not covered, because the sources refuse automated access or have no data service: the Council, ARERA and the energy ministry, Parliament committee meetings, and infringement decisions.
+
+The change feed stores history in PostgreSQL (`TrackedItem`, `ChangeEvent`; applied by `prisma migrate deploy` on start). The first monitoring run after a deployment records a baseline without reporting it. Without a database, history is kept in memory until the server restarts.
+
 > Only features backed by real data are included. Sections without a public data source (e.g. comitology votes) were removed rather than mocked.
 
 ---
@@ -134,4 +152,4 @@ The app deploys to **Railway** (Nixpacks builder, `npm run build` → `npm run s
 | `INGEST_API_KEY` | Yes (prod) | Bearer token protecting `POST /api/politics-tracker` event ingestion. |
 | `NEWS_API_KEY` | Optional | NewsData.io key enabling live Italian news ingestion (`NEWSDATA_API_KEY` also accepted). |
 
-**Cron scheduling**: the platform itself does not self-schedule. Point an external scheduler (Railway cron or e.g. cron-job.org) at `POST https://<your-app>/api/cron` on a `0 0,12 * * *` schedule with header `Authorization: Bearer <CRON_SECRET>`.
+**Cron scheduling**: in production the server schedules its own refresh (ingestion, change monitoring, cache warm-up) at 00:00 and 12:00 UTC, plus one run a minute after boot (`lib/scheduler.ts`). For an external trigger as well, point a scheduler (Railway cron or e.g. cron-job.org) at `POST https://<your-app>/api/cron` on a `0 0,12 * * *` schedule with header `Authorization: Bearer <CRON_SECRET>`.

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -14,7 +14,14 @@ import {
   Layers,
   Copy,
   Check,
-  Download
+  Download,
+  Radar,
+  Bell,
+  FolderOpen,
+  Handshake,
+  CalendarDays,
+  UserRound,
+  Newspaper
 } from "lucide-react";
 import ErrorBanner from "@/components/ErrorBanner";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -131,6 +138,18 @@ export default function EnelHubPage() {
       badge: "EC Consultation API"
     }  ];
 
+  // Workspaces organised the way the office works: by file, by date, and by what changed.
+  const workstreams = [
+    { title: "What changed", description: "New and changed items since yesterday across all monitored sources, with a digest to copy or export.", href: "/enel/digest", icon: Bell },
+    { title: "Radar", description: "What the Commission plans in energy: act type, stage and planned quarter.", href: "/enel/radar", icon: Radar },
+    { title: "Dossiers", description: "Watched legislative files with stage, rapporteurs, shadows, linked consultations, questions and votes.", href: "/enel/dossiers", icon: FolderOpen },
+    { title: "Regulatory calendar", description: "Consultation deadlines, planned adoptions and plenary sittings, with Outlook export.", href: "/enel/calendar", icon: CalendarDays },
+    { title: "Peer positions", description: "What other utilities and associations told the Commission in a consultation, side by side.", href: "/enel/peers", icon: Users },
+    { title: "Commission meetings", description: "Who meets which cabinet or Directorate-General, on what, and how Enel compares with peers.", href: "/enel/meetings", icon: Handshake },
+    { title: "MEP briefing", description: "One-page record for meeting prep: committees, file roles, questions and votes. Word and PowerPoint export.", href: "/enel/mep-briefing", icon: UserRound },
+    { title: "Announcements and market", description: "Commission press announcements on energy, plus Italian day-ahead prices and generation mix.", href: "/enel/context", icon: Newspaper },
+  ];
+
   const handleSelectAndGenerate = async (brief: EnelBrief, isDetailed: boolean = false) => {
     setSelectedInquiry(brief);
     setInDepthMode(isDetailed);
@@ -161,7 +180,7 @@ export default function EnelHubPage() {
         throw new Error("Failed to generate brief.");
       }
     } catch (err: any) {
-      setGeneratedReport(`âš ï¸ Error: ${err.message || "An issue occurred generating report."}`);
+      setGeneratedReport(`Error: ${err.message || "An issue occurred generating report."}`);
     } finally {
       setLoadingReport(false);
     }
@@ -246,7 +265,7 @@ export default function EnelHubPage() {
         throw new Error("Failed to generate answer.");
       }
     } catch (err: any) {
-      setGeneratedReport(`âš ï¸ Error: ${err.message || "An issue occurred answering question."}`);
+      setGeneratedReport(`Error: ${err.message || "An issue occurred answering question."}`);
     } finally {
       setLoadingReport(false);
     }
@@ -268,7 +287,7 @@ export default function EnelHubPage() {
               href="/"
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-slate-200 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-md transition-colors"
             >
-              â† Gateway
+              ← Gateway
             </Link>
             <div className="w-9 h-9 rounded-md bg-blue-600 flex items-center justify-center text-white font-bold">
               <Zap className="w-5 h-5" />
@@ -326,16 +345,44 @@ export default function EnelHubPage() {
           })}
         </div>
 
+        {/* Workstreams: by file, by date, by change */}
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-sm font-bold text-slate-200 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-blue-400" /> Files, calendar and changes
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">Follow each EU file through its stages, see what is due when, and what moved since yesterday</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {workstreams.map((w) => {
+              const Icon = w.icon;
+              return (
+                <Link
+                  key={w.href}
+                  href={w.href}
+                  className="bg-slate-900/60 border border-slate-800 rounded-lg p-4 flex flex-col gap-2 hover:border-slate-700 transition-colors group"
+                >
+                  <div className="w-8 h-8 rounded-md bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-300 group-hover:text-blue-400 transition-colors">
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-100 group-hover:text-blue-400 transition-colors">{w.title}</h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">{w.description}</p>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Core Tools Division */}
         <div className="space-y-4">
           <div>
             <h2 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-              <Layers className="w-4 h-4 text-blue-400" /> Authorized Legislative Watchers
+              <Layers className="w-4 h-4 text-blue-400" /> Source workspaces
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">Targeted workspaces to track and analyze EU regulatory frameworks</p>
+            <p className="text-xs text-slate-400 mt-0.5">Search each data source directly</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {tools.map((tool) => {
               const Icon = tool.icon;
               return (
@@ -460,7 +507,7 @@ export default function EnelHubPage() {
                   onClick={handleBackToMain}
                   className="mb-3 inline-flex items-center gap-1 px-3 py-1 rounded-md bg-slate-950 hover:bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300 transition-colors cursor-pointer"
                 >
-                  â† Return to Main Briefing
+                  ← Return to Main Briefing
                 </button>
               )}
               <div className={`bg-slate-950 border border-slate-800 p-4 rounded-md min-h-[220px] max-h-[340px] overflow-y-auto flex flex-col relative ${generatedReport || loadingReport ? "justify-start" : "justify-center"}`}>
