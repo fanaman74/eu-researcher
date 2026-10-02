@@ -1,107 +1,58 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  Scale,
-  ExternalLink,
-  FileText
-} from "lucide-react";
-import RegistryTablePage from "@/components/RegistryTablePage";
+import { Badge, ButtonLink, EmptyState, Loadable, Page, SearchBox, Segmented, SourceNote, useApi } from "@/components/ui";
 import { type EurLexHit } from "@/lib/types";
 
-export default function StateAidCasesPage() {
-  const [cases, setCases] = useState<EurLexHit[]>([]);
-  const [selectedSector, setSelectedSector] = useState("All");
+const SECTORS = ["All", "Case Law", "Preparatory Documents", "Secondary Legislation"] as const;
+type Sector = (typeof SECTORS)[number];
 
-  const getSectorCount = (sectorName: string) => {
-    if (sectorName === "All") return cases.length;
-    return cases.filter(item => item.sector === sectorName).length;
-  };
+const docDate = (snippet: string) => /Document Date: (\d{4}-\d{2}-\d{2})/.exec(snippet)?.[1] ?? null;
+
+export default function StateAidPage() {
+  const { data, loading, error, reload } = useApi<{ hits: EurLexHit[] }>("/api/eurlex?q=state aid energy&top_k=15");
+  const [sector, setSector] = useState<Sector>("All");
+  const [search, setSearch] = useState("");
+
+  const all = data?.hits ?? [];
+  const needle = search.trim().toLowerCase();
+  const items = all
+    .filter((i) => sector === "All" || i.sector === sector)
+    .filter((i) => !needle || `${i.title} ${i.id}`.toLowerCase().includes(needle));
+  const count = (s: Sector) => (s === "All" ? all.length : all.filter((i) => i.sector === s).length);
 
   return (
-    <RegistryTablePage<EurLexHit>
-      title="DG COMP State Aid Watcher"
-      subtitle="EUR-Lex SPARQL Cellar Database Crawler — Pre-filtered for State Support Decisions"
-      icon={Scale}
-      accent="emerald"
-      endpoint="/api/eurlex?q=state aid energy&top_k=15"
-      dataKey="hits"
-      countLabel={(n) => `${n} Cases Tracked`}
-      searchPlaceholder="Filter cases by CELEX ID, ruling title, or legal sector..."
-      filterItem={(item, search) => {
-        const q = search.toLowerCase();
-        const matchesSearch =
-          item.title.toLowerCase().includes(q) ||
-          item.id.toLowerCase().includes(q) ||
-          item.sector.toLowerCase().includes(q);
-        const matchesSector = selectedSector === "All" || item.sector === selectedSector;
-        return matchesSearch && matchesSector;
-      }}
-      loadingMessage="Querying publications office SPARQL endpoint..."
-      emptyMessage="No state aid cases match your filtering criteria."
-      onLoaded={setCases}
-      toolbarExtras={
-        <div className="flex flex-row items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 mr-2 shrink-0">Sector:</span>
-          {["All", "Case Law", "Preparatory Documents", "Secondary Legislation"].map((sector) => {
-            const isActive = selectedSector === sector;
-            const count = getSectorCount(sector);
-            return (
-              <button
-                key={sector}
-                onClick={() => setSelectedSector(sector)}
-                className={`px-4 py-2 rounded-full border text-[11px] font-semibold transition-all duration-200 cursor-pointer whitespace-nowrap flex items-center gap-2 ${
-                  isActive
-                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
-                    : "bg-slate-900/60 border-slate-900 text-slate-400 hover:text-slate-200 hover:border-slate-800"
-                }`}
-              >
-                {sector}
-                <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
-                  isActive ? "bg-emerald-500/25 text-emerald-300" : "bg-slate-950 text-slate-500"
-                }`}>
-                  {count}
-                </span>
-              </button>
-            );
-          })}
+    <Page>
+      <div className="flex flex-col lg:flex-row lg:items-end gap-4">
+        <Segmented label="Document type" options={SECTORS.map((s) => ({ value: s, label: data ? `${s} (${count(s)})` : s }))} value={sector} onChange={setSector} />
+        <div className="lg:w-96">
+          <SearchBox label="Filter rulings" hideLabel value={search} onChange={setSearch} placeholder="Filter by title or CELEX number" />
         </div>
-      }
-      columns={[
-        { header: "CELEX ID", className: "p-4 w-36" },
-        { header: "Legal Ruling / Decision", className: "p-4 min-w-[280px]" },
-        { header: "Sector", className: "p-4 w-40" },
-        { header: "Scope", className: "p-4 w-28" },
-        { header: "Action", className: "p-4 w-32 text-center" }
-      ]}
-      rowKey={(item) => item.id}
-      renderRow={(item) => (
-        <tr className="hover:bg-slate-900/35 transition-colors duration-150">
-          <td className="p-4 font-mono font-bold text-emerald-400">{item.id}</td>
-          <td className="p-4 font-medium text-slate-200">
-            <div className="space-y-1">
-              <div>{item.title}</div>
-              <div className="text-[10px] text-slate-500 font-mono leading-relaxed">{item.snippet}</div>
-            </div>
-          </td>
-          <td className="p-4 text-slate-400 font-medium">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-[10px]">
-              <FileText className="w-3.5 h-3.5 text-slate-500" /> {item.sector}
-            </span>
-          </td>
-          <td className="p-4 font-mono text-slate-500 font-bold uppercase">{item.country}</td>
-          <td className="p-4 text-center">
-            <a
-              href={item.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[10px] font-bold text-slate-300 hover:text-white transition-colors cursor-pointer"
-            >
-              EUR-Lex Record <ExternalLink className="w-3 h-3" />
-            </a>
-          </td>
-        </tr>
-      )}
-    />
+      </div>
+
+      <Loadable loading={loading} error={error} onRetry={reload} message="Searching EUR-Lex for state-aid rulings…">
+        {items.length === 0 ? (
+          <EmptyState title="No rulings match" />
+        ) : (
+          <ul className="space-y-3">
+            {items.map((i) => (
+              <li key={i.id} className="bg-surface border border-line rounded-lg shadow-card p-4 sm:p-5 space-y-2">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-subtle">
+                  <Badge>{i.sector}</Badge>
+                  <span className="font-mono text-xs">{i.id}</span>
+                  {docDate(i.snippet) && <span>{docDate(i.snippet)}</span>}
+                </div>
+                <h2 className="font-medium text-fg">{i.title}</h2>
+                <ButtonLink href={i.url} external size="sm">Official record</ButtonLink>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Loadable>
+
+      <SourceNote>
+        Source: EUR-Lex search for “state aid energy”. For Commission announcements of new state-aid approvals, see News and market.
+      </SourceNote>
+    </Page>
   );
 }

@@ -2,59 +2,56 @@
 
 import React from "react";
 import Link from "next/link";
-import { ArrowRight, FolderOpen } from "lucide-react";
-import HubShell, { Chip, Loadable, SourceNote, useApi } from "@/components/HubShell";
+import { ArrowRight } from "lucide-react";
+import { Badge, Loadable, Page, SourceNote, formatDate, useApi } from "@/components/ui";
 import type { Dossier } from "@/lib/types";
+
+const stageTone = (d: Dossier) => (!d.available ? "neutral" : d.stage.startsWith("Adopted") ? "success" : "info");
 
 export default function DossiersPage() {
   const { data, loading, error, reload } = useApi<{ dossiers: Dossier[] }>("/api/dossiers");
 
   return (
-    <HubShell title="Dossiers" subtitle="Watched legislative files, each tracked through its stages" badge="By file" icon={FolderOpen}>
-      <Loadable loading={loading} error={error} onRetry={reload} message="Loading watched files from the European Parliament...">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <Page>
+      <Loadable loading={loading} error={error} onRetry={reload} message="Loading watched files from the European Parliament…">
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {(data?.dossiers ?? []).map((d) => {
             const rapporteur = d.actors.find((a) => a.role === "Rapporteur");
             return (
-              <Link
-                key={d.id}
-                href={`/enel/dossiers/${d.id}`}
-                className="bg-slate-900/60 border border-slate-800 hover:border-slate-700 rounded-lg p-5 flex flex-col gap-3 transition-colors group"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] font-mono text-slate-400">{d.reference} · {d.proposal}</span>
-                  <Chip tone={d.available ? (d.stage.startsWith("Adopted") ? "green" : "blue") : "neutral"}>{d.stage}</Chip>
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-slate-100 group-hover:text-blue-400 transition-colors">{d.name}</h2>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">{d.why}</p>
-                </div>
-                <dl className="text-[11px] text-slate-300 space-y-1 mt-auto">
-                  <div className="flex gap-2">
-                    <dt className="text-slate-500 w-24 shrink-0">Latest</dt>
-                    <dd>{d.lastActivity ? `${d.lastActivity.date} · ${d.lastActivity.label}` : "No activity recorded"}</dd>
+              <li key={d.id}>
+                <Link
+                  href={`/enel/dossiers/${d.id}`}
+                  className="group h-full bg-surface border border-line rounded-lg shadow-card p-5 flex flex-col gap-3 hover:border-line-strong transition-colors"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-sm text-subtle font-mono">{d.reference}</span>
+                    <Badge tone={stageTone(d)}>{d.stage}</Badge>
                   </div>
-                  <div className="flex gap-2">
-                    <dt className="text-slate-500 w-24 shrink-0">Lead committee</dt>
-                    <dd>{d.leadCommittee || "Not assigned"}</dd>
+                  <div>
+                    <h2 className="text-lg font-semibold text-fg group-hover:text-link group-hover:underline">{d.name}</h2>
+                    <p className="text-sm text-muted mt-1">{d.why}</p>
                   </div>
-                  <div className="flex gap-2">
-                    <dt className="text-slate-500 w-24 shrink-0">Rapporteur</dt>
-                    <dd>{rapporteur ? `${rapporteur.name} (${[rapporteur.group, rapporteur.country].filter(Boolean).join(", ")})` : "Not appointed"}</dd>
-                  </div>
-                </dl>
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 group-hover:text-blue-400">
-                  Open file <ArrowRight className="w-3 h-3" />
-                </span>
-              </Link>
+                  <dl className="text-sm grid grid-cols-[8.5rem_1fr] gap-x-3 gap-y-1 mt-auto">
+                    <dt className="text-subtle">Latest step</dt>
+                    <dd className="text-fg">{d.lastActivity ? `${d.lastActivity.label} (${formatDate(d.lastActivity.date)})` : "No activity yet"}</dd>
+                    <dt className="text-subtle">Lead committee</dt>
+                    <dd className="text-fg">{d.leadCommittee || "Not assigned yet"}</dd>
+                    <dt className="text-subtle">Rapporteur</dt>
+                    <dd className="text-fg">{rapporteur ? `${rapporteur.name} (${[rapporteur.group, rapporteur.country].filter(Boolean).join(", ")})` : "Not appointed yet"}</dd>
+                  </dl>
+                  <span className="inline-flex items-center gap-1 text-sm font-medium text-link">
+                    Open file <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                  </span>
+                </Link>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </Loadable>
       <SourceNote>
-        Source: European Parliament Open Data Portal. The watchlist is curated by hand in lib/dossiers.ts. Council status is not shown: the
-        Council&apos;s website refuses automated access.
+        Source: European Parliament Open Data Portal. The list of watched files is maintained by hand in lib/dossiers.ts. The Council&apos;s position is
+        not shown because the Council&apos;s website refuses automated access.
       </SourceNote>
-    </HubShell>
+    </Page>
   );
 }

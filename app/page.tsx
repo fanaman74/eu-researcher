@@ -1,177 +1,114 @@
+"use client";
+
+import React from "react";
 import Link from "next/link";
-import { 
-  Scale, 
-  Zap, 
-  ArrowRight,
-  ShieldCheck,
-  Compass,
-  Radio,
-  FileText
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { Badge, Card, ErrorState, Page, Stat, formatDate, linkClass, plural, useApi } from "@/components/ui";
+import { NAV } from "@/lib/navigation";
+import type { Digest } from "@/lib/digest";
+import type { Dossier } from "@/lib/types";
 
-export default function GatewayPage() {
+const today = () => new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
+export default function HomePage() {
+  const digest = useApi<{ digest: Digest }>("/api/changes?view=digest&hours=24");
+  const files = useApi<{ dossiers: Dossier[] }>("/api/dossiers");
+
+  const d = digest.data?.digest;
+  const changes = d?.sections.reduce((n, s) => n + s.changes.length, 0);
+  const dossiers = files.data?.dossiers ?? [];
+  const inNegotiation = dossiers.filter((x) => /negotiation|trilogue/i.test(x.lastActivity?.label ?? "")).length;
+  const pending = (v: number | undefined, loading: boolean, error: boolean) => (loading ? "…" : error || v === undefined ? "—" : v);
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-12 flex flex-col justify-between">
-      
-      {/* Header & Main Container */}
-      <div className="max-w-6xl w-full mx-auto space-y-10">
-        
-        {/* Executive Header */}
-        <div className="border-b border-slate-800 pb-6 space-y-2">
-          <div className="flex justify-between items-center flex-wrap gap-4">
-            <div>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded-md">
-                Multi-Tenant Intelligence Platform
-              </span>
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white mt-3">
-                European Union Intelligence Portals
-              </h1>
-              <p className="text-xs md:text-sm text-slate-400 max-w-2xl mt-1 leading-relaxed">
-                Direct access to live CELLAR SPARQL legal databases, European Parliament written questions, DG COMP state-aid tracking, and Italian legislative watch.
-              </p>
-            </div>
-            <div className="flex items-center gap-3 text-xs font-mono text-slate-400">
-              <span className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-md">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" /> Authorized Session
-              </span>
-            </div>
-          </div>
-        </div>
+    <Page title="Today" description={today()}>
+      <section aria-label="Summary" className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <Stat label="Changes since yesterday" value={pending(changes, digest.loading, digest.error)} hint="Open the daily digest" href="/enel/digest" />
+        <Stat label="Consultations closing in 14 days" value={pending(d?.deadlines.length, digest.loading, digest.error)} hint="See the calendar" href="/enel/calendar" />
+        <Stat label="Watched files in negotiation" value={pending(files.data ? inNegotiation : undefined, files.loading, files.error)} hint={`Of ${dossiers.length || "…"} legislative files`} href="/enel/dossiers" />
+        <Stat label="Watched files" value={pending(files.data ? dossiers.length : undefined, files.loading, files.error)} hint="Stage, rapporteurs and votes" href="/enel/dossiers" />
+      </section>
 
-        {/* Workspace Directory Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          {/* Workspace 1: EU-Lex Explorer */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 flex flex-col justify-between hover:border-slate-700 transition-colors">
-            <div className="space-y-4">
-              <div className="flex justify-between items-start">
-                <div className="p-2.5 rounded-md bg-slate-800 border border-slate-700 text-blue-400">
-                  <Scale className="w-5 h-5" />
-                </div>
-                <span className="text-[9px] font-mono text-slate-400 bg-slate-950 border border-slate-800 px-2 py-0.5 rounded">
-                  CELLAR SPARQL
-                </span>
-              </div>
-              <div className="space-y-1">
-                <h2 className="text-base font-bold text-slate-100">
-                  EUR-Lex Directives & Case Law
-                </h2>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Query official EU sector legal acts, treaties, secondary legislation, and Court of Justice precedents directly via the Cellar RDF triplestore.
-                </p>
-              </div>
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card title="Deadlines coming up" actions={<Link href="/enel/calendar" className={`text-sm ${linkClass}`}>Full calendar</Link>}>
+          {digest.error ? (
+            <ErrorState onRetry={digest.reload} />
+          ) : !d ? (
+            <p className="text-sm text-muted" role="status">Loading deadlines… The first load of the day can take up to 30 seconds.</p>
+          ) : d.deadlines.length === 0 ? (
+            <p className="text-sm text-muted">No consultation closes in the next 14 days.</p>
+          ) : (
+            <ul className="divide-y divide-line">
+              {d.deadlines.map((x) => (
+                <li key={x.id} className="py-3 first:pt-0 last:pb-0 flex gap-4">
+                  <span className="w-24 shrink-0 text-sm font-medium tabular-nums text-fg">{formatDate(x.feedbackEnd)}</span>
+                  <span className="text-sm">
+                    <a href={x.url} target="_blank" rel="noopener noreferrer" className="text-fg hover:text-link hover:underline">{x.title}</a>
+                    <span className="block text-subtle">
+                      {plural(x.totalFeedback, "response")} so far ·{" "}
+                      <Link href={`/enel/peers?pid=${x.id}`} className={linkClass}>see peer responses</Link>
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
 
-            <div className="pt-6 border-t border-slate-800/80 mt-6">
-              <Link 
-                href="/eurlex"
-                className="inline-flex items-center justify-between w-full px-4 py-2 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-100 transition-colors"
-              >
-                <span>Launch EUR-Lex Workspace</span>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Workspace 2: Enel Strategic Public Affairs */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 flex flex-col justify-between hover:border-slate-700 transition-colors">
-            <div className="space-y-4">
-              <div className="flex justify-between items-start">
-                <div className="p-2.5 rounded-md bg-slate-800 border border-slate-700 text-amber-400">
-                  <Zap className="w-5 h-5" />
-                </div>
-                <span className="text-[9px] font-mono text-slate-400 bg-slate-950 border border-slate-800 px-2 py-0.5 rounded">
-                  Brussels Hub
-                </span>
-              </div>
-              <div className="space-y-1">
-                <h2 className="text-base font-bold text-slate-100">
-                  Enel Strategic Public Affairs
-                </h2>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Monitor DG COMP state aid decisions, European Parliament MEP questions, plenary votes, Have Your Say consultations, and generate formal corporate advocacy briefs.
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-6 border-t border-slate-800/80 mt-6">
-              <Link 
-                href="/enel"
-                className="inline-flex items-center justify-between w-full px-4 py-2 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-100 transition-colors"
-              >
-                <span>Access Public Affairs Hub</span>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Workspace 3: Italian Legislative Watch */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 flex flex-col justify-between hover:border-slate-700 transition-colors">
-            <div className="space-y-4">
-              <div className="flex justify-between items-start">
-                <div className="p-2.5 rounded-md bg-slate-800 border border-slate-700 text-emerald-400">
-                  <Radio className="w-5 h-5" />
-                </div>
-                <span className="text-[9px] font-mono text-slate-400 bg-slate-950 border border-slate-800 px-2 py-0.5 rounded">
-                  Rolling 60-Day Archive
-                </span>
-              </div>
-              <div className="space-y-1">
-                <h2 className="text-base font-bold text-slate-100">
-                  Italian Political Watch
-                </h2>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Track Chamber and Senate floor votes, committee hearings, Openpolis political entity movements, and political news feeds twice daily.
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-6 border-t border-slate-800/80 mt-6">
-              <Link 
-                href="/politics-tracker"
-                className="inline-flex items-center justify-between w-full px-4 py-2 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-100 transition-colors"
-              >
-                <span>Open Political Watch</span>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-              </Link>
-            </div>
-          </div>
-
-        </div>
-
-        {/* System Documentation & Guidance Notes */}
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-lg p-5 text-xs text-slate-400 space-y-3">
-          <h3 className="font-semibold text-slate-200 uppercase tracking-wider text-[11px] flex items-center gap-2">
-            <FileText className="w-4 h-4 text-blue-400" /> Workspace Data Protocols
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-slate-400 text-[11px] leading-relaxed">
-            <div>
-              <strong className="text-slate-300 block mb-0.5">Cellar RDF SPARQL:</strong>
-              Direct endpoint integration with `publications.europa.eu/webapi/rdf/sparql` supporting sector prefixes 0 through 9.
-            </div>
-            <div>
-              <strong className="text-slate-300 block mb-0.5">Data Ingestion Cycle:</strong>
-              Automated twice-daily synchronization (00:00 & 12:00 UTC) with 60-day historical data retention.
-            </div>
-            <div>
-              <strong className="text-slate-300 block mb-0.5">Corporate Brief Generation:</strong>
-              Structured analytical reporting using multi-model OpenRouter LLM orchestration and offline fallback briefing engines.
-            </div>
-          </div>
-        </div>
-
+        <Card title="Legislative files" actions={<Link href="/enel/dossiers" className={`text-sm ${linkClass}`}>All files</Link>}>
+          {files.error ? (
+            <ErrorState onRetry={files.reload} />
+          ) : !files.data ? (
+            <p className="text-sm text-muted" role="status">Loading files…</p>
+          ) : (
+            <ul className="divide-y divide-line">
+              {dossiers.map((x) => (
+                <li key={x.id} className="py-3 first:pt-0 last:pb-0">
+                  <Link href={`/enel/dossiers/${x.id}`} className="text-sm font-medium text-fg hover:text-link hover:underline">{x.name}</Link>
+                  <span className="block text-sm text-subtle">
+                    {x.lastActivity ? `${formatDate(x.lastActivity.date)} · ${x.lastActivity.label}` : x.stage}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
       </div>
 
-      {/* Footer */}
-      <div className="max-w-6xl w-full mx-auto pt-8 mt-12 border-t border-slate-900 flex flex-col md:flex-row justify-between items-center gap-4 text-[11px] text-slate-500">
-        <div>EU Legal & Public Affairs Intelligence Portal &copy; 2026</div>
-        <div className="flex items-center gap-6">
-          <Link href="/eurlex" className="hover:text-slate-300 transition-colors">EUR-Lex</Link>
-          <Link href="/enel" className="hover:text-slate-300 transition-colors">Enel Hub</Link>
-          <Link href="/politics-tracker" className="hover:text-slate-300 transition-colors">Italian Watch</Link>
+      <section aria-labelledby="tasks" className="space-y-4">
+        <h2 id="tasks" className="text-lg font-semibold text-fg">What do you want to do?</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          {NAV.map((group) => (
+            <Card key={group.label} title={group.label}>
+              <ul className="space-y-1">
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <li key={item.href}>
+                      <Link href={item.href} className="group flex gap-3 rounded-md p-2 -mx-2 hover:bg-sunken transition-colors">
+                        <Icon className="w-5 h-5 mt-0.5 shrink-0 text-link" aria-hidden="true" />
+                        <span className="min-w-0">
+                          <span className="flex items-center gap-1 font-medium text-fg">
+                            {item.label}
+                            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
+                          </span>
+                          <span className="block text-sm text-muted">{item.description}</span>
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </Card>
+          ))}
         </div>
-      </div>
+      </section>
 
-    </div>
+      {d && !d.persistent && (
+        <p className="text-sm text-subtle">
+          <Badge>Note</Badge> Change history is kept in server memory only, so it restarts when the server does.
+        </p>
+      )}
+    </Page>
   );
 }

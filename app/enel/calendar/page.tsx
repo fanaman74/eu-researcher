@@ -1,20 +1,20 @@
 "use client";
 
 import React, { useState } from "react";
-import { CalendarDays, Download } from "lucide-react";
-import HubShell, { Card, Chip, Loadable, Segmented, SourceNote, buttonClass, useApi } from "@/components/HubShell";
+import { Download } from "lucide-react";
+import { Badge, ButtonLink, Card, EmptyState, Loadable, Notice, Page, Segmented, SourceNote, useApi } from "@/components/ui";
 import type { CalendarEvent } from "@/lib/types";
 
 type Kind = "All" | CalendarEvent["kind"];
 const KINDS: { value: Kind; label: string }[] = [
-  { value: "All", label: "All" },
+  { value: "All", label: "Everything" },
   { value: "Consultation deadline", label: "Consultation deadlines" },
   { value: "Planned adoption", label: "Planned adoptions" },
   { value: "Plenary sitting", label: "Plenary sittings" },
 ];
-const TONES: Record<CalendarEvent["kind"], "green" | "blue" | "neutral"> = {
-  "Consultation deadline": "green",
-  "Planned adoption": "blue",
+const TONES: Record<CalendarEvent["kind"], "success" | "info" | "neutral"> = {
+  "Consultation deadline": "success",
+  "Planned adoption": "info",
   "Plenary sitting": "neutral",
 };
 
@@ -27,37 +27,30 @@ export default function CalendarPage() {
 
   const events = (data?.events ?? []).filter((e) => kind === "All" || e.kind === kind);
   const months = new Map<string, CalendarEvent[]>();
-  for (const e of events) {
-    const key = e.date.slice(0, 7);
-    months.set(key, [...(months.get(key) ?? []), e]);
-  }
+  for (const e of events) months.set(e.date.slice(0, 7), [...(months.get(e.date.slice(0, 7)) ?? []), e]);
 
   return (
-    <HubShell
-      title="Regulatory calendar"
-      subtitle="Consultation deadlines, planned Commission adoptions and Parliament plenary sittings"
-      badge="By date"
-      icon={CalendarDays}
-      rightSlot={
-        <a className={buttonClass} href="/api/calendar?format=ics" download>
-          <Download className="w-3.5 h-3.5" /> Add to Outlook (.ics)
-        </a>
+    <Page
+      actions={
+        <ButtonLink href="/api/calendar?format=ics" download variant="primary">
+          <Download className="w-4 h-4" aria-hidden="true" /> Add to Outlook (.ics)
+        </ButtonLink>
       }
     >
-      <Segmented options={KINDS} value={kind} onChange={setKind} />
+      <Segmented label="Show" options={KINDS} value={kind} onChange={setKind} />
 
-      <Loadable loading={loading} error={error} onRetry={reload} message="Building the calendar (about 30 seconds on first load)...">
-        {data?.gaps.map((g) => <p key={g} className="text-xs text-amber-400">{g}</p>)}
-        {events.length === 0 && <p className="text-xs text-slate-400 italic">Nothing scheduled.</p>}
+      <Loadable loading={loading} error={error} onRetry={reload} message="Building the calendar…">
         <div className="space-y-4">
+          {data?.gaps.map((g) => <Notice key={g} tone="warning">{g}</Notice>)}
+          {events.length === 0 && <EmptyState title="Nothing scheduled" message="No events of this type are coming up." />}
           {[...months.entries()].map(([key, list]) => (
             <Card key={key} title={monthLabel(`${key}-01`)}>
-              <ul className="divide-y divide-slate-800/60">
+              <ul className="divide-y divide-line">
                 {list.map((e, n) => (
-                  <li key={`${e.date}-${e.kind}-${n}`} className="py-2 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 text-xs">
-                    <span className="font-mono text-slate-300 w-28 shrink-0">{dayLabel(e.date)}</span>
-                    <span className="w-44 shrink-0"><Chip tone={TONES[e.kind]}>{e.kind}</Chip></span>
-                    <a href={e.url} target="_blank" rel="noopener noreferrer" className="text-slate-200 hover:text-blue-400">{e.title}</a>
+                  <li key={`${e.date}-${e.kind}-${n}`} className="py-3 first:pt-0 last:pb-0 grid grid-cols-1 sm:grid-cols-[8rem_13rem_1fr] gap-1 sm:gap-4 items-baseline">
+                    <span className="text-sm font-semibold tabular-nums text-fg">{dayLabel(e.date)}</span>
+                    <span><Badge tone={TONES[e.kind]}>{e.kind}</Badge></span>
+                    <a href={e.url} target="_blank" rel="noopener noreferrer" className="text-sm text-fg hover:text-link hover:underline">{e.title}</a>
                   </li>
                 ))}
               </ul>
@@ -67,11 +60,11 @@ export default function CalendarPage() {
       </Loadable>
 
       <SourceNote>
-        Sources: Have Your Say (deadlines and planned quarters) and the European Parliament Open Data Portal (plenary sittings). A planned adoption is
-        shown on the last day of its quarter; the Commission publishes a quarter, not a date. Not covered: Parliament committee meetings (not in the
-        Parliament&apos;s data service), the Council calendar (refuses automated access) and transposition deadlines (the source carries several
-        conflicting dates per directive). The .ics file is a snapshot; download it again to pick up changes.
+        Sources: Have Your Say (deadlines and planned quarters) and the European Parliament Open Data Portal (plenary sittings). The Commission plans by
+        quarter, not by date, so a planned adoption appears on the last day of its quarter. Not included: Parliament committee meetings (not in the
+        Parliament&apos;s data service), the Council calendar (refuses automated access) and transposition deadlines (the source gives conflicting dates).
+        The Outlook file is a snapshot; download it again to pick up changes.
       </SourceNote>
-    </HubShell>
+    </Page>
   );
 }

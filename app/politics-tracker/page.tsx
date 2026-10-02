@@ -1,545 +1,308 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  Search,
-  Filter,
-  Calendar,
-  Sparkles,
-  Activity,
-  Radio,
-  ExternalLink
-} from "lucide-react";
-import PageHeader from "@/components/PageHeader";
-import ErrorBanner from "@/components/ErrorBanner";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Check, Copy, Download, Sparkles, X } from "lucide-react";
+import { AiLabel, Badge, Button, Card, EmptyState, ErrorState, ExternalLink, Field, Loading, Page, SearchBox, SourceNote, formatDate, inputClass, plural } from "@/components/ui";
 import { type PoliticalEvent } from "@/lib/types";
 import { generateAnalysisPptx } from "@/lib/generatePptx";
 
-export default function ItalianTrackerPage() {
+const IMPACT_TONE = { High: "danger", Medium: "warning", Low: "neutral" } as const;
+
+function ReportDialog({ event, onClose }: { event: PoliticalEvent; onClose: () => void }) {
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(true);
+  const [failed, setFailed] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [pptx, setPptx] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const res = await fetch("/api/politics-tracker/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: event.title,
+            description: event.description,
+            content: event.content,
+            sourceName: event.sourceName,
+            category: event.category,
+            impactLevel: event.impactLevel,
+            entities: event.entities,
+            tags: event.tags,
+          }),
+          signal: controller.signal,
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "The report could not be written.");
+        setText(data.analysis || "");
+      } catch (err) {
+        if (!controller.signal.aborted) setFailed((err as Error).message || "The report could not be written.");
+      } finally {
+        if (!controller.signal.aborted) setBusy(false);
+      }
+    })();
+    return () => controller.abort();
+  }, [event]);
+
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    panelRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onCloseRef.current();
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      previous?.focus?.();
+    };
+  }, []);
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+  const saveText = () => {
+    const url = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${event.title.replace(/[^a-z0-9]/gi, "_").toLowerCase().slice(0, 80)}_analysis.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+  const savePptx = async () => {
+    setPptx(true);
+    try {
+      await generateAnalysisPptx(event, text);
+    } catch (err) {
+      console.error(err);
+      setFailed("The PowerPoint file could not be created. Check your connection and try again.");
+    } finally {
+      setPptx(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="report-title">
+      <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} aria-hidden="true" />
+      <div ref={panelRef} tabIndex={-1} className="relative bg-surface border border-line rounded-lg w-full max-w-3xl max-h-[90dvh] flex flex-col outline-none">
+        <div className="p-5 border-b border-line flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-sm text-subtle">Public affairs report</p>
+            <h2 id="report-title" className="text-lg font-semibold text-fg">{event.title}</h2>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close report" className="inline-flex items-center justify-center min-h-11 min-w-11 rounded-md text-muted hover:bg-sunken hover:text-fg">
+            <X className="w-5 h-5" aria-hidden="true" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-5 space-y-3" aria-live="polite">
+          {busy ? (
+            <Loading message="Writing the report…" slow="This usually takes 20 to 40 seconds." rows={4} />
+          ) : failed && !text ? (
+            <p className="text-sm text-danger" role="alert">{failed}</p>
+          ) : (
+            <>
+              <AiLabel />
+              {failed && <p className="text-sm text-danger" role="alert">{failed}</p>}
+              <div className="text-base text-fg whitespace-pre-line">{text}</div>
+            </>
+          )}
+        </div>
+        <div className="p-5 border-t border-line flex flex-wrap justify-end gap-2">
+          <span role="status" className="sr-only">{copied ? "Report copied" : ""}</span>
+          <Button onClick={copy} disabled={busy || !text}>
+            {copied ? <Check className="w-4 h-4" aria-hidden="true" /> : <Copy className="w-4 h-4" aria-hidden="true" />} {copied ? "Copied" : "Copy"}
+          </Button>
+          <Button onClick={saveText} disabled={busy || !text}><Download className="w-4 h-4" aria-hidden="true" /> Text file</Button>
+          <Button onClick={savePptx} disabled={busy || !text} loading={pptx}><Download className="w-4 h-4" aria-hidden="true" /> PowerPoint</Button>
+          <Button variant="primary" onClick={onClose}>Close</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function ItalianPoliticsPage() {
   const [events, setEvents] = useState<PoliticalEvent[]>([]);
-  const [selectedEvent, setSelectedEvent] = useState<PoliticalEvent | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [reportFor, setReportFor] = useState<PoliticalEvent | null>(null);
 
-  // Filtering States
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [debounced, setDebounced] = useState("");
   const [sourceType, setSourceType] = useState("");
   const [category, setCategory] = useState("");
   const [party, setParty] = useState("");
-  const [days, setDays] = useState(60);
+  const [days, setDays] = useState("60");
 
-  // Analysis Modal States
-  const [analysisModalOpen, setAnalysisModalOpen] = useState(false);
-  const [analyzingEvent, setAnalyzingEvent] = useState<PoliticalEvent | null>(null);
-  const [analysisText, setAnalysisText] = useState("");
-  const [analyzing, setAnalyzing] = useState(false);
-  const [copySuccess, setCopySuccess] = useState(false);
-  const [pptxGenerating, setPptxGenerating] = useState(false);
-
-  // Debounce free-text search so each keystroke doesn't fire a request
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => setDebounced(search), 300);
+    return () => clearTimeout(t);
   }, [search]);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     setLoadError(false);
     try {
-      const params = new URLSearchParams();
-      if (debouncedSearch) params.append("q", debouncedSearch);
+      const params = new URLSearchParams({ days });
+      if (debounced) params.append("q", debounced);
       if (sourceType) params.append("sourceType", sourceType);
       if (category) params.append("category", category);
       if (party) params.append("party", party);
-      params.append("days", days.toString());
-
-      const res = await fetch(`/api/politics-tracker?${params.toString()}`);
-      if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
-      const data = await res.json();
-      const loaded: PoliticalEvent[] = data.events || [];
+      const res = await fetch(`/api/politics-tracker?${params}`);
+      if (!res.ok) throw new Error(String(res.status));
+      const loaded: PoliticalEvent[] = (await res.json()).events || [];
       setEvents(loaded);
-      setSelectedEvent((prev) => {
-        if (loaded.length === 0) return null;
-        return loaded.find((e) => e.id === prev?.id) ?? loaded[0];
-      });
+      setSelectedId((prev) => (loaded.some((e) => e.id === prev) ? prev : loaded[0]?.id ?? null));
     } catch (err) {
       console.error("Failed to load events", err);
       setLoadError(true);
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, sourceType, category, party, days]);
+  }, [debounced, sourceType, category, party, days]);
 
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
 
-  const handleResetFilters = () => {
+  const filtersActive = Boolean(search || sourceType || category || party || days !== "60");
+  const reset = () => {
     setSearch("");
     setSourceType("");
     setCategory("");
     setParty("");
-    setDays(60);
+    setDays("60");
   };
-
-  const handleAnalyzeEvent = async (evt: PoliticalEvent) => {
-    setAnalyzingEvent(evt);
-    setAnalysisModalOpen(true);
-    setAnalyzing(true);
-    setAnalysisText("");
-    setCopySuccess(false);
-
-    try {
-      const res = await fetch("/api/politics-tracker/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: evt.title,
-          description: evt.description,
-          content: evt.content,
-          sourceName: evt.sourceName,
-          category: evt.category,
-          impactLevel: evt.impactLevel,
-          entities: evt.entities,
-          tags: evt.tags
-        })
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to generate public affairs analysis.");
-      }
-
-      setAnalysisText(data.analysis || "No report generated.");
-    } catch (err: any) {
-      setAnalysisText(`⚠️ Failed to draft political report: ${err.message || "An error occurred."}`);
-    } finally {
-      setAnalyzing(false);
-    }
-  };
-
-  const copyAnalysisToClipboard = () => {
-    if (!analysisText) return;
-    navigator.clipboard.writeText(analysisText);
-    setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 2000);
-  };
-
-  const downloadAnalysis = () => {
-    if (!analyzingEvent || !analysisText) return;
-    const blob = new Blob([analysisText], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${analyzingEvent.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_political_analysis.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  const downloadAsPptx = async () => {
-    if (!analyzingEvent || !analysisText) return;
-    setPptxGenerating(true);
-    try {
-      await generateAnalysisPptx(analyzingEvent, analysisText);
-    } catch (err: any) {
-      console.error("PPTX generation failed:", err);
-      alert(`Failed to generate presentation: ${err.message || "Unknown error"}`);
-    } finally {
-      setPptxGenerating(false);
-    }
-  };
+  const selected = events.find((e) => e.id === selectedId) ?? null;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative selection:bg-blue-500/30 selection:text-blue-200">
-
-      {/* Main Container */}
-      <div className="max-w-7xl mx-auto w-full p-6 md:p-12 space-y-8">
-
-        {/* Navigation Header */}
-        <PageHeader
-          backHref="/"
-          backLabel="Gateway"
-          title="Italian Political Watch"
-          badge="Rome Archive"
-          subtitle="National legislative movements, official committee votes, and policy aggregations"
-          icon={Radio}
-          accent="blue"
-        />
-
-        {/* Dashboard 4-Column Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-
-          {/* COLUMN 1: CONTROLS & FILTERING */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 space-y-6 h-fit">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                <Filter className="w-3.5 h-3.5 text-blue-400" /> Filter Archive
-              </h3>
-              <button
-                onClick={handleResetFilters}
-                className="text-[10px] text-slate-400 hover:text-slate-200 font-mono transition-colors"
-              >
-                Reset
-              </button>
-            </div>
-
-            {/* Keyword Search */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-slate-300">Keyword Search</label>
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-500" />
-                <input
-                  type="text"
-                  placeholder="Search decree, entity, tag..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-md pl-9 pr-3 py-2 text-xs text-slate-200 placeholder:text-slate-500 transition-colors outline-none"
-                />
-              </div>
-            </div>
-
-            {/* Source Type Filter */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-slate-300">Source Category</label>
-              <select
-                value={sourceType}
-                onChange={(e) => setSourceType(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-md px-3 py-2 text-xs text-slate-200 transition-colors outline-none cursor-pointer"
-              >
-                <option value="">All Sources (Official + News)</option>
-                <option value="Official">Official (Dati Camera/Senato, Openpolis)</option>
-                <option value="News">News Aggregators (NewsData, Event Registry)</option>
-              </select>
-            </div>
-
-            {/* Category Filter */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-slate-300">Event Classification</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-md px-3 py-2 text-xs text-slate-200 transition-colors outline-none cursor-pointer"
-              >
-                <option value="">All Categories</option>
-                <option value="Floor Vote">Floor Vote</option>
-                <option value="Committee Meeting">Committee Meeting</option>
-                <option value="Political Statement">Political Statement</option>
-                <option value="Corporate Regulation">Corporate Regulation</option>
-                <option value="Legislative Act">Legislative Act</option>
-              </select>
-            </div>
-
-            {/* Party Alignment Filter */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-slate-300">Political Party</label>
-              <select
-                value={party}
-                onChange={(e) => setParty(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-md px-3 py-2 text-xs text-slate-200 transition-colors outline-none cursor-pointer"
-              >
-                <option value="">All Factions</option>
-                <option value="FdI">Fratelli d'Italia (FdI)</option>
-                <option value="Lega">Lega</option>
-                <option value="FI">Forza Italia (FI)</option>
-                <option value="PD">Partito Democratico (PD)</option>
-                <option value="M5S">Movimento 5 Stelle (M5S)</option>
-              </select>
-            </div>
-
-            {/* Time Window Slider */}
-            <div className="space-y-2 pt-2 border-t border-slate-800/80">
-              <div className="flex justify-between text-[11px] font-semibold">
-                <span className="text-slate-300">Retention Window</span>
-                <span className="font-mono text-blue-400">{days} Days</span>
-              </div>
-              <input
-                type="range"
-                min="1"
-                max="60"
-                value={days}
-                onChange={(e) => setDays(parseInt(e.target.value, 10))}
-                className="w-full h-1 bg-slate-800 rounded-md appearance-none cursor-pointer accent-blue-500"
-              />
-              <div className="flex justify-between text-[9px] text-slate-500 font-mono">
-                <span>7 days</span>
-                <span>30 days</span>
-                <span>60 days</span>
-              </div>
-            </div>
+    <Page>
+      <div className="grid grid-cols-1 lg:grid-cols-[17rem_1fr] xl:grid-cols-[17rem_1fr_22rem] gap-4 items-start">
+        <Card title="Filters" actions={filtersActive && <Button size="sm" variant="ghost" onClick={reset}>Clear all</Button>}>
+          <div className="space-y-4">
+            <SearchBox label="Keyword" value={search} onChange={setSearch} placeholder="Decree, person, topic" />
+            <Field label="Source">
+              {(p) => (
+                <select {...p} className={inputClass} value={sourceType} onChange={(e) => setSourceType(e.target.value)}>
+                  <option value="">Official records and news</option>
+                  <option value="Official">Official records only</option>
+                  <option value="News">News only</option>
+                </select>
+              )}
+            </Field>
+            <Field label="Type of event">
+              {(p) => (
+                <select {...p} className={inputClass} value={category} onChange={(e) => setCategory(e.target.value)}>
+                  <option value="">All types</option>
+                  <option value="Floor Vote">Floor vote</option>
+                  <option value="Committee Meeting">Committee meeting</option>
+                  <option value="Political Statement">Political statement</option>
+                  <option value="Corporate Regulation">Corporate regulation</option>
+                  <option value="Legislative Act">Legislative act</option>
+                </select>
+              )}
+            </Field>
+            <Field label="Party">
+              {(p) => (
+                <select {...p} className={inputClass} value={party} onChange={(e) => setParty(e.target.value)}>
+                  <option value="">All parties</option>
+                  <option value="FdI">Fratelli d&apos;Italia (FdI)</option>
+                  <option value="Lega">Lega</option>
+                  <option value="FI">Forza Italia (FI)</option>
+                  <option value="PD">Partito Democratico (PD)</option>
+                  <option value="M5S">Movimento 5 Stelle (M5S)</option>
+                </select>
+              )}
+            </Field>
+            <Field label="Period">
+              {(p) => (
+                <select {...p} className={inputClass} value={days} onChange={(e) => setDays(e.target.value)}>
+                  <option value="7">Last 7 days</option>
+                  <option value="14">Last 14 days</option>
+                  <option value="30">Last 30 days</option>
+                  <option value="60">Last 60 days</option>
+                </select>
+              )}
+            </Field>
           </div>
+        </Card>
 
-          {/* COLUMN 2 & 3: POLICY TIMELINE STREAM */}
-          <div className="lg:col-span-2 flex flex-col h-[700px] gap-4">
-            <div className="flex justify-between items-center px-1 shrink-0">
-              <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                <Activity className="w-4 h-4 text-blue-400" /> Rolling Legislative Feed ({events.length})
-              </h3>
-              <span className="text-[10px] font-mono text-slate-400">Order: Chronological</span>
-            </div>
-
-            {loadError && (
-              <ErrorBanner
-                message="Failed to load political events. Please try again."
-                onRetry={fetchEvents}
-              />
-            )}
-
-            {loading ? (
-              <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-12 text-center flex flex-col items-center justify-center gap-3 flex-1">
-                <Radio className="w-6 h-6 text-blue-400 animate-spin" />
-                <span className="text-xs text-slate-400">Loading Rome legislative records...</span>
-              </div>
-            ) : events.length === 0 && !loadError ? (
-              <div className="bg-slate-900/60 border border-dashed border-slate-800 rounded-lg p-12 text-center text-slate-400 text-xs flex-1 flex flex-col items-center justify-center">
-                No active events match the filter criteria in the current {days}-day archive.
-              </div>
-            ) : events.length === 0 ? null : (
-              <div className="space-y-3 flex-1 overflow-y-auto pr-1">
-                {events.map((evt) => {
-                  const isSelected = selectedEvent?.id === evt.id;
-                  const eventDate = new Date(evt.date).toLocaleDateString("it-IT", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric"
-                  });
-
-                  return (
-                    <div
-                      key={evt.id}
-                      onClick={() => setSelectedEvent(evt)}
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          setSelectedEvent(evt);
-                        }
-                      }}
-                      className={`w-full text-left p-4 rounded-lg space-y-3 transition-colors cursor-pointer border ${
-                        isSelected
-                          ? "bg-slate-900 border-blue-500/60"
-                          : "bg-slate-900/60 border-slate-800 hover:border-slate-700"
-                      }`}
+        <section aria-labelledby="events" className="space-y-3 min-w-0">
+          <h2 id="events" className="text-lg font-semibold text-fg" aria-live="polite">{loading ? "Loading events…" : plural(events.length, "event")}</h2>
+          {loadError ? (
+            <ErrorState onRetry={fetchEvents} />
+          ) : loading ? (
+            <Loading message="Loading Italian political events…" />
+          ) : events.length === 0 ? (
+            <EmptyState title="No events match these filters" action={filtersActive && <Button onClick={reset}>Clear filters</Button>} />
+          ) : (
+            <ul className="space-y-3">
+              {events.map((evt) => {
+                const isSelected = evt.id === selectedId;
+                return (
+                  <li key={evt.id}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(evt.id)}
+                      aria-pressed={isSelected}
+                      className={`w-full text-left rounded-lg border p-4 space-y-2 transition-colors ${isSelected ? "border-primary bg-primary-soft" : "border-line bg-surface hover:border-line-strong"}`}
                     >
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[10px] font-mono font-semibold uppercase px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-300">
-                            {evt.sourceName}
-                          </span>
-                          <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">
-                            {evt.category}
-                          </span>
-                        </div>
-                        <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded border ${
-                          evt.impactLevel === "High"
-                            ? "bg-red-500/10 border-red-500/20 text-red-400"
-                            : evt.impactLevel === "Medium"
-                              ? "bg-amber-500/10 border-amber-500/20 text-amber-400"
-                              : "bg-slate-800 border-slate-700 text-slate-400"
-                        }`}>
-                          {evt.impactLevel} Impact
-                        </span>
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-subtle">
+                        <span className="tabular-nums">{formatDate(evt.date)}</span>
+                        <Badge>{evt.category}</Badge>
+                        <Badge tone={IMPACT_TONE[evt.impactLevel]}>{evt.impactLevel} impact</Badge>
+                        <span>{evt.sourceName}</span>
                       </div>
+                      <p className="font-medium text-fg">{evt.title}</p>
+                      {evt.description && <p className="text-sm text-muted line-clamp-2">{evt.description}</p>}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
 
-                      <h4 className="text-sm font-bold text-slate-100 leading-snug">
-                        {evt.title}
-                      </h4>
-
-                      <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
-                        {evt.description}
-                      </p>
-
-                      <div className="flex justify-between items-center text-[10px] text-slate-400 font-mono pt-1">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5 text-slate-500" /> {eventDate}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <span className="flex gap-1">
-                            {evt.tags.slice(0, 2).map((t) => (
-                              <span key={t} className="text-[9px] bg-slate-950 px-1.5 py-0.5 rounded text-slate-400 border border-slate-800">#{t}</span>
-                            ))}
-                          </span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAnalyzeEvent(evt);
-                            }}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-600/10 border border-blue-500/30 text-blue-400 hover:bg-blue-600 hover:text-white transition-colors font-semibold text-[10px] cursor-pointer"
-                          >
-                            <Sparkles className="w-3 h-3" /> Analyze
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* COLUMN 4: DEEP EXTRACTION PANEL */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-6 h-[700px] flex flex-col justify-between gap-4">
-            <div className="shrink-0 border-b border-slate-800 pb-3">
-              <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-blue-400" /> Policy Briefing & Extraction
-              </h3>
-              <p className="text-[10px] text-slate-400 mt-0.5">Selected event metadata & legislative links</p>
-            </div>
-
-            {selectedEvent ? (
-              <div className="space-y-5 overflow-y-auto pr-1 flex-1 text-xs">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-mono text-slate-500 uppercase">Selected Event Title</span>
-                  <h4 className="font-bold text-slate-100 text-sm leading-snug">{selectedEvent.title}</h4>
-                </div>
-
-                <div className="space-y-1">
-                  <span className="text-[10px] font-mono text-slate-500 uppercase">Full Summary</span>
-                  <p className="text-slate-300 leading-relaxed bg-slate-950 p-3 rounded-md border border-slate-800">
-                    {selectedEvent.content}
-                  </p>
-                </div>
-
-                {/* Political Entities Involved */}
-                <div className="space-y-2">
-                  <span className="text-[10px] font-mono text-slate-500 uppercase">Sponsoring Entities / Key Actors</span>
-                  {selectedEvent.entities && selectedEvent.entities.length > 0 ? (
-                    <div className="space-y-1.5">
-                      {selectedEvent.entities.map((ent) => (
-                        <div key={ent.name} className="p-2 bg-slate-950 border border-slate-800 rounded-md flex justify-between items-center">
-                          <div>
-                            <span className="font-semibold text-slate-200 block text-[11px]">{ent.name}</span>
-                            <span className="text-[10px] text-slate-500">{ent.role}</span>
-                          </div>
-                          <span className="text-[10px] font-mono font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
-                            {ent.party}
-                          </span>
-                        </div>
+        <div className="lg:col-span-2 xl:col-span-1 xl:sticky xl:top-6">
+          <Card title="Selected event">
+            {selected ? (
+              <div className="space-y-4">
+                <p className="font-semibold text-fg">{selected.title}</p>
+                <p className="text-sm text-fg whitespace-pre-line">{selected.content || selected.description}</p>
+                {selected.entities.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-fg mb-1">People involved</h3>
+                    <ul className="space-y-1 text-sm">
+                      {selected.entities.map((e) => (
+                        <li key={e.name} className="flex justify-between gap-3"><span>{e.name} <span className="text-subtle">· {e.role}</span></span><Badge>{e.party}</Badge></li>
                       ))}
-                    </div>
-                  ) : (
-                    <p className="text-slate-500 italic text-[11px]">No specific individual actors linked.</p>
-                  )}
-                </div>
-
-                {/* Action Trigger */}
-                <div className="pt-2">
-                  <button
-                    onClick={() => handleAnalyzeEvent(selectedEvent)}
-                    className="w-full py-2.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" /> Generate In-Depth Public Affairs Report
-                  </button>
-                </div>
-
-                {/* External Link */}
-                {selectedEvent.sourceUrl && (
-                  <div className="pt-2 border-t border-slate-800">
-                    <a
-                      href={selectedEvent.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-blue-400 transition-colors"
-                    >
-                      <span>View Official Source Document</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
+                    </ul>
                   </div>
                 )}
+                {selected.sourceUrl && <ExternalLink href={selected.sourceUrl} className="text-sm">Original source</ExternalLink>}
+                <Button variant="primary" className="w-full" onClick={() => setReportFor(selected)}>
+                  <Sparkles className="w-4 h-4" aria-hidden="true" /> Write a public affairs report
+                </Button>
+                <p className="text-sm text-subtle">The report is AI-generated from this event only.</p>
               </div>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center text-slate-500 text-xs italic">
-                Select any event from the timeline feed to view extraction metadata.
-              </div>
+              <p className="text-sm text-muted">Select an event to see its details.</p>
             )}
-          </div>
-
+          </Card>
         </div>
-
       </div>
 
-      {/* Analysis Report Modal */}
-      {analysisModalOpen && analyzingEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 md:p-8 max-w-4xl w-full max-h-[90vh] flex flex-col justify-between shadow-2xl relative">
+      <SourceNote>
+        Sources: Chamber of Deputies open data (final votes) and NewsData.io (Italian political news), refreshed twice a day and kept for 60 days. Impact
+        levels are assigned by keyword rules, not by an analyst.
+      </SourceNote>
 
-            {/* Header */}
-            <div className="border-b border-slate-800 pb-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-md bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                    In-Depth Legislative Analysis Report
-                  </h3>
-                  <p className="text-xs text-slate-400 truncate max-w-lg mt-0.5">Topic: {analyzingEvent.title}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setAnalysisModalOpen(false)}
-                aria-label="Close"
-                className="p-1.5 rounded-md bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-100 transition-colors cursor-pointer text-xs font-semibold"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="flex-1 overflow-y-auto my-6 pr-2">
-              {analyzing ? (
-                <div className="flex flex-col items-center justify-center py-20 space-y-3">
-                  <Radio className="w-7 h-7 text-blue-400 animate-spin" />
-                  <p className="text-sm font-semibold text-slate-300">
-                    Generating Strategic Public Affairs Report...
-                  </p>
-                  <p className="text-xs text-slate-500 max-w-md text-center">
-                    Analyzing parliamentary party alignments, regulatory risks, and actionable lobbying recommendations.
-                  </p>
-                </div>
-              ) : (
-                <div className="text-xs text-slate-300 leading-relaxed font-sans whitespace-pre-line space-y-4 pr-1">
-                  {analysisText}
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="border-t border-slate-800 pt-4 flex gap-3 justify-end flex-wrap">
-              <button
-                onClick={copyAnalysisToClipboard}
-                disabled={analyzing || !analysisText}
-                className="px-4 py-2 rounded-md bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-slate-100 text-xs font-semibold flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                {copySuccess ? "✓ Copied!" : "Copy Report"}
-              </button>
-              <button
-                onClick={downloadAnalysis}
-                disabled={analyzing || !analysisText}
-                className="px-4 py-2 rounded-md bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-slate-100 text-xs font-semibold flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                Save (.txt)
-              </button>
-              <button
-                onClick={downloadAsPptx}
-                disabled={analyzing || !analysisText || pptxGenerating}
-                className="px-4 py-2 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-semibold flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                {pptxGenerating ? "Generating..." : "Export PPTX"}
-              </button>
-              <button
-                onClick={() => setAnalysisModalOpen(false)}
-                className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors cursor-pointer"
-              >
-                Close Report
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
-
-    </div>
+      {reportFor && <ReportDialog event={reportFor} onClose={() => setReportFor(null)} />}
+    </Page>
   );
 }

@@ -1,63 +1,164 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens. Light is the default; dark follows the system preference unless
+ * the reader picks a theme (stored as data-theme on <html>). Components use the
+ * semantic classes below (bg-surface, text-muted, border-line, …), never raw colours.
+ * Text pairs are chosen for at least 4.5:1 contrast on their surfaces.
+ */
+:root {
+  --canvas: #f8fafc;
+  --surface: #ffffff;
+  --sunken: #f1f5f9;
+  --line: #e2e8f0;
+  --line-strong: #cbd5e1;
+  --fg: #0f172a;
+  --muted: #475569;
+  --subtle: #5b6b80;
+  --primary: #1e40af;
+  --primary-hover: #1e3a8a;
+  --on-primary: #ffffff;
+  --primary-soft: #eff6ff;
+  --link: #1d4ed8;
+  --ring: #2563eb;
+  --success: #047857;
+  --success-soft: #ecfdf5;
+  --warning: #b45309;
+  --warning-soft: #fffbeb;
+  --danger: #b91c1c;
+  --danger-soft: #fef2f2;
+  --shadow: 0 1px 2px rgb(15 23 42 / 0.06), 0 1px 3px rgb(15 23 42 / 0.04);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --canvas: #0b1120;
+    --surface: #111a2e;
+    --sunken: #18243b;
+    --line: #22304a;
+    --line-strong: #334462;
+    --fg: #f1f5f9;
+    --muted: #b6c2d4;
+    --subtle: #94a3b8;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --on-primary: #ffffff;
+    --primary-soft: rgb(37 99 235 / 0.16);
+    --link: #93c5fd;
+    --ring: #60a5fa;
+    --success: #6ee7b7;
+    --success-soft: rgb(16 185 129 / 0.14);
+    --warning: #fcd34d;
+    --warning-soft: rgb(245 158 11 / 0.14);
+    --danger: #fca5a5;
+    --danger-soft: rgb(239 68 68 / 0.14);
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --canvas: #0b1120;
+  --surface: #111a2e;
+  --sunken: #18243b;
+  --line: #22304a;
+  --line-strong: #334462;
+  --fg: #f1f5f9;
+  --muted: #b6c2d4;
+  --subtle: #94a3b8;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --on-primary: #ffffff;
+  --primary-soft: rgb(37 99 235 / 0.16);
+  --link: #93c5fd;
+  --ring: #60a5fa;
+  --success: #6ee7b7;
+  --success-soft: rgb(16 185 129 / 0.14);
+  --warning: #fcd34d;
+  --warning-soft: rgb(245 158 11 / 0.14);
+  --danger: #fca5a5;
+  --danger-soft: rgb(239 68 68 / 0.14);
+  --shadow: none;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-sunken: var(--sunken);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-on-primary: var(--on-primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-link: var(--link);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --shadow-card: var(--shadow);
+  --font-sans: var(--font-fira-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-fira-code), ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
 @layer base {
   html {
-    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
   }
   body {
-    background-color: #0b0f19; /* Deep Charcoal Slate */
-    color: #f3f4f6; /* Off-White Text */
-    font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+    background-color: var(--canvas);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    line-height: 1.55;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  ::selection {
+    background: var(--primary-soft);
+  }
+  button,
+  [role="button"],
+  summary,
+  select {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  a,
+  button {
+    touch-action: manipulation;
+  }
+  /* Taller hit area for text links (at least 24px) without changing the line layout.
+     In the base layer, so components that set their own padding win. */
+  main a {
+    padding-block: 0.25rem;
   }
 }
 
-/* Subdued Editorial Container Utility */
-.editorial-card {
-  background-color: rgba(19, 26, 39, 0.7);
-  border: 1px solid #263346;
-  border-radius: 0.5rem; /* Standard 8px radius */
-  transition: border-color 0.15s ease-in-out, background-color 0.15s ease-in-out;
-}
-
-.editorial-card:hover {
-  background-color: rgba(21, 29, 42, 0.9);
-  border-color: #3b82f6; /* Muted corporate blue accent */
-}
-
-/* Legacy utility fallbacks for clean dark styling */
-.glass-card {
-  background-color: rgba(19, 26, 39, 0.8);
-  border: 1px solid #263346;
-  border-radius: 0.5rem;
-}
-
-.glass-card-hover {
-  transition: border-color 0.15s ease-in-out;
-}
-.glass-card-hover:hover {
-  border-color: #3b82f6;
-}
-
-/* Subtle Neutral Scrollbar Styling */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #0b0f19;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #263346;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #3b82f6;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #263346 #0b0f19;
+  scrollbar-color: var(--line-strong) transparent;
 }
