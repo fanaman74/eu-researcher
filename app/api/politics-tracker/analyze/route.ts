@@ -1,15 +1,11 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { LLM_MODEL } from "@/lib/llm";
 import { checkRateLimit, getClientIp, isAllowedOrigin } from "@/lib/apiGuard";
 
 export const dynamic = "force-dynamic";
 
-const candidateModels = [
-  "deepseek/deepseek-chat",
-  "meta-llama/llama-3.3-70b-instruct",
-  "openai/gpt-4o-mini",
-  "google/gemini-flash-1.5"
-];
+const candidateModels = [LLM_MODEL];
 
 function generateFallbackReport(params: {
   title: string;
@@ -206,3 +202,4 @@ ${entityContext}`;
     modelUsed: "deterministic-public-affairs-engine" 
   });
 }
+

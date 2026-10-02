@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { LLM_MODEL } from "@/lib/llm";
 import { checkRateLimit, getClientIp, isAllowedOrigin } from "@/lib/apiGuard";
 
 export const dynamic = "force-dynamic";
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
     if (!celex) {
       return NextResponse.json({ error: "Missing CELEX identifier." }, { status: 400 });
     }
-    // CELEX is interpolated into the Cellar URL — validate its shape first.
+    // CELEX is interpolated into the Cellar URL â€” validate its shape first.
     if (typeof celex !== "string" || !/^\d[0-9A-Za-z]{3,14}$/.test(celex)) {
       return NextResponse.json({ error: "Invalid CELEX identifier." }, { status: 400 });
     }
@@ -146,7 +147,7 @@ Official Text Context:
 ${officialText}`;
 
     const response = await openai.chat.completions.create({
-      model: "deepseek/deepseek-v4-flash",
+      model: LLM_MODEL,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userMessage }
@@ -162,3 +163,4 @@ ${officialText}`;
     return NextResponse.json({ error: "Failed to generate legal summary." }, { status: 500 });
   }
 }
+

@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { LLM_MODEL } from "@/lib/llm";
 import { checkRateLimit, getClientIp, isAllowedOrigin } from "@/lib/apiGuard";
 import { sanitizeForSparql, STOP_WORDS, clampTopK, executeQuery, type EurlexHit } from "@/lib/eurlex";
 
@@ -143,7 +144,7 @@ export async function POST(req: Request) {
 
     // Step 1: Initial call to OpenRouter specifying the search tool
     let response = await openai.chat.completions.create({
-      model: "deepseek/deepseek-v4-flash",
+      model: LLM_MODEL,
       messages: conversationMessages,
       tools: [searchTool],
       tool_choice: "auto"
@@ -210,7 +211,7 @@ export async function POST(req: Request) {
 
       // Step 3: Call OpenRouter again with the search results
       const finalResponse = await openai.chat.completions.create({
-        model: "deepseek/deepseek-v4-flash",
+        model: LLM_MODEL,
         messages: updatedMessages
       });
 
@@ -240,3 +241,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Failed to process chat request." }, { status: 500 });
   }
 }
+
