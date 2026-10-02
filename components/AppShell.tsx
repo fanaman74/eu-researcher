@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, Moon, Sun, X } from "lucide-react";
-import { NAV, activeItem, type NavGroup } from "@/lib/navigation";
+import { NAV, SETTINGS, activeItem, type NavGroup } from "@/lib/navigation";
 
 function ThemeToggle({ withLabel = false }: { withLabel?: boolean }) {
   const [dark, setDark] = useState<boolean | null>(null);
@@ -260,6 +260,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </ul>
           </nav>
           <div className="ml-auto flex items-center gap-2">
+            <Link href={SETTINGS.href} aria-current={current === SETTINGS.href ? "page" : undefined} className={`hidden lg:inline-flex items-center justify-center min-h-11 min-w-11 text-fg hover:bg-sunken ${current === SETTINGS.href ? "border-b-2 border-marker" : ""}`} aria-label="Settings" title="Settings">
+              <SETTINGS.icon className="w-5 h-5" aria-hidden="true" />
+            </Link>
             <span className="hidden lg:block"><ThemeToggle /></span>
             <button
               type="button"
@@ -316,6 +319,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 </ul>
               </div>
             ))}
+            <Link href={SETTINGS.href} onClick={() => closeDrawer(false)} aria-current={current === SETTINGS.href ? "page" : undefined} className={`flex items-center gap-2.5 min-h-11 py-2 text-fg ${current === SETTINGS.href ? "font-bold" : ""}`}>
+              <span aria-hidden="true" className={`w-2 h-2 shrink-0 ${current === SETTINGS.href ? "bg-marker" : "bg-transparent"}`} />
+              <SETTINGS.icon className="w-4 h-4" aria-hidden="true" />
+              Settings
+            </Link>
             <div className="border-t border-line pt-3">
               <ThemeToggle withLabel />
             </div>

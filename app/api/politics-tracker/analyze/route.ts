@@ -1,11 +1,9 @@
 ﻿import { NextResponse } from "next/server";
-import OpenAI from "openai";
-import { LLM_MODEL } from "@/lib/llm";
+import { AiProviderError, createAiClientForRequest, type AiMessage } from "@/lib/llm";
+import { AiConfigError } from "@/lib/aiSettings";
 import { checkRateLimit, getClientIp, isAllowedOrigin } from "@/lib/apiGuard";
 
 export const dynamic = "force-dynamic";
-
-const candidateModels = [LLM_MODEL];
 
 function generateFallbackReport(params: {
   title: string;
@@ -110,27 +108,15 @@ export async function POST(req: Request) {
   const safeEntities = Array.isArray(entities) ? entities : [];
   const safeTags = Array.isArray(tags) ? tags : [];
 
-  const apiKey = process.env.OPENROUTER_API_KEY;
-
-  // Fail fast when the provider key is missing entirely; a placeholder key
-  // still falls through to the deterministic fallback report below.
-  if (!apiKey || apiKey.trim().length === 0) {
-    console.error("OPENROUTER_API_KEY is not configured.");
-    return NextResponse.json({ error: "AI provider is not configured." }, { status: 500 });
+  let client: Awaited<ReturnType<typeof createAiClientForRequest>>;
+  try { client = await createAiClientForRequest(); }
+  catch (error) {
+    if (error instanceof AiConfigError && error.source === "personal") return NextResponse.json({ error: error.message, category: error.code }, { status: 400 });
+    if (error instanceof AiConfigError) return NextResponse.json({ error: error.message, category: error.code }, { status: 503 });
+    return NextResponse.json({ error: "AI provider is not configured.", category: "configuration" }, { status: 503 });
   }
 
-  if (!apiKey.includes("[YOUR_")) {
-    const openai = new OpenAI({
-      apiKey: apiKey,
-      baseURL: "https://openrouter.ai/api/v1",
-      timeout: 60000,
-      maxRetries: 1,
-      defaultHeaders: {
-        "HTTP-Referer": "https://legaldatahunter.com",
-        "X-Title": "Italian Policy Watch Tracker",
-      },
-    });
-
+  {
     const systemPrompt = `You are a Senior Italian Public Affairs Analyst, Legal Counsel, and Lobbying Director.
 Your objective is to write a highly rigorous, comprehensive, and strategic in-depth political policy report based on the provided legislative or political event details.
 The report must offer deep, actionable analysis suitable for corporate directors and governmental relations teams.
@@ -163,25 +149,18 @@ ${content}
 Associated Political Actors / Entities:
 ${entityContext}`;
 
-    // Try candidate models sequentially
-    for (const model of candidateModels) {
-      try {
-        const response = await openai.chat.completions.create({
-          model,
-          messages: [
+    try {
+        const response = await client.complete([
             { role: "system", content: systemPrompt },
             { role: "user", content: userMessage }
-          ]
-        });
+          ] as AiMessage[]);
 
-        const text = response.choices?.[0]?.message?.content;
-        if (text && text.trim().length > 0) {
-          return NextResponse.json({ analysis: text, modelUsed: model });
-        }
-      } catch (err: any) {
-        console.warn(`[Analysis Route] Model ${model} call failed:`, err.message);
+        const text = response.content;
+        if (text && text.trim().length > 0) return NextResponse.json({ analysis: text, modelUsed: client.model });
+        if (client.source === "personal") return NextResponse.json({ error: "The selected AI provider returned no analysis text.", category: "invalid-response" }, { status: 502 });
+      } catch (error) {
+        if (client.source === "personal") return NextResponse.json({ error: "The selected AI provider could not complete the analysis.", category: error instanceof AiProviderError ? error.category : "provider" }, { status: 502 });
       }
-    }
   }
 
   // Fallback: Generate analytical public affairs briefing directly

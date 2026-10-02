@@ -1,24 +1,13 @@
 ﻿import { NextResponse } from "next/server";
-import OpenAI from "openai";
-import { LLM_MODEL } from "@/lib/llm";
+import { AiProviderError, createAiClientForRequest, type AiMessage, type AiTool } from "@/lib/llm";
+import { AiConfigError } from "@/lib/aiSettings";
 import { checkRateLimit, getClientIp, isAllowedOrigin } from "@/lib/apiGuard";
 import { sanitizeForSparql, STOP_WORDS, clampTopK, executeQuery, type EurlexHit } from "@/lib/eurlex";
 
 // Prevent handler caching
 export const dynamic = "force-dynamic";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY || "",
-  baseURL: "https://openrouter.ai/api/v1",
-  timeout: 60000,
-  maxRetries: 1,
-  defaultHeaders: {
-    "HTTP-Referer": "https://legaldatahunter.com",
-    "X-Title": "Legal Data Hunter AI",
-  },
-});
-
-const searchTool: OpenAI.Chat.Completions.ChatCompletionTool = {
+const searchTool: AiTool = {
   type: "function",
   function: {
     name: "search_legal_data",
@@ -117,12 +106,8 @@ export async function POST(req: Request) {
   if (!checkRateLimit(`chat:${getClientIp(req)}`, 20, 60_000)) {
     return NextResponse.json({ error: "Too many requests." }, { status: 429 });
   }
-  if (!process.env.OPENROUTER_API_KEY) {
-    console.error("OPENROUTER_API_KEY is not configured.");
-    return NextResponse.json({ error: "AI provider is not configured." }, { status: 500 });
-  }
-
   try {
+    const client = await createAiClientForRequest();
     const { messages, defaultNamespace = "all", defaultTopK = 5 } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
@@ -132,38 +117,41 @@ export async function POST(req: Request) {
     if (messages.length > 20 || JSON.stringify(messages).length > 16000) {
       return NextResponse.json({ error: "Request payload too large." }, { status: 400 });
     }
+    if (!messages.every((message: unknown) => {
+      if (!message || typeof message !== "object") return false;
+      const value = message as Record<string, unknown>;
+      return (value.role === "user" || value.role === "assistant") && typeof value.content === "string" && value.content.length <= 12000;
+    })) return NextResponse.json({ error: "Messages must contain only user and assistant text." }, { status: 400 });
+    const safeMessages: AiMessage[] = messages.map((message: { role: "user" | "assistant"; content: string }) => ({ role: message.role, content: message.content }));
 
     const searchLogs: any[] = [];
 
-    const systemMessage = {
+    const systemMessage: AiMessage = {
       role: "system",
       content: "You are a specialized Legal Data Hunter assistant focused exclusively on European law (including European Union regulations, directives, decisions, ECJ/CJEU case law, ECHR rulings, and legal frameworks of European member states). Every search query you generate must be tailored to a European legal context. Refuse to perform searches or analyze laws outside of European jurisdictions.\n\nCRITICAL SPECIFICITY RULE:\nIf the user's request or search term is already relatively specific (for example, if they enter 'psychological harassment', 'dismissal due to pregnancy', 'GDPR biometric data', or explicitly request 'recent cases' or 'precedents'), this is NOT ambiguous. In all such cases, you MUST IMMEDIATELY invoke the 'search_legal_data' tool to query the live database and present the results first. Do not ask clarifying questions first if they have provided a multi-word specific term.\n\nCRITICAL AMBIGUITY RULE:\nONLY if the user's input is a single broad/generic word (e.g. just entering 'harassment', 'dismissal', 'liability', or 'data violation' with absolutely no context or descriptors), you must ask clarifying questions to narrow down their research. In this scenario, you MUST list 3 or 4 concrete, actionable choices/options at the very end of your response, each on its own line, strictly formatted like this: [Option: Option Description]. One of these options MUST always be a concrete option for recent court cases (e.g., '[Option: Recent CJEU Cases on Psychological Harassment]'). For example:\n[Option: Recent CJEU Cases on Psychological Harassment]\n[Option: Workplace Psychological Harassment (Mobbing) Directives]\n[Option: Sexual Harassment under EU Equality Law]\nOnly execute a search tool once they have clarified their selection for these single-word broad terms."
     };
 
-    const conversationMessages = [systemMessage, ...messages];
+    const conversationMessages: AiMessage[] = [systemMessage, ...safeMessages];
 
     // Step 1: Initial call to OpenRouter specifying the search tool
-    let response = await openai.chat.completions.create({
-      model: LLM_MODEL,
-      messages: conversationMessages,
+    const response = await client.complete(conversationMessages as AiMessage[], {
       tools: [searchTool],
       tool_choice: "auto"
     });
 
-    let assistantMessage = response.choices?.[0]?.message;
-    if (!assistantMessage) {
-      console.error("OpenRouter returned no choices:", JSON.stringify(response));
-      return NextResponse.json({ error: "AI provider returned an invalid response." }, { status: 502 });
-    }
+    let assistantMessage = response;
 
     // Step 2: Handle function calls if the LLM requests it
     if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
-      const assistantPlainMessage = {
+      const assistantPlainMessage: AiMessage = {
         role: "assistant" as const,
         content: assistantMessage.content || "",
-        tool_calls: assistantMessage.tool_calls
+        tool_calls: assistantMessage.tool_calls,
+        nativeContent: assistantMessage.nativeContent,
+        reasoning_content: assistantMessage.reasoning_content,
+        reasoning_details: assistantMessage.reasoning_details,
       };
-      const updatedMessages = [systemMessage, ...messages, assistantPlainMessage];
+      const updatedMessages: AiMessage[] = [systemMessage, ...safeMessages, assistantPlainMessage];
 
       for (const toolCall of assistantMessage.tool_calls) {
         if (toolCall.function.name === "search_legal_data") {
@@ -171,7 +159,7 @@ export async function POST(req: Request) {
           try {
             args = JSON.parse(toolCall.function.arguments);
           } catch {
-            console.warn("Skipping tool call with malformed arguments:", toolCall.function.arguments);
+            // Continue with a safe tool-result message so the model can recover.
           }
           if (!args || typeof args.q !== "string" || !args.q.trim()) {
             // Skip the search but still answer the tool call so the conversation stays valid.
@@ -210,19 +198,16 @@ export async function POST(req: Request) {
       }
 
       // Step 3: Call OpenRouter again with the search results
-      const finalResponse = await openai.chat.completions.create({
-        model: LLM_MODEL,
-        messages: updatedMessages
-      });
+      const finalResponse = await client.complete(updatedMessages);
 
-      assistantMessage = finalResponse.choices?.[0]?.message;
+      assistantMessage = finalResponse;
       if (!assistantMessage) {
-        console.error("OpenRouter returned no choices on final call:", JSON.stringify(finalResponse));
         return NextResponse.json({ error: "AI provider returned an invalid response." }, { status: 502 });
       }
     }
 
-    let finalContent = assistantMessage.content || "No text response generated.";
+    if (!assistantMessage.content || !assistantMessage.content.trim()) return NextResponse.json({ error: "AI provider returned no text response.", category: "invalid-response" }, { status: 502 });
+    let finalContent = assistantMessage.content;
     // Clean up any raw thoughts or DSML tool tags that might slip into text
     finalContent = finalContent
       .replace(/<\s*\|\s*DSML[\s\S]*?>/gi, "")
@@ -236,9 +221,10 @@ export async function POST(req: Request) {
       searchLogs
     });
 
-  } catch (error: any) {
-    console.error("Route Coordinator Error:", error);
-    return NextResponse.json({ error: "Failed to process chat request." }, { status: 500 });
+  } catch (error: unknown) {
+    if (error instanceof AiConfigError) return NextResponse.json({ error: error.message, category: error.code }, { status: error.code === "missing" ? 503 : 400 });
+    if (error instanceof AiProviderError) return NextResponse.json({ error: "The selected AI provider could not complete the request.", category: error.category }, { status: 502 });
+    return NextResponse.json({ error: "Failed to process chat request.", category: "provider" }, { status: 502 });
   }
 }
 

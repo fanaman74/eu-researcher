@@ -131,6 +131,12 @@ npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) in your browser to view the Advanced EU Legal AI Gateway.
 
+### AI provider settings
+
+Open `/settings` to choose OpenRouter, OpenAI / ChatGPT, Claude, or DeepSeek and enter a provider model ID. The API key is kept in an encrypted, HttpOnly cookie scoped to this browser; it is never placed in local or session storage and is never returned by the settings API. Each provider has its own saved profile, so switching providers does not reuse another provider's key. A ChatGPT subscription does not include OpenAI API credit.
+
+Set `AI_SETTINGS_SECRET` to a random value of at least 32 characters in production so encrypted personal settings survive restarts. If no durable secret is available, the app uses a process-local key and saved connections expire when that process restarts. The existing OpenRouter server default remains available when no personal provider has been saved. Optional server defaults use `AI_PROVIDER`, provider API keys, and the matching `OPENAI_MODEL`, `ANTHROPIC_MODEL`, or `DEEPSEEK_MODEL`; provider origins are fixed in code.
+
 ### 4. Build for Production
 ```bash
 npm run build

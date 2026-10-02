@@ -17,6 +17,7 @@ import {
   Radar,
   Scale,
   Sparkles,
+  Settings,
   UserRound,
   Users,
   Vote,
@@ -39,6 +40,7 @@ export interface NavGroup {
 }
 
 export const HOME: NavItem = { href: "/", label: "Home", description: "Today at a glance and where to start.", icon: Home };
+export const SETTINGS: NavItem = { href: "/settings", label: "Settings", description: "Choose the AI provider and model for this browser.", icon: Settings };
 
 export const NAV: NavGroup[] = [
   {
@@ -83,7 +85,7 @@ export const NAV: NavGroup[] = [
   },
 ];
 
-export const ALL_ITEMS: NavItem[] = [HOME, ...NAV.flatMap((g) => g.items)];
+export const ALL_ITEMS: NavItem[] = [HOME, ...NAV.flatMap((g) => g.items), SETTINGS];
 
 /** The nav item a path belongs to (longest matching prefix). */
 export function activeItem(pathname: string): NavItem | undefined {

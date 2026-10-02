@@ -1,20 +1,9 @@
 ﻿import { NextResponse } from "next/server";
-import OpenAI from "openai";
-import { LLM_MODEL } from "@/lib/llm";
+import { AiProviderError, createAiClientForRequest, type AiMessage } from "@/lib/llm";
+import { AiConfigError } from "@/lib/aiSettings";
 import { checkRateLimit, getClientIp, isAllowedOrigin } from "@/lib/apiGuard";
 
 export const dynamic = "force-dynamic";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY || "",
-  baseURL: "https://openrouter.ai/api/v1",
-  timeout: 60000,
-  maxRetries: 1,
-  defaultHeaders: {
-    "HTTP-Referer": "https://legaldatahunter.com",
-    "X-Title": "Legal Data Hunter AI",
-  },
-});
 
 export async function POST(req: Request) {
   // Same-host origin guard against cross-site browser abuse.
@@ -25,12 +14,8 @@ export async function POST(req: Request) {
   if (!checkRateLimit(`summarize:${getClientIp(req)}`, 20, 60_000)) {
     return NextResponse.json({ error: "Too many requests." }, { status: 429 });
   }
-  if (!process.env.OPENROUTER_API_KEY) {
-    console.error("OPENROUTER_API_KEY is not configured.");
-    return NextResponse.json({ error: "AI provider is not configured." }, { status: 500 });
-  }
-
   try {
+    const client = await createAiClientForRequest();
     const { title, namespace, celex, detailed } = await req.json();
 
     if (!celex) {
@@ -146,21 +131,20 @@ Namespace: ${namespace || "case_law"}
 Official Text Context:
 ${officialText}`;
 
-    const response = await openai.chat.completions.create({
-      model: LLM_MODEL,
-      messages: [
+    const response = await client.complete([
         { role: "system", content: systemPrompt },
         { role: "user", content: userMessage }
-      ]
-    });
+      ] as AiMessage[]);
 
-    const summaryText = response.choices?.[0]?.message?.content || "Failed to generate legal summary.";
+    if (!response.content || !response.content.trim()) return NextResponse.json({ error: "AI provider returned no summary text.", category: "invalid-response" }, { status: 502 });
+    const summaryText = response.content;
 
     return NextResponse.json({ summary: summaryText });
 
-  } catch (error: any) {
-    console.error("Summarize Route Error:", error);
-    return NextResponse.json({ error: "Failed to generate legal summary." }, { status: 500 });
+  } catch (error: unknown) {
+    if (error instanceof AiConfigError) return NextResponse.json({ error: error.message, category: error.code }, { status: error.code === "missing" ? 503 : 400 });
+    if (error instanceof AiProviderError) return NextResponse.json({ error: "The selected AI provider could not complete the request.", category: error.category }, { status: 502 });
+    return NextResponse.json({ error: "Failed to generate legal summary.", category: "provider" }, { status: 502 });
   }
 }
 
