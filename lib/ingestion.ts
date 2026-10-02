@@ -14,6 +14,7 @@ import { getPrisma } from "./db";
 import { createEventIfNew, pruneOldEvents } from "./eventStore";
 import { SOURCE_URL_PATTERN, type EventPayload } from "./validateEvent";
 import { fetchCameraFinalVotes, cameraVoteToEvent } from "./cameraVotes";
+import { isRelevantItalianPolitics } from "./newsFilter";
 
 export type IngestionResult =
   | {
@@ -91,7 +92,7 @@ export async function runIngestion(): Promise<IngestionResult> {
   const newsEnabled = Boolean(apiKey) && !apiKey!.includes("[YOUR_");
   if (newsEnabled) {
     const response = await fetch(
-      `https://newsdata.io/api/1/news?apikey=${apiKey}&country=it&category=politics`
+      `https://newsdata.io/api/1/news?apikey=${apiKey}&country=it&language=it&category=politics`
     );
     if (!response.ok) {
       throw new Error(`NewsData.io request failed with HTTP ${response.status}.`);
@@ -100,6 +101,10 @@ export async function runIngestion(): Promise<IngestionResult> {
     const articles: any[] = Array.isArray(json?.results) ? json.results : [];
     newsFetched = articles.length;
     for (const article of articles) {
+      if (!isRelevantItalianPolitics(article)) {
+        dropped++; // off-topic, non-Italian or multi-country spam from NewsData's loose "politics" category
+        continue;
+      }
       const normalized = transformNewsDataPayload(article);
       if (!SOURCE_URL_PATTERN.test(normalized.sourceUrl)) {
         dropped++; // refuse to store empty / non-http(s) source URLs

@@ -3,6 +3,7 @@ import { parseQuestion, isEnergyRelevant } from "../lib/epQuestions";
 import { cameraVoteToEvent, cameraVoteUrl } from "../lib/cameraVotes";
 import { cleanTitle } from "../lib/eurlex";
 import { SOURCE_URL_PATTERN } from "../lib/validateEvent";
+import { isRelevantItalianPolitics } from "../lib/newsFilter";
 
 // Shaped like a real EP Open Data record (E-10-2026-003603).
 const epWork = {
@@ -92,6 +93,26 @@ describe("cameraVoteToEvent", () => {
     const url = cameraVoteUrl(vote.uri);
     expect(SOURCE_URL_PATTERN.test(url)).toBe(true);
     expect(url).toContain("Legislatura=XIX&RifVotazione=714_31");
+  });
+});
+
+describe("isRelevantItalianPolitics", () => {
+  const it_ = (title: string, extra = {}) => ({ title, description: "", language: "italian", country: ["italy"], ...extra });
+
+  it("keeps Italian political stories", () => {
+    expect(isRelevantItalianPolitics(it_("Legge elettorale: Donzelli controlla dall'alto"))).toBe(true);
+    expect(isRelevantItalianPolitics(it_("Salvini: via libera a 10.000 militari"))).toBe(true);
+    expect(isRelevantItalianPolitics(it_("Flessibilità, l'Ue gela Meloni"))).toBe(true);
+  });
+
+  it("drops sport and unrelated stories from the loose politics category", () => {
+    expect(isRelevantItalianPolitics(it_('Inter Women, Le Bihan: "Pareggio meritato"'))).toBe(false);
+  });
+
+  it("drops non-Italian and multi-country articles", () => {
+    expect(isRelevantItalianPolitics(it_("Governo tedesco in crisi", { language: "german" }))).toBe(false);
+    expect(isRelevantItalianPolitics(it_("Governo e Ue", { country: new Array(40).fill("x").concat("italy") }))).toBe(false);
+    expect(isRelevantItalianPolitics(it_("Governo e Ue", { country: ["france"] }))).toBe(false);
   });
 });
 
