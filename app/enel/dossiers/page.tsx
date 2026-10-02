@@ -14,14 +14,14 @@ export default function DossiersPage() {
   return (
     <Page>
       <Loadable loading={loading} error={error} onRetry={reload} message="Loading watched files from the European Parliament…">
-        <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
           {(data?.dossiers ?? []).map((d) => {
             const rapporteur = d.actors.find((a) => a.role === "Rapporteur");
             return (
               <li key={d.id}>
                 <Link
                   href={`/enel/dossiers/${d.id}`}
-                  className="group h-full bg-surface border border-line rounded-lg shadow-card p-5 flex flex-col gap-3 hover:border-line-strong transition-colors"
+                  className="group h-full border-t-[3px] border-line-strong pt-4 pb-2 flex flex-col gap-3"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-sm text-subtle font-mono">{d.reference}</span>

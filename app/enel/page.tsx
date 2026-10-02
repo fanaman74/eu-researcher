@@ -161,9 +161,9 @@ export default function BriefingDrafterPage() {
                         type="button"
                         onClick={() => setSelected(b)}
                         aria-pressed={isSelected}
-                        className={`w-full text-left rounded-md border p-3 transition-colors ${isSelected ? "border-primary bg-primary-soft" : "border-line hover:border-line-strong hover:bg-sunken"}`}
+                        className={`group w-full text-left border-t py-2.5 ${isSelected ? "border-line-strong" : "border-line"}`}
                       >
-                        <span className="block text-sm font-medium text-fg">{b.title}</span>
+                        <span className={`block text-fg group-hover:underline ${isSelected ? "font-bold" : "font-medium"}`}>{isSelected && <span className="inline-block w-2 h-2 mr-2 bg-marker align-middle" aria-hidden="true" />}{b.title}</span>
                         <span className="block text-sm text-subtle mt-0.5">{b.type}{b.date && ` · ${formatDate(b.date)}`} · {b.source}</span>
                       </button>
                     </li>

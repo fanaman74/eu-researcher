@@ -57,7 +57,7 @@ export default function DossierPage() {
                   {d.actors.length === 0 ? (
                     <div className="mt-4"><Empty>No rapporteur or shadow rapporteurs recorded yet.</Empty></div>
                   ) : (
-                    <div className="mt-4 overflow-x-auto -mx-4 sm:-mx-5">
+                    <div className="mt-4 overflow-x-auto">
                       <table className={tableClass}>
                         <caption className="sr-only">Rapporteurs and shadow rapporteurs</caption>
                         <thead>
@@ -117,7 +117,7 @@ export default function DossierPage() {
                     {links.questions.length === 0 ? (
                       <Empty>None of the recent written questions match this file.</Empty>
                     ) : (
-                      <ul className="space-y-3">
+                      <ul className="space-y-5">
                         {links.questions.map((q) => (
                           <li key={q.id} className="text-sm">
                             <a href={q.url} target="_blank" rel="noopener noreferrer" className="text-fg hover:text-link hover:underline">{q.title}</a>
@@ -131,7 +131,7 @@ export default function DossierPage() {
                     {links.votes.length === 0 ? (
                       <Empty>No main plenary vote on this file yet.</Empty>
                     ) : (
-                      <ul className="space-y-3">
+                      <ul className="space-y-5">
                         {links.votes.map((v) => (
                           <li key={v.id} className="text-sm">
                             <ExternalLink href={`https://howtheyvote.eu/votes/${v.id}`}>{v.title}</ExternalLink>
@@ -151,7 +151,7 @@ export default function DossierPage() {
                   ) : (
                     <ol className="space-y-4">
                       {d.timeline.map((t) => (
-                        <li key={`${t.date}-${t.label}`} className="border-l-2 border-line-strong pl-3">
+                        <li key={`${t.date}-${t.label}`} className="border-l border-line-strong pl-4">
                           <p className="text-sm text-subtle tabular-nums">{formatDate(t.date)}</p>
                           <p className="text-sm font-medium text-fg">{t.label}</p>
                           {t.documents.length > 0 && (

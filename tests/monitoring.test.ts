@@ -6,7 +6,7 @@ import { matchPeer } from "../lib/peers";
 import { parseMeetings } from "../lib/commissionMeetings";
 import { toPressItem } from "../lib/pressCorner";
 import { dailyPrices } from "../lib/market";
-import { radarEvents, toIcs } from "../lib/calendar";
+import { radarEvents, toAgenda, toIcs, toSitting } from "../lib/calendar";
 import { digestText } from "../lib/digest";
 
 describe("diffSnapshot", () => {
@@ -222,6 +222,29 @@ describe("calendar", () => {
     expect(ics).toContain("DTEND;VALUE=DATE:20270101\r\n");
     expect(ics).toContain("Hydrogen\\, storage\\; grids");
     expect(ics.split("\r\n").every((line) => Buffer.byteLength(line) <= 75)).toBe(true);
+  });
+});
+
+describe("plenary sittings", () => {
+  it("reads place and earliest start time from a meeting record", () => {
+    const s = toSitting({ activity_date: "2026-10-05", hasLocality: "http://publications.europa.eu/resource/authority/place/FRA_SXB", was_scheduled_in: ["eli/dl/event/MTG-PL-2026-10-05-TF-1900", "eli/dl/event/MTG-PL-2026-10-05-TF-1700"] });
+    expect(s).toEqual({ date: "2026-10-05", place: "Strasbourg", start: "17:00" });
+    expect(toSitting({ activity_date: "2026-10-06" })).toEqual({ date: "2026-10-06", place: "", start: null });
+  });
+
+  it("groups agenda items under their timed parts, in order, and flags energy items", () => {
+    const item = (id: string, order: number, type: string, en: string) => ({ id, activity_order: order, had_activity_type: `def/ep-activities/${type}`, activity_label: { en } });
+    const parts = toAgenda([
+      { id: "p2", had_activity_type: "def/ep-activities/MEETING_PART", activity_start_date: "2026-09-16T12:30:00+02:00", activity_end_date: "2026-09-16T13:30:00+02:00", agendaLabel: { en: "Votes" }, consists_of: "v1" },
+      { id: "p1", had_activity_type: "def/ep-activities/MEETING_PART", activity_start_date: "2026-09-16T09:00:00+02:00", activity_end_date: "2026-09-16T12:30:00+02:00", agendaLabel: { en: "Debates" }, consists_of: ["d2", "d1"] },
+      item("d1", 1, "PLENARY_DEBATE", "Resumption of session"),
+      item("d2", 2, "PLENARY_DEBATE", "Electricity grids: the backbone of the EU energy system"),
+      item("v1", 5, "PLENARY_VOTE", "Budget 2027"),
+      item("x1", 9, "PLENARY_DEBATE", "One-minute speeches"),
+    ]);
+    expect(parts.map((p) => `${p.time} ${p.label}`)).toEqual(["09:00–12:30 Debates", "12:30–13:30 Votes", " Other items"]);
+    expect(parts[0].items.map((i) => [i.title, i.energy])).toEqual([["Resumption of session", false], ["Electricity grids: the backbone of the EU energy system", true]]);
+    expect(parts[1].items[0].kind).toBe("Vote");
   });
 });
 

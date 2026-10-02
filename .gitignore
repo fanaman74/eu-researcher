@@ -33,3 +33,11 @@ next-env.d.ts
 europe-paths-generated.txt
 
 /app/generated/prisma
+
+# Impeccable working files (review captures, decision payloads)
+.impeccable/review/
+.impeccable/decision-payload.json
+.impeccable/brief-body.md
+.impeccable/mocks/
+.impeccable/build/
+.impeccable/questions/

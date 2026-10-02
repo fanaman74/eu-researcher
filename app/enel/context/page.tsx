@@ -45,7 +45,7 @@ function Market() {
                   <div className="flex items-end gap-1 h-32 border-b border-line" role="img" aria-label={`Daily average price over the last ${days.length} days, from ${days[0].avg.toFixed(0)} to ${latest.avg.toFixed(0)} ${m.unit}`}>
                     {days.map((d) => (
                       <div key={d.date} className="flex-1 flex flex-col justify-end h-full" title={`${formatDate(d.date)}: ${d.avg.toFixed(1)} ${m.unit}`}>
-                        <div className={`rounded-t ${d === latest ? "bg-primary" : "bg-line-strong"}`} style={{ height: `${(d.avg / peak) * 100}%` }} />
+                        <div className={`${d === latest ? "bg-primary" : "bg-line-strong"}`} style={{ height: `${(d.avg / peak) * 100}%` }} />
                       </div>
                     ))}
                   </div>
@@ -80,7 +80,7 @@ function Market() {
                     {m.mix.sources.slice(0, 8).map((s) => (
                       <li key={s.name} className="text-sm">
                         <div className="flex justify-between gap-3"><span className="text-fg">{s.name}</span><span className="tabular-nums text-muted">{s.share.toFixed(1)}% · {s.gwh.toFixed(0)} GWh</span></div>
-                        <div className="h-2 mt-1 rounded bg-sunken overflow-hidden" aria-hidden="true"><div className="h-full bg-primary" style={{ width: `${s.share}%` }} /></div>
+                        <div className="h-2 mt-1 bg-sunken overflow-hidden" aria-hidden="true"><div className="h-full bg-primary" style={{ width: `${s.share}%` }} /></div>
                       </li>
                     ))}
                   </ul>
@@ -126,9 +126,9 @@ export default function ContextPage() {
           {items.length === 0 ? (
             <EmptyState title="No announcements match" />
           ) : (
-            <ul className="space-y-3">
+            <ul className="space-y-5">
               {items.map((p) => (
-                <li key={p.ref} className="bg-surface border border-line rounded-lg shadow-card p-4">
+                <li key={p.ref} className="border-t border-line pt-4 pb-1">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-subtle">
                     <span className="font-semibold text-fg tabular-nums">{formatDate(p.date)}</span>
                     <Badge>{p.type}</Badge>

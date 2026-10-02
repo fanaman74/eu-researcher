@@ -15,7 +15,7 @@ function Breakdown({ title, rows }: { title: string; rows: { name: string; count
         {rows.slice(0, 10).map((r) => (
           <li key={r.name} className="text-sm">
             <div className="flex justify-between gap-3"><span className="text-fg">{r.name}</span><span className="tabular-nums text-muted">{r.count} ({r.percentage}%)</span></div>
-            <div className="h-1.5 mt-1 bg-sunken rounded overflow-hidden" aria-hidden="true"><div className="h-full bg-primary rounded" style={{ width: `${r.percentage}%` }} /></div>
+            <div className="h-1.5 mt-1 bg-sunken overflow-hidden" aria-hidden="true"><div className="h-full bg-primary " style={{ width: `${r.percentage}%` }} /></div>
           </li>
         ))}
       </ul>
@@ -74,7 +74,7 @@ function Response({ sub }: { sub: ConsultationSubmission }) {
       )}
       {failed && <p className="text-sm text-danger" role="alert">The analysis could not be drafted. Try again in a moment.</p>}
       {analysis && (
-        <div className="rounded-md border border-line bg-sunken p-4 space-y-2">
+        <div className="border-t border-line-strong pt-3 space-y-2">
           <AiLabel />
           <p className="text-sm text-fg whitespace-pre-wrap">{analysis}</p>
         </div>

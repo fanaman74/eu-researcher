@@ -43,7 +43,7 @@ export default function RadarPage() {
           <EmptyState title="No initiatives match" message={needle ? "Try a shorter or different word." : "Nothing in this group right now."} />
         ) : (
           <Card padded={false}>
-            <div className="hidden md:grid grid-cols-[8rem_1fr_12rem_10rem_12rem] gap-4 px-5 py-2.5 border-b border-line bg-sunken text-xs font-semibold uppercase tracking-wide text-subtle rounded-t-lg">
+            <div className="hidden md:grid grid-cols-[8rem_1fr_12rem_10rem_12rem] gap-4 px-0 py-2 border-b border-line-strong text-xs font-semibold uppercase tracking-[0.06em] text-subtle">
               <span>{view === "Adopted" ? "Adopted" : "Planned"}</span>
               <span>Initiative</span>
               <span>Act type</span>
@@ -52,12 +52,12 @@ export default function RadarPage() {
             </div>
             <ul className="divide-y divide-line">
               {items.map((i) => (
-                <li key={i.id} className="grid grid-cols-1 md:grid-cols-[8rem_1fr_12rem_10rem_12rem] gap-x-4 gap-y-1.5 px-4 sm:px-5 py-4">
+                <li key={i.id} className="grid grid-cols-1 md:grid-cols-[8rem_1fr_12rem_10rem_12rem] gap-x-4 gap-y-1.5 py-4">
                   <span className="text-sm font-semibold tabular-nums text-fg">
                     {view === "Adopted" ? formatDate(i.adoptionDate) : i.plannedPeriod ?? <span className="font-normal text-subtle">No quarter given</span>}
                   </span>
                   <div className="min-w-0">
-                    <a href={i.url} target="_blank" rel="noopener noreferrer" className="font-medium text-fg hover:text-link hover:underline">
+                    <a href={i.url} target="_blank" rel="noopener noreferrer" className="font-serif text-[1.0625rem] font-semibold text-fg hover:text-link hover:underline">
                       {i.title}
                     </a>
                     {i.major && <span className="ml-2 align-middle"><Badge tone="info">Major initiative</Badge></span>}

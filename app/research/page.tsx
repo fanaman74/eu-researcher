@@ -97,7 +97,7 @@ export default function ResearchPage() {
             if (m.role === "user") {
               return (
                 <div key={i} className="flex justify-end">
-                  <p className="max-w-[85%] rounded-lg bg-primary text-on-primary px-4 py-3 text-base whitespace-pre-wrap">{m.content}</p>
+                  <p className="max-w-[85%] border border-line-strong px-4 py-3 font-serif text-lg font-semibold whitespace-pre-wrap">{m.content}</p>
                 </div>
               );
             }

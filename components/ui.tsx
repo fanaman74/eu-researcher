@@ -71,7 +71,7 @@ export function Page({
   const intro = description ?? nav?.description;
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10 py-6 lg:py-10 space-y-6">
+    <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10 pt-6 pb-12 lg:pt-8 lg:pb-16 space-y-8">
       <header className="space-y-3">
         {breadcrumbs && breadcrumbs.length > 0 && (
           <nav aria-label="Breadcrumb">
@@ -91,8 +91,8 @@ export function Page({
         )}
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0 space-y-1.5">
-            <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight text-fg [text-wrap:balance]">{heading}</h1>
-            {intro && <p className="text-base text-muted max-w-3xl">{intro}</p>}
+            <h1 className="text-[2rem] sm:text-[2.5rem] lg:text-5xl leading-[1.08] font-bold tracking-[-0.02em] text-fg">{heading}</h1>
+            {intro && <p className="text-lg text-muted max-w-[65ch] font-serif">{intro}</p>}
           </div>
           {actions && <div className="flex flex-wrap items-center gap-2 shrink-0">{actions}</div>}
         </div>
@@ -120,12 +120,12 @@ export function Card({
   as?: "section" | "div" | "article";
 }) {
   return (
-    <Tag className={`bg-surface border border-line rounded-lg shadow-card ${padded ? "p-4 sm:p-5" : ""} ${className}`}>
+    <Tag className={`rule-double pt-4 ${padded ? "pb-2" : ""} ${className}`}>
       {(title || actions) && (
-        <div className={`flex flex-wrap items-start justify-between gap-3 ${padded ? "mb-4" : "px-4 sm:px-5 pt-4 sm:pt-5 mb-3"}`}>
+        <div className="flex flex-wrap items-baseline justify-between gap-3 mb-4">
           <div className="min-w-0">
-            {title && <h2 className="text-lg font-semibold text-fg">{title}</h2>}
-            {description && <p className="text-sm text-muted mt-0.5">{description}</p>}
+            {title && <h2 className="text-xl font-bold tracking-[-0.01em] text-fg">{title}</h2>}
+            {description && <p className="text-sm text-muted mt-1 max-w-[65ch]">{description}</p>}
           </div>
           {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
         </div>
@@ -141,9 +141,9 @@ type Variant = "primary" | "secondary" | "ghost";
 type Size = "md" | "sm";
 
 const VARIANTS: Record<Variant, string> = {
-  primary: "bg-primary text-on-primary hover:bg-primary-hover border border-transparent",
-  secondary: "bg-surface text-fg border border-line-strong hover:bg-sunken",
-  ghost: "text-link border border-transparent hover:bg-primary-soft",
+  primary: "bg-primary text-on-primary hover:bg-primary-hover border border-primary hover:border-primary-hover",
+  secondary: "bg-canvas text-fg border border-line-strong hover:bg-fg hover:text-canvas",
+  ghost: "text-link border border-transparent underline decoration-transparent hover:decoration-current",
 };
 const SIZES: Record<Size, string> = {
   md: "min-h-11 px-4 text-sm",
@@ -151,7 +151,7 @@ const SIZES: Record<Size, string> = {
 };
 
 export function buttonClass(variant: Variant = "secondary", size: Size = "md") {
-  return `inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors duration-150 disabled:opacity-50 ${VARIANTS[variant]} ${SIZES[size]}`;
+  return `inline-flex items-center justify-center gap-2 font-semibold transition-colors duration-150 disabled:opacity-50 disabled:pointer-events-none ${VARIANTS[variant]} ${SIZES[size]}`;
 }
 
 export function Button({
@@ -217,21 +217,21 @@ export const linkClass = "text-link underline-offset-2 hover:underline";
 
 export type Tone = "neutral" | "info" | "success" | "warning" | "danger";
 const TONES: Record<Tone, string> = {
-  neutral: "bg-sunken text-muted border-line",
-  info: "bg-primary-soft text-link border-transparent",
-  success: "bg-success-soft text-success border-transparent",
-  warning: "bg-warning-soft text-warning border-transparent",
-  danger: "bg-danger-soft text-danger border-transparent",
+  neutral: "text-muted border-line",
+  info: "text-link border-current",
+  success: "text-success border-current",
+  warning: "text-warning border-current",
+  danger: "text-danger border-current",
 };
 
 /** A short status label. Meaning is always in the text, never in the colour alone. */
 export function Badge({ children, tone = "neutral" }: { children: React.ReactNode; tone?: Tone }) {
-  return <span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium border whitespace-nowrap ${TONES[tone]}`}>{children}</span>;
+  return <span className={`inline-flex items-center gap-1 px-1.5 py-px text-xs font-semibold border whitespace-nowrap ${TONES[tone]}`}>{children}</span>;
 }
 
 export function Notice({ tone = "info", children }: { tone?: Tone; children: React.ReactNode }) {
   return (
-    <div role={tone === "danger" || tone === "warning" ? "alert" : "status"} className={`rounded-md px-4 py-3 text-sm ${TONES[tone]}`}>
+    <div role={tone === "danger" || tone === "warning" ? "alert" : "status"} className={`border px-4 py-3 text-sm ${TONES[tone]}`}>
       {children}
     </div>
   );
@@ -252,15 +252,15 @@ export function Segmented<T extends string>({
   label: string;
 }) {
   return (
-    <div role="group" aria-label={label} className="inline-flex flex-wrap gap-1 rounded-lg border border-line bg-sunken p-1">
+    <div role="group" aria-label={label} className="inline-flex flex-wrap border border-line-strong divide-x divide-line-strong">
       {options.map((o) => (
         <button
           key={o.value}
           type="button"
           onClick={() => onChange(o.value)}
           aria-pressed={value === o.value}
-          className={`min-h-9 px-3 rounded-md text-sm font-medium transition-colors duration-150 ${
-            value === o.value ? "bg-surface text-fg shadow-card border border-line" : "text-muted hover:text-fg border border-transparent"
+          className={`min-h-11 px-3.5 text-sm font-semibold transition-colors duration-150 ${
+            value === o.value ? "bg-fg text-canvas" : "text-fg hover:bg-sunken"
           }`}
         >
           {o.label}
@@ -273,7 +273,7 @@ export function Segmented<T extends string>({
 // ── Forms ─────────────────────────────────────────────────────────────────
 
 export const inputClass =
-  "w-full min-h-11 rounded-md border border-line-strong bg-surface px-3 text-base sm:text-sm text-fg placeholder:text-subtle focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/30";
+  "w-full min-h-11 border border-line-strong bg-canvas px-3 text-base sm:text-sm text-fg placeholder:text-subtle focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/30";
 
 /** A labelled control with optional help text, wired for screen readers. */
 export function Field({
@@ -291,7 +291,7 @@ export function Field({
   const hintId = hint ? `${id}-hint` : undefined;
   return (
     <div className="space-y-1.5">
-      <label htmlFor={id} className={hideLabel ? "sr-only" : "block text-sm font-medium text-fg"}>{label}</label>
+      <label htmlFor={id} className={hideLabel ? "sr-only" : "block text-sm font-semibold text-fg"}>{label}</label>
       {children({ id, "aria-describedby": hintId })}
       {hint && <p id={hintId} className="text-sm text-subtle">{hint}</p>}
     </div>
@@ -358,13 +358,11 @@ export function Loading({ message, slow = "Some sources take up to 30 seconds th
   }, []);
   return (
     <div role="status" aria-live="polite" className="space-y-3">
-      <p className="text-sm text-muted flex items-center gap-2">
-        <RotateCw className="w-4 h-4 animate-spin" aria-hidden="true" /> {message}
-      </p>
+      <p className="text-sm text-muted">{message}</p>
       {waiting && slow && <p className="text-sm text-subtle">{slow}</p>}
       <div className="space-y-2" aria-hidden="true">
         {Array.from({ length: rows }, (_, i) => (
-          <div key={i} className="h-16 rounded-md bg-sunken animate-pulse" />
+          <div key={i} className="h-12 border-t border-line" />
         ))}
       </div>
     </div>
@@ -381,7 +379,7 @@ export function ErrorState({
   onRetry?: () => void;
 }) {
   return (
-    <div role="alert" className="rounded-lg border border-line bg-danger-soft p-4 sm:p-5 flex flex-col sm:flex-row sm:items-start gap-3">
+    <div role="alert" className="border border-danger p-4 sm:p-5 flex flex-col sm:flex-row sm:items-start gap-3">
       <AlertTriangle className="w-5 h-5 text-danger shrink-0 mt-0.5" aria-hidden="true" />
       <div className="flex-1 space-y-1">
         <p className="font-semibold text-fg">{title}</p>
@@ -398,7 +396,7 @@ export function ErrorState({
 
 export function EmptyState({ title, message, action }: { title: string; message?: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-dashed border-line-strong p-8 text-center space-y-2">
+    <div className="border-y border-line py-10 text-center space-y-2">
       <Inbox className="w-6 h-6 mx-auto text-subtle" aria-hidden="true" />
       <p className="font-medium text-fg">{title}</p>
       {message && <p className="text-sm text-muted max-w-prose mx-auto">{message}</p>}
@@ -428,23 +426,20 @@ export function Loadable({
 
 // ── Data display ──────────────────────────────────────────────────────────
 
-export function Stat({ label, value, hint, href }: { label: string; value: React.ReactNode; hint?: React.ReactNode; href?: string }) {
-  const body = (
-    <>
-      <p className="text-sm text-muted">{label}</p>
-      <p className="text-3xl font-semibold tabular-nums text-fg mt-1">{value}</p>
-      {hint && <p className="text-sm text-subtle mt-1">{hint}</p>}
-    </>
-  );
-  return href ? (
-    <Link href={href} className="block bg-surface border border-line rounded-lg p-4 sm:p-5 shadow-card hover:border-line-strong transition-colors">
-      {body}
+/** One line of a contents table: label, dotted leader, figure. The whole line is the link. */
+export function ContentsLine({ label, value, hint, href }: { label: string; value: React.ReactNode; hint?: string; href: string }) {
+  return (
+    <Link href={href} className="leader-row group relative block overflow-hidden py-3 pr-14 border-b border-line text-fg">
+      <span className="font-serif text-lg sm:text-xl">
+        {label}
+        {hint && <span className="hidden sm:inline font-sans text-sm text-subtle"> — {hint}</span>}
+      </span>
+      {/* Zero-width anchor at the end of the label's last line; its leader runs on to the figure. */}
+      <span className="leader" aria-hidden="true" />
+      <span className="absolute right-0 bottom-3 pl-2 bg-canvas font-serif text-2xl sm:text-3xl leading-none font-bold tabular-nums group-hover:underline group-focus-visible:underline">{value}</span>
     </Link>
-  ) : (
-    <div className="bg-surface border border-line rounded-lg p-4 sm:p-5 shadow-card">{body}</div>
   );
 }
-
 /** Label/value pairs. */
 export function Facts({ items }: { items: { label: string; value: React.ReactNode }[] }) {
   return (
@@ -460,7 +455,7 @@ export function Facts({ items }: { items: { label: string; value: React.ReactNod
 }
 
 export const tableClass = "w-full text-left text-sm";
-export const thClass = "py-2.5 px-3 text-xs font-semibold uppercase tracking-wide text-subtle border-b border-line bg-sunken";
+export const thClass = "py-2 px-3 text-xs font-semibold uppercase tracking-[0.06em] text-subtle border-y border-line-strong";
 export const tdClass = "py-3 px-3 align-top border-b border-line";
 
 /** Small print: where the data comes from and what it leaves out. */

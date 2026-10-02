@@ -87,8 +87,8 @@ function ReportDialog({ event, onClose }: { event: PoliticalEvent; onClose: () =
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="report-title">
-      <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} aria-hidden="true" />
-      <div ref={panelRef} tabIndex={-1} className="relative bg-surface border border-line rounded-lg w-full max-w-3xl max-h-[90dvh] flex flex-col outline-none">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
+      <div ref={panelRef} tabIndex={-1} className="relative bg-canvas border border-line-strong w-full max-w-3xl max-h-[90dvh] flex flex-col outline-none">
         <div className="p-5 border-b border-line flex items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="text-sm text-subtle">Public affairs report</p>
@@ -241,7 +241,7 @@ export default function ItalianPoliticsPage() {
           ) : events.length === 0 ? (
             <EmptyState title="No events match these filters" action={filtersActive && <Button onClick={reset}>Clear filters</Button>} />
           ) : (
-            <ul className="space-y-3">
+            <ul className="space-y-5">
               {events.map((evt) => {
                 const isSelected = evt.id === selectedId;
                 return (
@@ -250,7 +250,7 @@ export default function ItalianPoliticsPage() {
                       type="button"
                       onClick={() => setSelectedId(evt.id)}
                       aria-pressed={isSelected}
-                      className={`w-full text-left rounded-lg border p-4 space-y-2 transition-colors ${isSelected ? "border-primary bg-primary-soft" : "border-line bg-surface hover:border-line-strong"}`}
+                      className={`group w-full text-left border-t pt-3 pb-1 space-y-2 ${isSelected ? "border-line-strong" : "border-line"}`}
                     >
                       <div className="flex flex-wrap items-center gap-2 text-sm text-subtle">
                         <span className="tabular-nums">{formatDate(evt.date)}</span>
@@ -258,7 +258,7 @@ export default function ItalianPoliticsPage() {
                         <Badge tone={IMPACT_TONE[evt.impactLevel]}>{evt.impactLevel} impact</Badge>
                         <span>{evt.sourceName}</span>
                       </div>
-                      <p className="font-medium text-fg">{evt.title}</p>
+                      <p className={`font-serif text-[1.0625rem] text-fg group-hover:underline ${isSelected ? "font-bold" : "font-semibold"}`}>{isSelected && <span className="inline-block w-2 h-2 mr-2 bg-marker align-middle" aria-hidden="true" />}{evt.title}</p>
                       {evt.description && <p className="text-sm text-muted line-clamp-2">{evt.description}</p>}
                     </button>
                   </li>

@@ -34,9 +34,9 @@ export default function StateAidPage() {
         {items.length === 0 ? (
           <EmptyState title="No rulings match" />
         ) : (
-          <ul className="space-y-3">
+          <ul className="space-y-5">
             {items.map((i) => (
-              <li key={i.id} className="bg-surface border border-line rounded-lg shadow-card p-4 sm:p-5 space-y-2">
+              <li key={i.id} className="border-t border-line pt-4 pb-1 space-y-2">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-subtle">
                   <Badge>{i.sector}</Badge>
                   <span className="font-mono text-xs">{i.id}</span>

@@ -103,7 +103,7 @@ export default function SummarizerModal({ isOpen, onClose, document: doc, idLabe
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-labelledby="summary-title">
-      <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
       <div ref={panelRef} tabIndex={-1} className="relative w-full max-w-xl h-full bg-surface border-l border-line flex flex-col outline-none">
         <div className="p-5 border-b border-line flex items-start justify-between gap-4">
           <div className="min-w-0 space-y-1">

@@ -8,17 +8,108 @@
  */
 import { cached } from "./cache";
 import { epGet } from "./meps";
+import { ENERGY_RE } from "./epQuestions";
 import { listRadar } from "./radar";
 import type { CalendarEvent, RadarItem } from "./types";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const isoDay = (d: Date) => d.toISOString().slice(0, 10);
 
-async function plenaryDays(year: number): Promise<string[]> {
+const PLACES: Record<string, string> = { FRA_SXB: "Strasbourg", BEL_BRU: "Brussels", LUX_LUX: "Luxembourg" };
+const tail = (s: unknown) => String(s ?? "").split("/").pop() ?? "";
+/** JSON-LD writes a single value as a bare object and several as an array. */
+const list = (v: unknown): any[] => (v == null ? [] : Array.isArray(v) ? v : [v]);
+const AGENDA_URL = (date: string) => `https://www.europarl.europa.eu/doceo/document/OJQ-10-${date}_EN.html`;
+
+interface Sitting {
+  date: string;
+  place: string;
+  /** Local start time of the first scheduled part, "17:00", when published. */
+  start: string | null;
+}
+
+/** One sitting from a meeting record. Exported for tests. */
+export function toSitting(m: any): Sitting | null {
+  const date = String(m.activity_date ?? "").slice(0, 10);
+  if (!date) return null;
+  // Scheduled parts are identified by their start time: "…-TF-1700".
+  const starts = list(m.was_scheduled_in)
+    .map((id) => /-TF-(\d{2})(\d{2})$/.exec(String(id)))
+    .filter(Boolean)
+    .map((x) => `${x![1]}:${x![2]}`)
+    .sort();
+  return { date, place: PLACES[tail(m.hasLocality)] ?? "", start: starts[0] ?? null };
+}
+
+async function plenarySittings(year: number): Promise<Sitting[]> {
   return cached(`ep:plenary:${year}`, DAY_MS, async () => {
     const data = await epGet(`/meetings?year=${year}&offset=0&limit=400`);
-    const days = (data.data as any[]).map((m) => String(m.activity_date ?? "").slice(0, 10)).filter(Boolean);
-    return [...new Set(days)].sort();
+    const byDate = new Map<string, Sitting>();
+    for (const m of data.data as any[]) {
+      const s = toSitting(m);
+      if (s && !byDate.has(s.date)) byDate.set(s.date, s);
+    }
+    return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+  });
+}
+
+export interface AgendaPart {
+  /** "17:00–19:30" */
+  time: string;
+  /** "Debates", "Votes", … */
+  label: string;
+  items: { title: string; kind: "Debate" | "Vote" | "Other"; energy: boolean }[];
+}
+
+/** The source writes some part labels in capitals ("KEY DEBATE", "VOTES"). */
+const sentenceCase = (s: string) => (s === s.toUpperCase() ? s.charAt(0) + s.slice(1).toLowerCase() : s);
+
+/** Group a sitting's draft agenda into its timed parts. Exported for tests. */
+export function toAgenda(rows: any[]): AgendaPart[] {
+  const hhmm = (iso: unknown) => /T(\d{2}:\d{2})/.exec(String(iso ?? ""))?.[1] ?? "";
+  const kindOf = (type: string): AgendaPart["items"][number]["kind"] => (type === "PLENARY_DEBATE" ? "Debate" : type === "PLENARY_VOTE" ? "Vote" : "Other");
+  const items = new Map(
+    rows
+      .filter((r) => tail(r.had_activity_type) !== "MEETING_PART")
+      .map((r) => [String(r.id), { order: Number(r.activity_order ?? 9999), title: String(r.activity_label?.en ?? "").trim(), kind: kindOf(tail(r.had_activity_type)) }])
+  );
+  const used = new Set<string>();
+  const build = (ids: string[]) =>
+    ids
+      .map((id) => items.get(id))
+      .filter((i): i is NonNullable<typeof i> => Boolean(i && i.title))
+      .sort((a, b) => a.order - b.order)
+      .map(({ title, kind }) => ({ title, kind, energy: ENERGY_RE.test(title) }));
+
+  const parts: (AgendaPart & { sort: string })[] = rows
+    .filter((r) => tail(r.had_activity_type) === "MEETING_PART")
+    .map((r) => {
+      const ids = list(r.consists_of).map(String);
+      ids.forEach((id) => used.add(id));
+      const start = hhmm(r.activity_start_date);
+      const end = hhmm(r.activity_end_date);
+      return { sort: start, time: end && end !== start ? `${start}–${end}` : start, label: sentenceCase(String(r.agendaLabel?.en ?? r.activity_label?.en ?? "Session")), items: build(ids) };
+    })
+    .filter((p) => p.items.length > 0)
+    .sort((a, b) => a.sort.localeCompare(b.sort));
+
+  const loose = build([...items.keys()].filter((id) => !used.has(id)));
+  if (loose.length > 0) parts.push({ sort: "99", time: "", label: "Other items", items: loose });
+  return parts.map((p) => ({ time: p.time, label: p.label, items: p.items }));
+}
+
+/** The draft agenda of one plenary sitting. The Parliament fills it in during the weeks before. */
+export async function getSittingAgenda(date: string): Promise<{ date: string; parts: AgendaPart[]; agendaUrl: string } | null> {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  return cached(`ep:agenda:${date}`, 6 * 60 * 60 * 1000, async () => {
+    try {
+      const data = await epGet(`/meetings/MTG-PL-${date}/foreseen-activities?offset=0&limit=300`);
+      return { date, parts: toAgenda(data?.data ?? []), agendaUrl: AGENDA_URL(date) };
+    } catch (err) {
+      // 404 / empty body: nothing published for that day yet.
+      if ((err as any)?.status === 404 || err instanceof SyntaxError) return { date, parts: [], agendaUrl: AGENDA_URL(date) };
+      throw err;
+    }
   });
 }
 
@@ -49,15 +140,22 @@ export async function listCalendar(): Promise<{ events: CalendarEvent[]; gaps: s
   const year = new Date().getUTCFullYear();
   const gaps: string[] = [];
 
-  const [radar, thisYear, nextYear] = await Promise.allSettled([listRadar(), plenaryDays(year), plenaryDays(year + 1)]);
+  const [radar, thisYear, nextYear] = await Promise.allSettled([listRadar(), plenarySittings(year), plenarySittings(year + 1)]);
   const events: CalendarEvent[] = [];
   if (radar.status === "fulfilled") events.push(...radarEvents(radar.value, today));
   else gaps.push("Commission pipeline (consultation deadlines and planned quarters) could not be loaded.");
 
   const sittings = [thisYear, nextYear].flatMap((r) => (r.status === "fulfilled" ? r.value : []));
   if (thisYear.status === "rejected") gaps.push("Parliament plenary dates could not be loaded.");
-  for (const date of sittings.filter((d) => d >= today)) {
-    events.push({ date, kind: "Plenary sitting", title: "European Parliament plenary sitting", url: "https://www.europarl.europa.eu/plenary/en/home.html" });
+  for (const s of sittings.filter((x) => x.date >= today)) {
+    events.push({
+      date: s.date,
+      kind: "Plenary sitting",
+      title: `European Parliament plenary sitting${s.place ? `, ${s.place}` : ""}`,
+      url: AGENDA_URL(s.date),
+      place: s.place || undefined,
+      start: s.start ?? undefined,
+    });
   }
 
   events.sort((a, b) => a.date.localeCompare(b.date) || a.kind.localeCompare(b.kind));
@@ -101,6 +199,7 @@ export function toIcs(events: CalendarEvent[], stamp = new Date()): string {
       `SUMMARY:${icsText(`${e.kind}: ${e.title}`)}`,
       `DESCRIPTION:${icsText(e.url)}`,
       `URL:${e.url}`,
+      ...(e.place ? [`LOCATION:${icsText(e.place)}`] : []),
       "TRANSP:TRANSPARENT",
       "END:VEVENT"
     );

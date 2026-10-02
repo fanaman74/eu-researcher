@@ -27,8 +27,8 @@ export default function MeetingsPage() {
               <table className="w-full text-sm">
                 <caption className="sr-only">Meetings per organisation with Commissioners' cabinets and with Directorates-General</caption>
                 <thead>
-                  <tr className="text-xs font-semibold uppercase tracking-wide text-subtle bg-sunken border-y border-line">
-                    <th scope="col" className="py-2 px-4 text-left">Organisation</th>
+                  <tr className="text-xs font-semibold uppercase tracking-[0.06em] text-subtle border-y border-line-strong">
+                    <th scope="col" className="py-2 pr-4 text-left">Organisation</th>
                     <th scope="col" className="py-2 px-2 text-right"><abbr title="Commissioners and their cabinets" className="no-underline">Cabinet</abbr></th>
                     <th scope="col" className="py-2 px-2 text-right"><abbr title="Directors-General and management staff" className="no-underline">DG</abbr></th>
                     <th scope="col" className="py-2 px-4 text-right">Last 12 months</th>
@@ -38,17 +38,17 @@ export default function MeetingsPage() {
                   {data.benchmark.map((b) => {
                     const selected = b.peer === peer;
                     return (
-                      <tr key={b.peer} className={`border-b border-line ${selected ? "bg-primary-soft" : ""}`}>
-                        <th scope="row" className="py-2 px-4 text-left font-normal">
+                      <tr key={b.peer} className="border-b border-line">
+                        <th scope="row" className="py-2 pr-4 text-left font-normal">
                           <button
                             type="button"
                             onClick={() => setPeer(selected ? "" : b.peer)}
                             aria-pressed={selected}
-                            className={`text-left min-h-9 ${selected ? "font-semibold text-link" : "text-fg hover:text-link hover:underline"}`}
+                            className={`text-left min-h-9 text-fg hover:underline ${selected ? "font-bold" : ""}`}
                           >
-                            {b.peer}
+                            {selected && <span className="inline-block w-2 h-2 mr-2 bg-marker align-middle" aria-hidden="true" />}{b.peer}
                           </button>
-                          <div className="h-1.5 mt-1 rounded bg-sunken overflow-hidden" aria-hidden="true">
+                          <div className="h-1.5 mt-1 bg-sunken overflow-hidden" aria-hidden="true">
                             <div className={`h-full ${b.peer === "Enel" ? "bg-primary" : "bg-line-strong"}`} style={{ width: `${((b.cabinet + b.dg) / max) * 100}%` }} />
                           </div>
                         </th>
@@ -87,9 +87,9 @@ export default function MeetingsPage() {
                 )}
               </p>
               {(peer || q) && data.meetings.length === 0 && <EmptyState title="No meetings found" message="Try another word or clear the organisation filter." />}
-              <ul className="space-y-3">
+              <ul className="space-y-5">
                 {data.meetings.map((m, n) => (
-                  <li key={`${m.date}-${m.host}-${n}`} className="bg-surface border border-line rounded-lg shadow-card p-4 space-y-1.5">
+                  <li key={`${m.date}-${m.host}-${n}`} className="border-t border-line pt-4 pb-1 space-y-1.5">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-subtle">
                       <span className="font-semibold text-fg tabular-nums">{formatDate(m.date)}</span>
                       <Badge tone={m.level === "Cabinet" ? "info" : "neutral"}>{m.level === "Cabinet" ? "Cabinet" : "Directorate-General"}</Badge>

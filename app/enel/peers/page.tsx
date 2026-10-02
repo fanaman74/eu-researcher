@@ -19,7 +19,7 @@ function Position({ p }: { p: PeerPosition }) {
   const [open, setOpen] = useState(false);
   const long = p.text.length > 600;
   return (
-    <article className="rounded-md border border-line bg-sunken p-4 space-y-2">
+    <article className="border-t border-line pt-3 pb-1 space-y-2">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-subtle">
         <span className="font-semibold text-fg">{p.organization}</span>
         <span>{p.country}</span>
@@ -109,9 +109,9 @@ function PeersContent() {
               </Card>
 
               {byPeer.size > 0 && (
-                <nav aria-label="Jump to organisation" className="flex flex-wrap gap-2">
+                <nav aria-label="Jump to organisation" className="flex flex-wrap gap-x-5 gap-y-2 border-y border-line py-3">
                   {[...byPeer.keys()].map((peer) => (
-                    <a key={peer} href={`#peer-${peer.replace(/\W+/g, "-")}`} className="text-sm rounded-md border border-line bg-surface px-3 py-1.5 hover:bg-sunken">
+                    <a key={peer} href={`#peer-${peer.replace(/\W+/g, "-")}`} className="text-sm text-link hover:underline">
                       {peer}
                     </a>
                   ))}

@@ -84,9 +84,9 @@ export default function EurlexPage() {
         ) : hits.length === 0 ? (
           <EmptyState title="No documents found" message="Try fewer or more general words, such as “renewable energy”." />
         ) : (
-          <ul className="space-y-3">
+          <ul className="space-y-5">
             {hits.map((doc) => (
-              <li key={doc.id} className="bg-surface border border-line rounded-lg shadow-card p-4 sm:p-5 space-y-3">
+              <li key={doc.id} className="border-t border-line pt-4 pb-1 space-y-3">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-subtle">
                   <Badge>{doc.sector}</Badge>
                   <span className="font-mono text-xs">{doc.id}</span>

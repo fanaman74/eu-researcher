@@ -1,0 +1,187 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-02T12:00:00Z",
+  "title": "Design System: EU Researcher",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "EU Blue", "canonical": "#003399", "tonalRamp": ["oklch(15% 0.17 262)", "oklch(27% 0.17 262)", "oklch(38% 0.17 262)", "oklch(50% 0.17 262)", "oklch(62% 0.17 262)", "oklch(73% 0.12 262)", "oklch(84% 0.08 262)", "oklch(95% 0.03 262)"] },
+      "primary-hover": { "role": "primary", "displayName": "EU Blue, pressed", "canonical": "#00256e", "tonalRamp": ["oklch(15% 0.13 262)", "oklch(27% 0.13 262)", "oklch(38% 0.13 262)", "oklch(50% 0.13 262)", "oklch(62% 0.13 262)", "oklch(73% 0.10 262)", "oklch(84% 0.06 262)", "oklch(95% 0.02 262)"] },
+      "on-primary": { "role": "neutral", "displayName": "Paper on Blue", "canonical": "#ffffff" },
+      "link": { "role": "primary", "displayName": "Link Blue", "canonical": "#003399" },
+      "ring": { "role": "primary", "displayName": "Focus Blue", "canonical": "#003399" },
+      "marker": { "role": "secondary", "displayName": "Flag Yellow", "canonical": "#ffcc00", "tonalRamp": ["oklch(15% 0.04 90)", "oklch(27% 0.07 90)", "oklch(38% 0.09 90)", "oklch(50% 0.11 90)", "oklch(62% 0.14 90)", "oklch(73% 0.16 90)", "oklch(84% 0.176 90)", "oklch(95% 0.07 90)"] },
+      "canvas": { "role": "neutral", "displayName": "Paper", "canonical": "#ffffff", "tonalRamp": ["oklch(15% 0.008 265)", "oklch(27% 0.008 265)", "oklch(38% 0.008 265)", "oklch(50% 0.008 265)", "oklch(62% 0.008 265)", "oklch(73% 0.006 265)", "oklch(84% 0.004 265)", "oklch(100% 0 0)"] },
+      "sunken": { "role": "neutral", "displayName": "Sunken", "canonical": "#f1f2f4", "tonalRamp": ["oklch(15% 0.004 265)", "oklch(27% 0.004 265)", "oklch(38% 0.004 265)", "oklch(50% 0.004 265)", "oklch(62% 0.004 265)", "oklch(73% 0.004 265)", "oklch(84% 0.004 265)", "oklch(96% 0.003 265)"] },
+      "line": { "role": "neutral", "displayName": "Hairline", "canonical": "#d2d4d8", "tonalRamp": ["oklch(15% 0.006 265)", "oklch(27% 0.006 265)", "oklch(38% 0.006 265)", "oklch(50% 0.006 265)", "oklch(62% 0.006 265)", "oklch(73% 0.006 265)", "oklch(86% 0.006 265)", "oklch(95% 0.004 265)"] },
+      "line-strong": { "role": "neutral", "displayName": "Ink Rule", "canonical": "#16181d" },
+      "fg": { "role": "neutral", "displayName": "Ink", "canonical": "#16181d", "tonalRamp": ["oklch(15% 0.01 265)", "oklch(21% 0.01 265)", "oklch(38% 0.01 265)", "oklch(50% 0.01 265)", "oklch(62% 0.01 265)", "oklch(73% 0.008 265)", "oklch(84% 0.006 265)", "oklch(95% 0.004 265)"] },
+      "muted": { "role": "neutral", "displayName": "Second Ink", "canonical": "#42464e", "tonalRamp": ["oklch(15% 0.012 262)", "oklch(27% 0.012 262)", "oklch(39% 0.012 262)", "oklch(50% 0.012 262)", "oklch(62% 0.012 262)", "oklch(73% 0.010 262)", "oklch(84% 0.008 262)", "oklch(95% 0.004 262)"] },
+      "subtle": { "role": "neutral", "displayName": "Small-Print Grey", "canonical": "#5f646d", "tonalRamp": ["oklch(15% 0.014 260)", "oklch(27% 0.014 260)", "oklch(38% 0.014 260)", "oklch(50% 0.014 260)", "oklch(62% 0.014 260)", "oklch(73% 0.012 260)", "oklch(84% 0.008 260)", "oklch(95% 0.004 260)"] },
+      "success": { "role": "tertiary", "displayName": "Notice Green", "canonical": "#0b6b3a", "tonalRamp": ["oklch(15% 0.05 153)", "oklch(27% 0.08 153)", "oklch(38% 0.11 153)", "oklch(46% 0.12 153)", "oklch(62% 0.12 153)", "oklch(73% 0.11 153)", "oklch(84% 0.09 153)", "oklch(95% 0.04 153)"] },
+      "warning": { "role": "tertiary", "displayName": "Notice Amber", "canonical": "#8a5a00", "tonalRamp": ["oklch(15% 0.04 75)", "oklch(27% 0.07 75)", "oklch(38% 0.09 75)", "oklch(50% 0.11 75)", "oklch(62% 0.12 75)", "oklch(73% 0.12 75)", "oklch(84% 0.11 75)", "oklch(95% 0.04 75)"] },
+      "danger": { "role": "tertiary", "displayName": "Notice Red", "canonical": "#a8201a", "tonalRamp": ["oklch(15% 0.06 27)", "oklch(27% 0.11 27)", "oklch(38% 0.15 27)", "oklch(47% 0.17 27)", "oklch(62% 0.17 27)", "oklch(73% 0.12 27)", "oklch(84% 0.08 27)", "oklch(95% 0.03 27)"] },
+      "night-primary": { "role": "primary", "displayName": "EU Blue, night edition", "canonical": "#3f6fe6", "tonalRamp": ["oklch(15% 0.10 264)", "oklch(27% 0.14 264)", "oklch(38% 0.18 264)", "oklch(50% 0.18 264)", "oklch(57% 0.18 264)", "oklch(73% 0.13 264)", "oklch(84% 0.08 264)", "oklch(95% 0.03 264)"] },
+      "night-primary-hover": { "role": "primary", "displayName": "EU Blue, night pressed", "canonical": "#2f5bcb" },
+      "night-link": { "role": "primary", "displayName": "Link Blue, night edition", "canonical": "#a4bcff" },
+      "night-ring": { "role": "primary", "displayName": "Focus Blue, night edition", "canonical": "#a4bcff" },
+      "night-canvas": { "role": "neutral", "displayName": "Night Sheet", "canonical": "#0f1217", "tonalRamp": ["oklch(18% 0.012 260)", "oklch(27% 0.012 260)", "oklch(38% 0.012 260)", "oklch(50% 0.012 260)", "oklch(62% 0.012 260)", "oklch(73% 0.010 260)", "oklch(84% 0.008 260)", "oklch(95% 0.004 260)"] },
+      "night-sunken": { "role": "neutral", "displayName": "Night Sunken", "canonical": "#191d25" },
+      "night-line": { "role": "neutral", "displayName": "Night Hairline", "canonical": "#2e343e" },
+      "night-line-strong": { "role": "neutral", "displayName": "Night Ink Rule", "canonical": "#ecebe7" },
+      "night-fg": { "role": "neutral", "displayName": "Night Ink", "canonical": "#ecebe7", "tonalRamp": ["oklch(15% 0.006 95)", "oklch(27% 0.006 95)", "oklch(38% 0.006 95)", "oklch(50% 0.006 95)", "oklch(62% 0.006 95)", "oklch(73% 0.006 95)", "oklch(84% 0.006 95)", "oklch(94% 0.006 95)"] },
+      "night-muted": { "role": "neutral", "displayName": "Night Second Ink", "canonical": "#bdbbb5" },
+      "night-subtle": { "role": "neutral", "displayName": "Night Small-Print Grey", "canonical": "#9a9892" },
+      "night-success": { "role": "tertiary", "displayName": "Notice Green, night edition", "canonical": "#79d6a2" },
+      "night-warning": { "role": "tertiary", "displayName": "Notice Amber, night edition", "canonical": "#f0c060" },
+      "night-danger": { "role": "tertiary", "displayName": "Notice Red, night edition", "canonical": "#ff9d94" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The page title, one per page. 2rem, 2.5rem from 640px, 3rem from 1024px." },
+      "wordmark": { "displayName": "Wordmark", "purpose": "The masthead name. 1.5rem, 2.25rem from 640px." },
+      "headline": { "displayName": "Headline", "purpose": "Section titles under a double rule, and the Contents heading." },
+      "figure": { "displayName": "Figure", "purpose": "The count at the end of a contents line. 1.5rem, 1.875rem from 640px." },
+      "title": { "displayName": "Title", "purpose": "Entry titles in lists; bold when the entry is selected." },
+      "lead": { "displayName": "Lead", "purpose": "The standfirst under a page title, max 65ch; also the contents-line label size." },
+      "body": { "displayName": "Body", "purpose": "Base text, line-height 1.55, lining tabular figures." },
+      "body-sm": { "displayName": "Body small", "purpose": "Most interface text, descriptions, table cells, control labels (semibold on controls)." },
+      "label": { "displayName": "Label", "purpose": "Uppercase heading of a navigation or index group (0.08em) and table column headers (0.06em)." }
+    },
+    "shadows": [
+      { "name": "shadow-card", "value": "none", "purpose": "The only shadow token. A printed sheet casts no shadow." }
+    ],
+    "motion": [
+      { "name": "rule-draw", "value": "transform scaleX(0) to scaleX(1), 700ms cubic-bezier(0.16, 1, 0.3, 1), origin left", "purpose": "The masthead double rule draws once when the page loads." },
+      { "name": "leader-ink", "value": "transform scaleX(0) to scaleX(1), 360ms cubic-bezier(0.16, 1, 0.3, 1), origin left", "purpose": "A solid ink line draws over the dotted leader on hover or focus of a contents line." },
+      { "name": "control-colour", "value": "color, background-color, border-color 150ms", "purpose": "Colour change on buttons and segmented options." },
+      { "name": "reduced-motion", "value": "animation and transition durations 0.01ms", "purpose": "prefers-reduced-motion removes every animation and transition." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one solid action on a page, in the title row or beside a search field.",
+      "html": "<button class=\"ds-btn-primary\">Search</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; font-family: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; background: var(--primary); color: var(--on-primary); border: 1px solid var(--primary); border-radius: 0; cursor: pointer; transition: background-color 150ms, border-color 150ms, color 150ms; } .ds-btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); } .ds-btn-primary:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; pointer-events: none; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "The default action: an ink outline that inverts on hover.",
+      "html": "<button class=\"ds-btn-secondary\">Try again</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; font-family: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; background: var(--canvas); color: var(--fg); border: 1px solid var(--line-strong); border-radius: 0; cursor: pointer; transition: background-color 150ms, color 150ms; } .ds-btn-secondary:hover { background: var(--fg); color: var(--canvas); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "A text action in link blue; an underline appears on hover.",
+      "html": "<button class=\"ds-btn-ghost\">Copy text</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; font-family: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; background: transparent; color: var(--link); border: 1px solid transparent; border-radius: 0; text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 1px; text-underline-offset: 0.18em; cursor: pointer; transition: text-decoration-color 150ms; } .ds-btn-ghost:hover { text-decoration-color: currentColor; } .ds-btn-ghost:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }"
+    },
+    {
+      "name": "Contents Line",
+      "kind": "custom",
+      "refersTo": "contents-line",
+      "description": "Signature row: serif label, dotted leader, bold tabular figure. The whole line is the link; the leader inks solid on hover or focus.",
+      "html": "<a class=\"ds-contents-line\" href=\"#\"><span class=\"ds-contents-label\">Changes since yesterday<span class=\"ds-contents-hint\"> — the daily digest</span></span><span class=\"ds-leader\" aria-hidden=\"true\"></span><span class=\"ds-contents-figure\">12</span></a>",
+      "css": ".ds-contents-line { position: relative; display: block; overflow: hidden; padding: 12px 56px 12px 0; border-bottom: 1px solid var(--line); color: var(--fg); text-decoration: none; } .ds-contents-label { font-family: var(--font-source-serif), 'Iowan Old Style', 'Times New Roman', serif; font-size: 1.25rem; } .ds-contents-hint { font-family: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; color: var(--subtle); } .ds-leader { display: inline-block; position: relative; width: 0; vertical-align: baseline; } .ds-leader::before, .ds-leader::after { content: ''; position: absolute; left: 0.6rem; bottom: 0.1em; width: 100vw; height: 1px; } .ds-leader::before { background-image: radial-gradient(circle, var(--subtle) 0.75px, transparent 1px); background-size: 6px 1px; background-repeat: repeat-x; } .ds-leader::after { background: var(--line-strong); transform: scaleX(0); transform-origin: left; transition: transform 360ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-contents-line:hover .ds-leader::after, .ds-contents-line:focus-visible .ds-leader::after { transform: scaleX(1); } .ds-contents-figure { position: absolute; right: 0; bottom: 12px; padding-left: 8px; background: var(--canvas); font-family: var(--font-source-serif), 'Iowan Old Style', 'Times New Roman', serif; font-size: 1.875rem; line-height: 1; font-weight: 700; font-variant-numeric: lining-nums tabular-nums; } .ds-contents-line:hover .ds-contents-figure, .ds-contents-line:focus-visible .ds-contents-figure { text-decoration: underline; text-decoration-thickness: 1px; } .ds-contents-line:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; } @media (prefers-reduced-motion: reduce) { .ds-leader::after { transition-duration: 0.01ms; } }"
+    },
+    {
+      "name": "Section",
+      "kind": "card",
+      "description": "A section opens with a heavy rule over a hairline; no fill, no side borders. Entries are separated by hairlines.",
+      "html": "<section class=\"ds-section\"><div class=\"ds-section-head\"><h2 class=\"ds-section-title\">Deadlines</h2><a class=\"ds-section-link\" href=\"#\">Full calendar</a></div><ul class=\"ds-section-list\"><li><span class=\"ds-section-date\">15 Oct 2026</span><span>Electricity market design: implementing rules<span class=\"ds-section-meta\">42 responses so far</span></span></li><li><span class=\"ds-section-date\">21 Oct 2026</span><span>Grid connection network code<span class=\"ds-section-meta\">7 responses so far</span></span></li></ul></section>",
+      "css": ".ds-section { position: relative; border-top: 3px solid var(--line-strong); padding: 16px 0 8px; color: var(--fg); font-family: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif; } .ds-section::after { content: ''; position: absolute; inset: 3px 0 auto 0; border-top: 1px solid var(--line-strong); } .ds-section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 16px; } .ds-section-title { margin: 0; font-family: var(--font-source-serif), 'Iowan Old Style', 'Times New Roman', serif; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; } .ds-section-link { font-size: 0.875rem; color: var(--link); text-decoration: none; text-underline-offset: 2px; } .ds-section-link:hover { text-decoration: underline; text-decoration-thickness: 1px; } .ds-section-link:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; } .ds-section-list { list-style: none; margin: 0; padding: 0; } .ds-section-list li { display: grid; grid-template-columns: 6.5rem 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid var(--line); } .ds-section-list li:first-child { border-top: 0; padding-top: 0; } .ds-section-date { font-family: var(--font-source-serif), 'Iowan Old Style', 'Times New Roman', serif; font-weight: 700; } .ds-section-meta { display: block; font-size: 0.875rem; color: var(--subtle); }"
+    },
+    {
+      "name": "Status Label",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Outlined square label; the meaning is in the words, colour only tints text and outline.",
+      "html": "<span class=\"ds-badge\">Adopted</span> <span class=\"ds-badge ds-badge-info\">In negotiation</span> <span class=\"ds-badge ds-badge-success\">Open</span> <span class=\"ds-badge ds-badge-warning\">AI-generated — check against the sources</span> <span class=\"ds-badge ds-badge-danger\">Closed</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; gap: 4px; padding: 1px 6px; font-family: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif; font-size: 0.75rem; font-weight: 600; white-space: nowrap; color: var(--muted); border: 1px solid var(--line); border-radius: 0; background: transparent; } .ds-badge-info { color: var(--link); border-color: currentColor; } .ds-badge-success { color: var(--success); border-color: currentColor; } .ds-badge-warning { color: var(--warning); border-color: currentColor; } .ds-badge-danger { color: var(--danger); border-color: currentColor; }"
+    },
+    {
+      "name": "Segmented Choice",
+      "kind": "custom",
+      "refersTo": "segmented-option",
+      "description": "Mutually exclusive filter buttons; the selected option is solid ink.",
+      "html": "<div class=\"ds-segmented\" role=\"group\" aria-label=\"Period\"><button aria-pressed=\"true\">24 hours</button><button aria-pressed=\"false\">7 days</button><button aria-pressed=\"false\">30 days</button></div>",
+      "css": ".ds-segmented { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line-strong); } .ds-segmented button { min-height: 44px; padding: 0 14px; font-family: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; background: transparent; color: var(--fg); border: 0; border-left: 1px solid var(--line-strong); border-radius: 0; cursor: pointer; transition: background-color 150ms, color 150ms; } .ds-segmented button:first-child { border-left: 0; } .ds-segmented button:hover { background: var(--sunken); } .ds-segmented button[aria-pressed='true'] { background: var(--fg); color: var(--canvas); } .ds-segmented button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }"
+    },
+    {
+      "name": "Search Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Ink-outlined square field with a label above, a search icon inside, and a primary submit button.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-field-label\" for=\"ds-q\">Search EU law</label><div class=\"ds-field-row\"><div class=\"ds-field-wrap\"><svg class=\"ds-field-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><input id=\"ds-q\" class=\"ds-input\" type=\"search\" placeholder=\"Title, CELEX number or keyword\"></div></div><p class=\"ds-field-hint\">Searches EUR-Lex; the first search can take up to 30 seconds.</p></div>",
+      "css": ".ds-field { font-family: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif; } .ds-field-label { display: block; margin-bottom: 6px; font-size: 0.875rem; font-weight: 600; color: var(--fg); } .ds-field-row { display: flex; gap: 8px; } .ds-field-wrap { position: relative; flex: 1; } .ds-field-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--subtle); pointer-events: none; } .ds-input { width: 100%; min-height: 44px; padding: 0 12px 0 36px; font: inherit; font-size: 0.875rem; color: var(--fg); background: var(--canvas); border: 1px solid var(--line-strong); border-radius: 0; caret-color: var(--primary); } .ds-input::placeholder { color: var(--subtle); } .ds-input:focus { outline: none; border-color: var(--ring); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 30%, transparent); } .ds-field-hint { margin: 6px 0 0; font-size: 0.875rem; color: var(--subtle); }"
+    },
+    {
+      "name": "Contents Navigation",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "The Contents column: uppercase group label over a hairline, lines with a square marker slot and a series code. The current line carries the yellow square.",
+      "html": "<nav class=\"ds-contents\"><h2 class=\"ds-contents-title\">Contents</h2><h3 class=\"ds-contents-group\">Monitoring</h3><ul><li><a class=\"ds-nav-link\" href=\"#\" aria-current=\"page\"><span class=\"ds-nav-mark\"></span><span class=\"ds-nav-name\">What changed</span><span class=\"ds-nav-code\">L 1</span></a></li><li><a class=\"ds-nav-link\" href=\"#\"><span class=\"ds-nav-mark\"></span><span class=\"ds-nav-name\">Calendar</span><span class=\"ds-nav-code\">L 2</span></a></li><li><a class=\"ds-nav-link\" href=\"#\"><span class=\"ds-nav-mark\"></span><span class=\"ds-nav-name\">Legislative files</span><span class=\"ds-nav-code\">L 3</span></a></li></ul></nav>",
+      "css": ".ds-contents { width: 240px; font-family: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif; } .ds-contents ul { list-style: none; margin: 0; padding: 0; } .ds-contents-title { margin: 0 0 16px; font-family: var(--font-source-serif), 'Iowan Old Style', 'Times New Roman', serif; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; color: var(--fg); } .ds-contents-group { margin: 0 0 2px; padding-bottom: 4px; border-bottom: 1px solid var(--line); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--subtle); } .ds-nav-link { display: flex; align-items: center; gap: 10px; min-height: 32px; padding: 4px 0; font-size: 0.9375rem; line-height: 1.375; color: var(--muted); text-decoration: none; } .ds-nav-mark { width: 8px; height: 8px; flex-shrink: 0; background: transparent; } .ds-nav-name { flex: 1; } .ds-nav-code { width: 32px; flex-shrink: 0; text-align: right; font-size: 0.75rem; color: var(--subtle); } .ds-nav-link:hover { color: var(--fg); } .ds-nav-link:hover .ds-nav-mark { background: var(--line); } .ds-nav-link:hover .ds-nav-name { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.18em; } .ds-nav-link[aria-current='page'] { font-weight: 600; color: var(--fg); } .ds-nav-link[aria-current='page'] .ds-nav-mark { background: var(--marker); } .ds-nav-link[aria-current='page'] .ds-nav-name { text-decoration: none; } .ds-nav-link:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }"
+    },
+    {
+      "name": "Masthead",
+      "kind": "custom",
+      "refersTo": "section-code",
+      "description": "Wordmark, date and day-of-year issue line, boxed section code, closed by the double rule that draws once on load.",
+      "html": "<header class=\"ds-masthead\"><div class=\"ds-masthead-row\"><div><span class=\"ds-wordmark\">EU Researcher</span><span class=\"ds-wordmark-sub\">Enel EU Affairs</span></div><p class=\"ds-masthead-date\">Friday 2 October 2026 <span aria-hidden=\"true\">·</span> <span class=\"ds-masthead-issue\">Day 275 of 2026</span></p><span class=\"ds-section-code\">EN</span></div><div class=\"ds-rule-double\" aria-hidden=\"true\"></div></header>",
+      "css": ".ds-masthead { font-family: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif; color: var(--fg); } .ds-masthead-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 16px; padding-bottom: 12px; } .ds-wordmark { display: block; white-space: nowrap; font-family: var(--font-source-serif), 'Iowan Old Style', 'Times New Roman', serif; font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1; } .ds-wordmark-sub { display: block; margin-top: 6px; font-size: 0.875rem; line-height: 1; color: var(--muted); } .ds-masthead-date { margin: 0; padding-bottom: 2px; text-align: center; font-size: 0.875rem; color: var(--muted); } .ds-masthead-date span { margin: 0 4px; color: var(--subtle); } .ds-section-code { justify-self: end; display: inline-flex; align-items: center; justify-content: center; min-width: 44px; height: 32px; padding: 0 8px; border: 1px solid var(--line-strong); font-size: 0.875rem; font-weight: 600; letter-spacing: 0.025em; } .ds-rule-double { position: relative; height: 5px; border-top: 3px solid var(--line-strong); transform-origin: left; animation: ds-rule-draw 700ms cubic-bezier(0.16, 1, 0.3, 1) both; } .ds-rule-double::after { content: ''; position: absolute; inset: 3px 0 auto 0; border-top: 1px solid var(--line-strong); } @keyframes ds-rule-draw { from { transform: scaleX(0); } } @media (prefers-reduced-motion: reduce) { .ds-rule-double { animation-duration: 0.01ms; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Official Journal",
+    "overview": "The site is the day's issue of a gazette, modelled on the Official Journal of the European Union: dated, numbered, ruled and plain. Every page sits inside the same printed frame: a Contents column at the left, a masthead with the wordmark, the date, a day-of-year issue line and a boxed section code, closed by a heavy rule over a hairline. Below it, a page is a serif title, a serif standfirst, and sections that open with the same double rule.\n\nStructure comes from rules and type, never from boxes. There are no filled cards, no rounded corners and no shadows; every radius token is zero and the one shadow token is `none`. Entries in a list are separated by hairlines. Colour is ink on paper, EU blue for links and the primary action, and one flag-yellow square that marks the current line. Status is an outlined, square label whose meaning is in its words.\n\nTwo editions ship. The day edition (light, the default) is white paper and near-black ink. The night edition (dark) follows the system setting unless the reader picks one, and inverts to warm off-white ink on a blue-black sheet with a lighter blue. Both use the same rules, type and layout.",
+    "keyCharacteristics": [
+      "Rules instead of containers: a 3px rule over a 1px hairline opens a section; 1px hairlines separate entries.",
+      "Square corners everywhere and no shadows.",
+      "Serif for titles, standfirsts, entry titles and figures; sans for controls, tables, labels and small print.",
+      "Lining tabular figures throughout; reference numbers are set in the text sans, not a code face.",
+      "One yellow square marks the current or selected line.",
+      "Dotted-leader contents lines: label, leader, figure.",
+      "Two motions only: the masthead rule draws once, and a leader inks solid on hover or focus."
+    ],
+    "rules": [
+      { "name": "The One Mark Rule", "body": "Yellow appears only as the 8px square on the current or selected line and as the selection highlight. It is never a background, a border, a badge or a button.", "section": "colors" },
+      { "name": "The Words First Rule", "body": "Status colour only tints text and its outline; the meaning is always written out in the label.", "section": "colors" },
+      { "name": "The Two Editions Rule", "body": "Every colour is used through its semantic token so the day and night editions stay the same design. No raw hex in components.", "section": "colors" },
+      { "name": "The Figures Rule", "body": "Numbers are lining and tabular everywhere. Document references (CELEX, procedure numbers) are data and are set in Public Sans at 0.75rem, never in a monospace face.", "section": "typography" },
+      { "name": "The Serif Reads, Sans Operates Rule", "body": "Anything read as content (titles, standfirst, entry titles, counts) is serif; anything operated or scanned as a grid (buttons, inputs, tables, labels, small print) is sans.", "section": "typography" },
+      { "name": "The Printed Sheet Rule", "body": "A printed sheet has no rounded corners and casts no shadow. Separate with a rule, never with lift.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do open every section with the double rule (3px ink over a 1px hairline) and separate entries with 1px hairlines.",
+      "Do keep every corner at 0 radius and every surface without a shadow.",
+      "Do set titles, standfirsts, entry titles and counts in Source Serif 4, and controls, tables, labels and small print in Public Sans.",
+      "Do use the semantic colour tokens so the day and night editions stay in step.",
+      "Do mark the current or selected line with the 8px yellow square together with a heavier weight.",
+      "Do write the meaning of a status in the label and use colour only for its text and outline.",
+      "Do keep one solid blue primary button per page; every other action is outlined or a text link.",
+      "Do keep controls 44px high and the focus outline at 2px blue with a 2px offset.",
+      "Do honour reduced motion for the rule draw and the leader."
+    ],
+    "donts": [
+      "Don't put content in filled, rounded or shadowed cards, or arrange counts as stat tiles.",
+      "Don't use yellow for anything except the current-line square and the selection highlight.",
+      "Don't fill a status label or notice with colour.",
+      "Don't set reference numbers in a monospace face.",
+      "Don't add motion beyond the masthead rule, the leader, and 150ms colour changes on controls.",
+      "Don't use the sunken tint as a container background; it is for hover and bar tracks only.",
+      "Don't reproduce the Enel logo or brand colours; no assets have been supplied and the wordmark stays text."
+    ]
+  }
+}

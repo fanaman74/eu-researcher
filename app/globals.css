@@ -1,85 +1,79 @@
 @import "tailwindcss";
 
 /*
- * Design tokens. Light is the default; dark follows the system preference unless
- * the reader picks a theme (stored as data-theme on <html>). Components use the
- * semantic classes below (bg-surface, text-muted, border-line, …), never raw colours.
- * Text pairs are chosen for at least 4.5:1 contrast on their surfaces.
+ * The Official Journal: paper, ink, EU blue, and rules instead of boxes.
+ * Light is the day edition and the default; dark is the night edition and follows
+ * the system unless the reader picks one (data-theme on <html>).
+ * Components use the semantic classes (bg-surface, text-muted, border-line, …).
  */
 :root {
-  --canvas: #f8fafc;
+  --canvas: #ffffff;
   --surface: #ffffff;
-  --sunken: #f1f5f9;
-  --line: #e2e8f0;
-  --line-strong: #cbd5e1;
-  --fg: #0f172a;
-  --muted: #475569;
-  --subtle: #5b6b80;
-  --primary: #1e40af;
-  --primary-hover: #1e3a8a;
+  --sunken: #f1f2f4;
+  --line: #d2d4d8;
+  --line-strong: #16181d;
+  --fg: #16181d;
+  --muted: #42464e;
+  --subtle: #5f646d;
+  --primary: #003399;
+  --primary-hover: #00256e;
   --on-primary: #ffffff;
-  --primary-soft: #eff6ff;
-  --link: #1d4ed8;
-  --ring: #2563eb;
-  --success: #047857;
-  --success-soft: #ecfdf5;
-  --warning: #b45309;
-  --warning-soft: #fffbeb;
-  --danger: #b91c1c;
-  --danger-soft: #fef2f2;
-  --shadow: 0 1px 2px rgb(15 23 42 / 0.06), 0 1px 3px rgb(15 23 42 / 0.04);
+  --primary-soft: #eaf0fb;
+  --link: #003399;
+  --ring: #003399;
+  --marker: #ffcc00;
+  --success: #0b6b3a;
+  --success-soft: transparent;
+  --warning: #8a5a00;
+  --warning-soft: transparent;
+  --danger: #a8201a;
+  --danger-soft: transparent;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --canvas: #0b1120;
-    --surface: #111a2e;
-    --sunken: #18243b;
-    --line: #22304a;
-    --line-strong: #334462;
-    --fg: #f1f5f9;
-    --muted: #b6c2d4;
-    --subtle: #94a3b8;
-    --primary: #2563eb;
-    --primary-hover: #1d4ed8;
+    --canvas: #0f1217;
+    --surface: #0f1217;
+    --sunken: #191d25;
+    --line: #2e343e;
+    --line-strong: #ecebe7;
+    --fg: #ecebe7;
+    --muted: #bdbbb5;
+    --subtle: #9a9892;
+    --primary: #3f6fe6;
+    --primary-hover: #2f5bcb;
     --on-primary: #ffffff;
-    --primary-soft: rgb(37 99 235 / 0.16);
-    --link: #93c5fd;
-    --ring: #60a5fa;
-    --success: #6ee7b7;
-    --success-soft: rgb(16 185 129 / 0.14);
-    --warning: #fcd34d;
-    --warning-soft: rgb(245 158 11 / 0.14);
-    --danger: #fca5a5;
-    --danger-soft: rgb(239 68 68 / 0.14);
-    --shadow: none;
+    --primary-soft: #1a2540;
+    --link: #a4bcff;
+    --ring: #a4bcff;
+    --marker: #ffcc00;
+    --success: #79d6a2;
+    --warning: #f0c060;
+    --danger: #ff9d94;
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
-  --canvas: #0b1120;
-  --surface: #111a2e;
-  --sunken: #18243b;
-  --line: #22304a;
-  --line-strong: #334462;
-  --fg: #f1f5f9;
-  --muted: #b6c2d4;
-  --subtle: #94a3b8;
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
+  --canvas: #0f1217;
+  --surface: #0f1217;
+  --sunken: #191d25;
+  --line: #2e343e;
+  --line-strong: #ecebe7;
+  --fg: #ecebe7;
+  --muted: #bdbbb5;
+  --subtle: #9a9892;
+  --primary: #3f6fe6;
+  --primary-hover: #2f5bcb;
   --on-primary: #ffffff;
-  --primary-soft: rgb(37 99 235 / 0.16);
-  --link: #93c5fd;
-  --ring: #60a5fa;
-  --success: #6ee7b7;
-  --success-soft: rgb(16 185 129 / 0.14);
-  --warning: #fcd34d;
-  --warning-soft: rgb(245 158 11 / 0.14);
-  --danger: #fca5a5;
-  --danger-soft: rgb(239 68 68 / 0.14);
-  --shadow: none;
+  --primary-soft: #1a2540;
+  --link: #a4bcff;
+  --ring: #a4bcff;
+  --marker: #ffcc00;
+  --success: #79d6a2;
+  --warning: #f0c060;
+  --danger: #ff9d94;
   color-scheme: dark;
 }
 
@@ -98,34 +92,57 @@
   --color-primary-soft: var(--primary-soft);
   --color-link: var(--link);
   --color-ring: var(--ring);
+  --color-marker: var(--marker);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
-  --shadow-card: var(--shadow);
-  --font-sans: var(--font-fira-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: var(--font-fira-code), ui-monospace, "SFMono-Regular", Menlo, monospace;
+  /* A printed sheet has no rounded corners and casts no shadow. */
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --shadow-card: none;
+  --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: var(--font-source-serif), "Iowan Old Style", "Times New Roman", serif;
+  /* Reference numbers are data, set in the text sans with tabular figures rather than a code face. */
+  --font-mono: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    scrollbar-color: var(--line) transparent;
+    scrollbar-width: thin;
   }
   body {
     background-color: var(--canvas);
     color: var(--fg);
     font-family: var(--font-sans);
+    font-variant-numeric: lining-nums tabular-nums;
     line-height: 1.55;
+    caret-color: var(--primary);
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-serif);
+    text-wrap: balance;
   }
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
-    border-radius: 4px;
   }
   ::selection {
-    background: var(--primary-soft);
+    background: var(--marker);
+    color: #16181d;
+  }
+  a {
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: 1px;
   }
   button,
   [role="button"],
@@ -147,6 +164,61 @@
   }
 }
 
+/* A section opens the way a gazette heading does: a heavy rule over a hairline. */
+.rule-double {
+  border-top: 3px solid var(--line-strong);
+  position: relative;
+}
+.rule-double::after {
+  content: "";
+  position: absolute;
+  inset: 3px 0 auto 0;
+  border-top: 1px solid var(--line-strong);
+}
+
+/* The masthead rule is drawn once when the issue opens. */
+.rule-draw {
+  transform-origin: left;
+  animation: rule-draw 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes rule-draw {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* Contents line: label, dotted leader, figure. The leader starts where the label's last
+   line ends and is clipped by the row; it inks solid on hover or focus. */
+.leader {
+  display: inline-block;
+  position: relative;
+  width: 0;
+  vertical-align: baseline;
+}
+.leader::before,
+.leader::after {
+  content: "";
+  position: absolute;
+  left: 0.6rem;
+  bottom: 0.1em;
+  width: 100vw;
+  height: 1px;
+}
+.leader::before {
+  background-image: radial-gradient(circle, var(--subtle) 0.75px, transparent 1px);
+  background-size: 6px 1px;
+  background-repeat: repeat-x;
+}
+.leader::after {
+  background: var(--line-strong);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 360ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.leader-row:hover .leader::after,
+.leader-row:focus-visible .leader::after {
+  transform: scaleX(1);
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -156,9 +228,4 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-}
-
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--line-strong) transparent;
 }

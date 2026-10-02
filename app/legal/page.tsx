@@ -45,9 +45,9 @@ export default function LatestLawPage() {
         ) : docs.length === 0 ? (
           <EmptyState title="Nothing published recently" message="EUR-Lex returned no documents of this type for the last three years." />
         ) : (
-          <ul className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <ul className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-6">
             {docs.map((doc) => (
-              <li key={doc.celex} className="bg-surface border border-line rounded-lg shadow-card p-4 sm:p-5 flex flex-col gap-3">
+              <li key={doc.celex} className="border-t border-line pt-4 pb-1 flex flex-col gap-3">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-subtle">
                   <span className="font-semibold text-fg tabular-nums">{formatDate(doc.date)}</span>
                   <Badge>{doc.sector}</Badge>

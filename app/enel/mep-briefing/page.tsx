@@ -151,16 +151,16 @@ function MepBriefingContent() {
             {list.data?.meps.length === 0 ? (
               <p className="text-sm text-muted">No sitting MEP has that name.</p>
             ) : (
-              <ul className="max-h-[60vh] overflow-y-auto rounded-lg border border-line bg-surface divide-y divide-line" aria-label="MEPs">
+              <ul className="max-h-[60vh] overflow-y-auto border-y border-line-strong divide-y divide-line [scrollbar-width:thin]" aria-label="MEPs">
                 {(list.data?.meps ?? []).map((m) => (
                   <li key={m.id}>
                     <button
                       type="button"
                       onClick={() => router.replace(`/enel/mep-briefing?id=${m.id}`)}
                       aria-current={m.id === id ? "true" : undefined}
-                      className={`w-full text-left px-3 py-2.5 min-h-11 transition-colors ${m.id === id ? "bg-primary-soft" : "hover:bg-sunken"}`}
+                      className="group w-full text-left py-2 min-h-11"
                     >
-                      <span className={`block text-sm ${m.id === id ? "font-semibold text-link" : "text-fg"}`}>{m.name}</span>
+                      <span className={`block text-sm text-fg group-hover:underline ${m.id === id ? "font-bold" : ""}`}>{m.id === id && <span className="inline-block w-2 h-2 mr-2 bg-marker align-middle" aria-hidden="true" />}{m.name}</span>
                       <span className="block text-xs text-subtle">{m.group} · {m.country}</span>
                     </button>
                   </li>

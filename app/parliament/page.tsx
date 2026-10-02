@@ -15,8 +15,8 @@ function SplitBar({ label, count, total, barClass }: { label: string; count: num
         <span className="font-medium text-fg">{label}</span>
         <span className="tabular-nums text-muted">{count} MEPs ({pct(count, total)}%)</span>
       </div>
-      <div className="h-2 bg-sunken rounded overflow-hidden" aria-hidden="true">
-        <div className={`h-full rounded ${barClass}`} style={{ width: `${pct(count, total)}%` }} />
+      <div className="h-2 bg-sunken overflow-hidden" aria-hidden="true">
+        <div className={`h-full ${barClass}`} style={{ width: `${pct(count, total)}%` }} />
       </div>
     </div>
   );

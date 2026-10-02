@@ -295,6 +295,9 @@ export interface CalendarEvent {
   kind: "Consultation deadline" | "Planned adoption" | "Plenary sitting";
   title: string;
   url: string;
+  /** Plenary sittings: city, and local start time ("17:00") once published. */
+  place?: string;
+  start?: string;
 }
 
 export interface MepSummary {

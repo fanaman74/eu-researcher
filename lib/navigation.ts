@@ -33,6 +33,8 @@ export interface NavItem {
 
 export interface NavGroup {
   label: string;
+  /** Series letter shown in the masthead, as the Official Journal marks its L and C series. */
+  series: string;
   items: NavItem[];
 }
 
@@ -41,6 +43,7 @@ export const HOME: NavItem = { href: "/", label: "Home", description: "Today at 
 export const NAV: NavGroup[] = [
   {
     label: "Daily monitoring",
+    series: "M",
     items: [
       { href: "/enel/digest", label: "What changed", description: "New and changed items since yesterday, and deadlines coming up.", icon: Bell },
       { href: "/enel/calendar", label: "Calendar", description: "Consultation deadlines, planned adoptions and plenary sittings.", icon: CalendarDays },
@@ -50,6 +53,7 @@ export const NAV: NavGroup[] = [
   },
   {
     label: "People and positions",
+    series: "P",
     items: [
       { href: "/enel/mep-briefing", label: "MEP briefing", description: "One-page record of an MEP before a meeting.", icon: UserRound },
       { href: "/enel/peers", label: "Peer positions", description: "What other utilities told the Commission in a consultation.", icon: Users },
@@ -58,6 +62,7 @@ export const NAV: NavGroup[] = [
   },
   {
     label: "Sources",
+    series: "S",
     items: [
       { href: "/parliament", label: "European Parliament", description: "MEP written questions and plenary roll-call votes.", icon: Vote },
       { href: "/have-your-say", label: "Consultations", description: "Commission consultations on energy and who responded.", icon: MessagesSquare },
@@ -70,6 +75,7 @@ export const NAV: NavGroup[] = [
   },
   {
     label: "AI assistants",
+    series: "A",
     items: [
       { href: "/enel", label: "Briefing drafter", description: "Draft a briefing note from a live item. AI-generated.", icon: Sparkles },
       { href: "/research", label: "Research assistant", description: "Ask questions about EU law in plain language. AI-generated.", icon: Bot },
@@ -84,4 +90,14 @@ export function activeItem(pathname: string): NavItem | undefined {
   return ALL_ITEMS.filter((i) => (i.href === "/" ? pathname === "/" : pathname === i.href || pathname.startsWith(`${i.href}/`))).sort(
     (a, b) => b.href.length - a.href.length
   )[0];
+}
+
+/** Masthead code for a path: series letter and position ("M 2"), or "EN" on the home page. */
+export function seriesCode(pathname: string): string {
+  const item = activeItem(pathname);
+  for (const group of NAV) {
+    const index = group.items.findIndex((i) => i.href === item?.href);
+    if (index >= 0) return `${group.series} ${index + 1}`;
+  }
+  return "EN";
 }
