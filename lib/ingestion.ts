@@ -135,6 +135,11 @@ export async function runIngestion(): Promise<IngestionResult> {
 
   // 3. Purge the fabricated placeholder vote that earlier versions wrote as "Official".
   await prisma.event.deleteMany({ where: { sourceUrl: LEGACY_MOCK_SOURCE_URL } });
+  // One-time: drop news stored before the relevance filter existed (included off-topic and non-Italian items).
+  // Safe to remove once a run has executed in production.
+  await prisma.event.deleteMany({
+    where: { sourceName: "NewsData.io", createdAt: { lt: new Date("2026-10-02T08:25:00Z") } },
+  });
 
   // 4. Rolling 60-day retention cleanup
   const pruned = await pruneOldEvents(prisma);
