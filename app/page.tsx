@@ -62,11 +62,11 @@ export default function HomePage() {
           fill
           priority
           sizes="100vw"
-          className="-z-10 object-cover object-[center_62%]"
+          className="hero-photo -z-10 object-cover object-[center_62%]"
         />
-        {/* Scrim: darkens the lower half so white text holds at least 4.5:1 over sky and field. */}
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/85 via-black/50 to-black/10" aria-hidden="true" />
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10 min-h-[30rem] lg:min-h-[36rem] flex flex-col justify-end pt-24 pb-6">
+        {/* The layered scrim keeps the left-aligned copy readable across the bright sky and field. */}
+        <div className="hero-scrim absolute inset-0 -z-10" aria-hidden="true" />
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10 min-h-[42rem] lg:min-h-[max(44rem,calc(100svh-4rem))] flex flex-col justify-end pt-24 pb-6">
           <p className="text-sm sm:text-base text-white/90 min-h-6">{today}</p>
           <h1 id="hero-title" className="mt-2 max-w-4xl font-serif text-[2.5rem] sm:text-6xl lg:text-7xl leading-[1.04] font-bold tracking-[-0.02em] text-white">
             EU energy policy, tracked every day
@@ -80,7 +80,7 @@ export default function HomePage() {
               Open the calendar
             </Link>
           </div>
-          <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 border-t border-white/40 sm:divide-x sm:divide-white/25">
+          <div className="mt-8 grid grid-cols-2 gap-x-4 sm:grid-cols-4 sm:gap-x-0 border-t border-white/40 sm:divide-x sm:divide-white/25">
             <Figure value={pending(changes, digest.loading, digest.error)} label="changes since yesterday" href="/enel/digest" />
             <Figure value={pending(d?.deadlines.length, digest.loading, digest.error)} label="consultations closing within 14 days" href="/enel/calendar" />
             <Figure value={pending(files.data ? inNegotiation : undefined, files.loading, files.error)} label="watched files in negotiation" href="/enel/dossiers" />
@@ -104,7 +104,7 @@ export default function HomePage() {
                 ? skeleton(3)
                 : dates.map((e, n) => (
                     <li key={`${e.date}-${e.kind}-${n}`}>
-                      <article className={cardClass}>
+                      <article className={`${cardClass} card-deadline`}>
                         <p className="font-serif text-2xl font-bold text-fg">{formatDate(e.date)}</p>
                         <p><Badge tone={e.kind === "Consultation deadline" ? "success" : "neutral"}>{e.kind}</Badge></p>
                         <h3 className="font-sans text-base font-semibold text-fg">
@@ -139,7 +139,7 @@ export default function HomePage() {
                     const rapporteur = x.actors.find((a) => a.role === "Rapporteur");
                     return (
                       <li key={x.id}>
-                        <Link href={`/enel/dossiers/${x.id}`} className={`${cardClass} group hover:bg-sunken transition-colors`}>
+                        <Link href={`/enel/dossiers/${x.id}`} className={`${cardClass} card-dossier group`}>
                           <span className="flex flex-wrap items-center justify-between gap-2">
                             <span className="text-sm text-subtle">{x.reference}</span>
                             <Badge tone={!x.available ? "neutral" : x.stage.startsWith("Adopted") ? "success" : "info"}>{x.stage}</Badge>
@@ -148,8 +148,9 @@ export default function HomePage() {
                           <span className="text-sm text-muted">
                             {x.lastActivity ? `${x.lastActivity.label}, ${formatDate(x.lastActivity.date)}` : "No activity yet"}
                           </span>
-                          <span className="mt-auto pt-3 border-t border-line text-sm text-muted">
-                            Rapporteur: {rapporteur ? `${rapporteur.name} (${[rapporteur.group, rapporteur.country].filter(Boolean).join(", ")})` : "not appointed yet"}
+                          <span className="mt-auto pt-3 border-t border-line text-sm text-muted flex items-center justify-between gap-3">
+                            <span>Rapporteur: {rapporteur ? `${rapporteur.name} (${[rapporteur.group, rapporteur.country].filter(Boolean).join(", ")})` : "not appointed yet"}</span>
+                            <ArrowRight className="card-arrow w-4 h-4 shrink-0 text-primary" aria-hidden="true" />
                           </span>
                         </Link>
                       </li>

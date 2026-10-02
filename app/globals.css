@@ -219,6 +219,101 @@
 .leader-row:focus-visible .leader::after {
   transform: scaleX(1);
 }
+
+/* The photograph settles into the page on first paint, while the text remains readable
+   over the bright sky and field through a spatial, two-axis scrim. */
+.hero-photo {
+  animation: hero-photo-reveal 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.hero-scrim {
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.42) 58%, rgba(0, 0, 0, 0.12) 100%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.62) 40%, rgba(0, 0, 0, 0.26) 100%);
+}
+@keyframes hero-photo-reveal {
+  from {
+    clip-path: inset(0 0 8% 0);
+    transform: scale(1.035);
+  }
+  to {
+    clip-path: inset(0);
+    transform: scale(1);
+  }
+}
+
+/* Both card families get a quiet colour wash that also responds when a child link
+   receives keyboard focus. The surface and foreground stay theme-aware. */
+.card-deadline,
+.card-dossier {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  transition: background-color 180ms ease, border-color 180ms ease;
+}
+.card-deadline::before,
+.card-dossier::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1), opacity 180ms ease;
+}
+.card-deadline::before {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--success) 18%, var(--surface)), color-mix(in srgb, var(--success) 7%, var(--surface)));
+}
+.card-dossier::before {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 14%, var(--surface)), color-mix(in srgb, var(--primary) 7%, var(--surface)));
+}
+.card-deadline > *,
+.card-dossier > * {
+  position: relative;
+  z-index: 1;
+}
+.card-deadline:hover,
+.card-deadline:focus-within {
+  border-color: var(--success);
+}
+.card-deadline:hover::before,
+.card-deadline:focus-within::before {
+  opacity: 1;
+  transform: scaleX(1);
+}
+.card-dossier:hover,
+.card-dossier:focus-within {
+  border-color: var(--primary);
+}
+.card-dossier:hover::before,
+.card-dossier:focus-within::before {
+  opacity: 1;
+  transform: scaleX(1);
+}
+.card-deadline a:focus-visible {
+  outline-color: var(--success);
+}
+.card-dossier:focus-visible {
+  outline-color: var(--primary);
+}
+.card-arrow {
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-dossier:hover .card-arrow,
+.card-dossier:focus-visible .card-arrow,
+.card-dossier:focus-within .card-arrow {
+  transform: translateX(3px);
+}
+
+@media (min-width: 64rem) {
+  /* The final menu panel opens inward at laptop widths instead of hanging off-screen. */
+  .main-nav > ul > li:last-child > ul {
+    left: auto;
+    right: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -227,5 +322,26 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  .hero-photo {
+    animation: none;
+    clip-path: inset(0);
+    transform: none;
+  }
+  .card-deadline::before,
+  .card-dossier::before,
+  .card-arrow {
+    transform: none !important;
+  }
+  .card-deadline::before,
+  .card-dossier::before {
+    opacity: 0;
+    transition: none;
+  }
+  .card-deadline:hover::before,
+  .card-deadline:focus-within::before,
+  .card-dossier:hover::before,
+  .card-dossier:focus-within::before {
+    opacity: 1;
   }
 }

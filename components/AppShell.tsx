@@ -111,12 +111,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [drawer, setDrawer] = useState(false);
   const barRef = useRef<HTMLElement>(null);
   const mainRef = useRef<HTMLElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const drawerCloseRef = useRef<HTMLButtonElement>(null);
+  const drawerTriggerRef = useRef<HTMLButtonElement>(null);
+  const drawerReturnFocusRef = useRef<HTMLElement | null>(null);
+  const drawerWasOpen = useRef(false);
   const firstRender = useRef(true);
+
+  const closeDrawer = (restoreFocus = true) => {
+    if (!restoreFocus) drawerReturnFocusRef.current = null;
+    setDrawer(false);
+  };
 
   // Close menus and move focus to the new page's content after navigation.
   useEffect(() => {
     setOpenMenu(null);
-    setDrawer(false);
+    closeDrawer(false);
     if (firstRender.current) {
       firstRender.current = false;
       return;
@@ -127,7 +137,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   // A dropdown closes on Escape or when the reader clicks or tabs outside the bar.
   useEffect(() => {
     if (!openMenu) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpenMenu(null);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      const group = NAV.find((item) => item.label === openMenu);
+      setOpenMenu(null);
+      if (group) {
+        requestAnimationFrame(() => {
+          barRef.current?.querySelector<HTMLElement>(`[aria-controls="menu-${group.series}"]`)?.focus({ preventScroll: true });
+        });
+      }
+    };
     const onAway = (e: Event) => {
       if (!barRef.current?.contains(e.target as Node)) setOpenMenu(null);
     };
@@ -143,13 +163,65 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!drawer) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setDrawer(false);
+    drawerWasOpen.current = true;
+    const panel = drawerRef.current;
+    const focusables = () => Array.from(panel?.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ) ?? []);
+    drawerCloseRef.current?.focus({ preventScroll: true });
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeDrawer();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const items = focusables();
+      if (items.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    const onFocusIn = (e: FocusEvent) => {
+      if (panel && !panel.contains(e.target as Node)) focusables()[0]?.focus();
+    };
+    const onMediaChange = (e: MediaQueryListEvent) => {
+      if (e.matches) closeDrawer();
+    };
+    const desktop = window.matchMedia("(min-width: 1024px)");
     window.addEventListener("keydown", onKey);
+    document.addEventListener("focusin", onFocusIn);
+    desktop.addEventListener("change", onMediaChange);
     document.body.style.overflow = "hidden";
     return () => {
       window.removeEventListener("keydown", onKey);
+      document.removeEventListener("focusin", onFocusIn);
+      desktop.removeEventListener("change", onMediaChange);
       document.body.style.overflow = "";
     };
+  }, [drawer]);
+
+  useEffect(() => {
+    if (drawer || !drawerWasOpen.current) return;
+    drawerWasOpen.current = false;
+    const returnFocus = drawerReturnFocusRef.current;
+    drawerReturnFocusRef.current = null;
+    if (!returnFocus) return;
+    const frame = requestAnimationFrame(() => {
+      const visible = returnFocus.isConnected && returnFocus.getClientRects().length > 0;
+      const fallback = barRef.current?.querySelector<HTMLElement>("a, button");
+      (visible ? returnFocus : fallback)?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
   }, [drawer]);
 
   return (
@@ -164,7 +236,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <header ref={barRef} className="sticky top-0 z-30 bg-canvas border-b-[3px] border-line-strong">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10 flex items-center gap-6 min-h-16">
           <Wordmark />
-          <nav aria-label="Main" className="hidden lg:block flex-1">
+          <nav aria-label="Main" className="main-nav hidden lg:block flex-1">
             <ul className="flex items-center gap-1">
               <li>
                 <Link
@@ -191,7 +263,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <span className="hidden lg:block"><ThemeToggle /></span>
             <button
               type="button"
-              onClick={() => setDrawer(true)}
+              ref={drawerTriggerRef}
+              onClick={() => {
+                drawerReturnFocusRef.current = drawerTriggerRef.current;
+                setDrawer(true);
+              }}
               aria-expanded={drawer}
               aria-controls="mobile-nav"
               className="lg:hidden inline-flex items-center gap-2 border border-line-strong px-3 min-h-11 text-sm font-semibold text-fg hover:bg-sunken"
@@ -203,21 +279,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       {drawer && (
-        <div className="lg:hidden fixed inset-0 z-40 bg-canvas overflow-y-auto" role="dialog" aria-modal="true" aria-label="Menu" id="mobile-nav">
+        <div ref={drawerRef} className="lg:hidden fixed inset-0 z-40 bg-canvas overflow-y-auto" role="dialog" aria-modal="true" aria-label="Menu" id="mobile-nav">
           <div className="flex items-center justify-between px-4 sm:px-6 min-h-16 border-b-[3px] border-line-strong">
             <Wordmark />
             <button
               type="button"
-              onClick={() => setDrawer(false)}
+              ref={drawerCloseRef}
+              onClick={() => closeDrawer()}
               className="inline-flex items-center justify-center min-h-11 min-w-11 text-fg hover:bg-sunken"
               aria-label="Close menu"
-              autoFocus
             >
               <X className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
           <nav aria-label="Main" className="px-4 sm:px-6 py-5 space-y-6">
-            <Link href="/" onClick={() => setDrawer(false)} aria-current={current === "/" ? "page" : undefined} className="block text-lg font-semibold text-fg">
+            <Link href="/" onClick={() => closeDrawer(false)} aria-current={current === "/" ? "page" : undefined} className="block text-lg font-semibold text-fg">
               Today
             </Link>
             {NAV.map((group) => (
@@ -228,7 +304,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     <li key={item.href}>
                       <Link
                         href={item.href}
-                        onClick={() => setDrawer(false)}
+                        onClick={() => closeDrawer(false)}
                         aria-current={item.href === current ? "page" : undefined}
                         className={`flex items-center gap-2.5 min-h-11 py-2 text-fg ${item.href === current ? "font-bold" : ""}`}
                       >
