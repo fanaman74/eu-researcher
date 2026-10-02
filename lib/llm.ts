@@ -1,6 +1,7 @@
 /**
  * The OpenRouter model used by every AI route. Override with OPENROUTER_MODEL.
- * The default is a model that is commonly allowed by OpenRouter workspace guardrails;
- * if requests fail with "blocked by guardrail", allow the model there or set another id.
+ * The default is the pinned DeepSeek V4 Flash build (supports tool calling). Aliases such as
+ * "~deepseek/deepseek-flash-latest" can route to providers a workspace guardrail blocks; if requests
+ * fail with "blocked by guardrail", allow the model there or set another id.
  */
-export const LLM_MODEL = process.env.OPENROUTER_MODEL || "~deepseek/deepseek-flash-latest";
+export const LLM_MODEL = process.env.OPENROUTER_MODEL || "deepseek/deepseek-v4-flash-0731";
