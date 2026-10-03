@@ -61,6 +61,10 @@ function scheduleNext() {
 export function startScheduler() {
   void warmCaches();
 
+  // The office briefing has its own Europe/Brussels wall-clock schedule;
+  // keep it independent from the legacy 00:00/12:00 UTC ingestion timer.
+  void import("./officeNewsSchedule").then(({ startOfficeNewsScheduler }) => startOfficeNewsScheduler());
+
   // Without a database the ingestion step skips itself; monitoring still takes its baseline.
   const boot = setTimeout(() => void refreshAll(), BOOT_RUN_DELAY_MS);
   boot.unref?.();

@@ -47,6 +47,7 @@ export const NAV: NavGroup[] = [
     label: "Daily monitoring",
     series: "M",
     items: [
+      { href: "/enel/office-news", label: "Office news", description: "Regulatory, funding and consultation updates for the Enel team.", icon: Newspaper },
       { href: "/enel/digest", label: "What changed", description: "New and changed items since yesterday, and deadlines coming up.", icon: Bell },
       { href: "/enel/calendar", label: "Calendar", description: "Consultation deadlines, planned adoptions and plenary sittings.", icon: CalendarDays },
       { href: "/enel/radar", label: "Commission pipeline", description: "What the Commission plans in energy, by act type and quarter.", icon: Radar },

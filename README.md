@@ -67,10 +67,14 @@ The hub is also organised the way an EU-affairs office works — by file, by dat
 | `/enel/radar` | The Commission's energy pipeline: act type, stage, planned quarter, feedback periods. | Have Your Say |
 | `/enel/dossiers` | Watched legislative files: stage, lead committee, rapporteur and shadows with groups, timeline, linked initiatives, MEP questions and votes. | EP Open Data, HowTheyVote.eu |
 | `/enel/calendar` | Consultation deadlines, planned adoptions (on the quarter's last day) and plenary sittings, with `.ics` export for Outlook. | Have Your Say, EP Open Data |
-| `/enel/peers` | Peer utilities' and associations' responses to a consultation, with full text and position-paper links. | Have Your Say |
+| `/enel/peers` | Peer responses with a liaison-office brief: stated position, Enel relevance and useful follow-up, plus full text and position-paper links. | Have Your Say |
 | `/enel/meetings` | Commission cabinet and DG meetings since 1 December 2024, with a peer benchmark. | Commission transparency register exports |
 | `/enel/mep-briefing` | One-page MEP record (committees, file roles, questions, energy votes) with Word and PowerPoint export. | EP Open Data, HowTheyVote.eu |
 | `/enel/context` | Commission press announcements on energy (state aid flagged), Italian day-ahead prices and generation mix. | Press corner, Energy-Charts |
+
+The office news briefing is available at `GET /api/office-news`. It uses only official European Commission Press Corner announcements, keeps energy-priority items from the previous 30 days, and refreshes at 07:00, 12:00 and 17:00 Europe/Brussels (including daylight-saving changes). A successful snapshot is retained in the `TrackedItem` store when PostgreSQL is available; a source failure keeps the last good items and reports `status: "stale"` with the actual attempt time. Without a database, the same snapshot lives in process memory.
+
+Peer briefings automatically read published feedback and supported Commission PDF attachments. They use the selected AI provider when available, with a labelled extractive fallback and explicit source-coverage limits. AI outputs are not shared across users. The original responses and attachments remain available for verification.
 
 Hand-made mappings live in code: the dossier watchlist and its linking keywords in `lib/dossiers.ts`, the peer list in `lib/peers.ts`.
 Not covered, because the sources refuse automated access or have no data service: the Council, ARERA and the energy ministry, Parliament committee meetings, and infringement decisions.

@@ -362,7 +362,7 @@ export function Loading({ message, slow = "Some sources take up to 30 seconds th
       {waiting && slow && <p className="text-sm text-subtle">{slow}</p>}
       <div className="space-y-2" aria-hidden="true">
         {Array.from({ length: rows }, (_, i) => (
-          <div key={i} className="h-12 border-t border-line" />
+          <div key={i} className="loading-skeleton h-12 border-t border-line" />
         ))}
       </div>
     </div>

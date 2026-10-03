@@ -1,15 +1,16 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Badge, ButtonLink, ErrorState, formatDate, linkClass, useApi } from "@/components/ui";
+import HeroVideo from "@/components/HeroVideo";
+import { OfficeNews, useOfficeNews } from "@/components/OfficeNews";
 import { NAV } from "@/lib/navigation";
 import type { Digest } from "@/lib/digest";
 import type { CalendarEvent, Dossier } from "@/lib/types";
 
-const PHOTO_PAGE = "https://commons.wikimedia.org/wiki/File:Power_Lines_-_Sant%27Agata_Bolognese,_Bologna,_Italy_-_December_7,_2018.jpg";
+const VIDEO_PAGE = "https://www.pexels.com/video/pannelli-solari-drone-19350561/";
 
 function Figure({ value, label, href }: { value: React.ReactNode; label: string; href: string }) {
   return (
@@ -32,12 +33,13 @@ function SectionHeading({ id, title, href, linkLabel }: { id: string; title: str
 }
 
 const cardClass = "h-full border border-line-strong p-5 flex flex-col gap-3";
-const skeleton = (n: number) => Array.from({ length: n }, (_, i) => <li key={i} className="h-44 border border-line" aria-hidden="true" />);
+const skeleton = (n: number) => Array.from({ length: n }, (_, i) => <li key={i} className="loading-skeleton h-44 border border-line" aria-hidden="true" />);
 
 export default function HomePage() {
   const digest = useApi<{ digest: Digest }>("/api/changes?view=digest&hours=24");
   const files = useApi<{ dossiers: Dossier[] }>("/api/dossiers");
   const calendar = useApi<{ events: CalendarEvent[] }>("/api/calendar");
+  const officeNews = useOfficeNews();
   const [today, setToday] = useState("");
   useEffect(() => {
     setToday(new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }));
@@ -56,17 +58,10 @@ export default function HomePage() {
     <>
       {/* Hero */}
       <section aria-labelledby="hero-title" className="relative isolate overflow-hidden bg-[#10151c]">
-        <Image
-          src="/hero-grid.jpg"
-          alt="Power lines crossing green fields near Bologna, Italy"
-          fill
-          priority
-          sizes="100vw"
-          className="hero-photo -z-10 object-cover object-[center_62%]"
-        />
+        <HeroVideo posterAlt="Aerial view of a solar field in Italy" />
         {/* The layered scrim keeps the left-aligned copy readable across the bright sky and field. */}
-        <div className="hero-scrim absolute inset-0 -z-10" aria-hidden="true" />
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10 min-h-[42rem] lg:min-h-[max(44rem,calc(100svh-4rem))] flex flex-col justify-end pt-24 pb-6">
+        <div className="hero-scrim pointer-events-none absolute inset-0 z-10" aria-hidden="true" />
+        <div className="relative z-20 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10 min-h-[42rem] lg:min-h-[max(44rem,calc(100svh-4rem))] flex flex-col justify-end pt-24 pb-24 sm:pb-20">
           <p className="text-sm sm:text-base text-white/90 min-h-6">{today}</p>
           <h1 id="hero-title" className="mt-2 max-w-4xl font-serif text-[2.5rem] sm:text-6xl lg:text-7xl leading-[1.04] font-bold tracking-[-0.02em] text-white">
             EU energy policy, tracked every day
@@ -86,13 +81,19 @@ export default function HomePage() {
             <Figure value={pending(files.data ? inNegotiation : undefined, files.loading, files.error)} label="watched files in negotiation" href="/enel/dossiers" />
             <Figure value={pending(files.data ? dossiers.length : undefined, files.loading, files.error)} label="watched legislative files" href="/enel/dossiers" />
           </div>
-          <p className="mt-2 text-xs text-white/75 text-right">
-            Photo: <a href={PHOTO_PAGE} target="_blank" rel="noopener noreferrer" className="underline">Giorgio Galeotti, CC BY 4.0, via Wikimedia Commons</a>
-          </p>
         </div>
+        <p className="hero-credit absolute right-4 bottom-4 z-30 max-w-[calc(100%-2rem)] text-right text-xs text-white/90 sm:right-6 sm:bottom-6 lg:right-10">
+          Video: <a href={VIDEO_PAGE} target="_blank" rel="noopener noreferrer" className="underline">Samuele Abis / Pexels</a>
+        </p>
       </section>
 
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10 py-12 lg:py-16 space-y-14">
+        {/* Office news */}
+        <section aria-labelledby="office-news">
+          <SectionHeading id="office-news" title="Office news" href="/enel/office-news" linkLabel="All office news" />
+          <OfficeNews data={officeNews.data} loading={officeNews.loading} error={officeNews.error} onRetry={officeNews.reload} limit={4} compact showSchedule />
+        </section>
+
         {/* Deadlines */}
         <section aria-labelledby="deadlines">
           <SectionHeading id="deadlines" title="Deadlines and key dates" href="/enel/calendar" linkLabel="Full calendar" />

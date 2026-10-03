@@ -36,17 +36,24 @@ export function toPressItem(doc: any): PressItem | null {
   };
 }
 
+/** Fetch the current official Press Corner pages without the local cache. */
+export async function fetchPressFromCommission(): Promise<PressItem[]> {
+  const pages = await Promise.all(
+    Array.from({ length: PAGES }, (_, i) =>
+      getJson(`${API}/latestnews?language=en&pagesize=100&pagenumber=${i + 1}`)
+    )
+  );
+  const seen = new Set<string>();
+  return pages
+    .flatMap((p) => p.docuLanguageListResources ?? [])
+    .map(toPressItem)
+    .filter((p): p is PressItem => p !== null && !seen.has(p.ref) && Boolean(seen.add(p.ref)))
+    .sort((a, b) => b.date.localeCompare(a.date));
+}
+
 export async function listPress(): Promise<PressItem[]> {
   return cached(CACHE_KEY, TTL_MS, async () => {
-    const pages = await Promise.all(
-      Array.from({ length: PAGES }, (_, i) => getJson(`${API}/latestnews?language=en&pagesize=100&pagenumber=${i + 1}`))
-    );
-    const seen = new Set<string>();
-    return pages
-      .flatMap((p) => p.docuLanguageListResources ?? [])
-      .map(toPressItem)
-      .filter((p): p is PressItem => p !== null && !seen.has(p.ref) && Boolean(seen.add(p.ref)))
-      .sort((a, b) => b.date.localeCompare(a.date));
+    return fetchPressFromCommission();
   });
 }
 

@@ -241,6 +241,43 @@
   }
 }
 
+/* Loading keeps the printed hairlines visible while a quiet ink sweep shows that
+   the request is still moving. The placeholder itself is aria-hidden; status copy
+   remains the only content exposed to assistive technology. */
+.loading-skeleton {
+  position: relative;
+  overflow: hidden;
+}
+.loading-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    transparent 38%,
+    color-mix(in srgb, var(--line-strong) 14%, transparent) 50%,
+    transparent 62%,
+    transparent 100%
+  );
+  background-size: 250% 100%;
+  animation: loading-sweep 1.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+@keyframes loading-sweep {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -150% 0;
+  }
+}
+
+/* Credits sit on the photograph rather than changing the hero's reading flow. */
+.hero-credit {
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.9);
+}
+
 /* Both card families get a quiet colour wash that also responds when a child link
    receives keyboard focus. The surface and foreground stay theme-aware. */
 .card-deadline,
@@ -327,6 +364,10 @@
     animation: none;
     clip-path: inset(0);
     transform: none;
+  }
+  .loading-skeleton::after {
+    animation: none;
+    background: none;
   }
   .card-deadline::before,
   .card-dossier::before,

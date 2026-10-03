@@ -32,8 +32,9 @@ Every figure, date and name comes from a live official source and is labelled wi
 
 ## Capabilities and Constraints
 
-- Pages: Today (home), What changed, Calendar (with plenary agendas), Commission pipeline, Legislative files and file detail, MEP briefing, Peer positions, Commission meetings, European Parliament, Consultations, Search EU law, Latest EU law, State aid rulings, News and market, Italian politics, Briefing drafter (AI), Research assistant (AI), Settings (AI provider and model).
+- Pages: Today (home), Office news, What changed, Calendar (with plenary agendas), Commission pipeline, Legislative files and file detail, MEP briefing, Peer positions, Commission meetings, European Parliament, Consultations, Search EU law, Latest EU law, State aid rulings, News and market, Italian politics, Briefing drafter (AI), Research assistant (AI), Settings (AI provider and model).
 - Next.js 15 App Router, React 19, Tailwind CSS v4, lucide-react icons, deployed on Railway.
+- Office news highlights recent official energy news for Enel EU affairs, with source links and editorial follow-up suggestions. Refreshes at 07:00, 12:00 and 17:00 Europe/Brussels, including daylight-saving changes.
 - Hand-made mappings (watched files, peer list) live in code, not in the interface.
 - Not covered because the sources refuse automated access or have no data service: the Council, ARERA, the Italian energy ministry, Parliament committee meetings, infringement decisions.
 - No sign-in. AI provider, model and credentials can be configured per browser through Settings; public EU source data remains shared. Personal API keys are kept in encrypted HttpOnly cookies.
