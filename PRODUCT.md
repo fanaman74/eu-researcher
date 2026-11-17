@@ -61,4 +61,4 @@ Every figure, date and name comes from a live official source and is labelled wi
 
 ## Accessibility & Inclusion
 
-WCAG 2.2 AA is the working standard already applied (contrast, keyboard access, visible focus, 24px minimum targets, reduced motion). Light and dark themes both ship.
+WCAG 2.2 AA is the working standard already applied (contrast, keyboard access, visible focus, 24px minimum targets, reduced motion). The interface uses a single light theme.

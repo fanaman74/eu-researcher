@@ -3,7 +3,7 @@
 import React, { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FileText } from "lucide-react";
-import { Badge, Card, EmptyState, Field, Loadable, Page, SourceNote, formatDate, inputClass, linkClass, plural, useApi } from "@/components/ui";
+import { Badge, Card, Disclosure, EmptyState, Field, Loadable, Page, SourceNote, formatDate, inputClass, linkClass, plural, useApi } from "@/components/ui";
 import type { PeerPosition, RadarItem } from "@/lib/types";
 import { extractivePeerBriefing, peerPositionKey, type PeerBriefing } from "@/lib/peerBriefingShared";
 
@@ -48,8 +48,7 @@ function Position({ p, summary, summaryLoading }: { p: PeerPosition; summary?: P
           </div>
         ) : <p className="text-sm text-muted">{summaryLoading ? "Preparing a source-grounded brief…" : "Brief unavailable; read the published response below."}</p>}
       </section>
-      <details>
-        <summary className={`text-sm font-medium ${linkClass}`}>Read published response and attachments</summary>
+      <Disclosure label="Read published response and attachments">
         <div className="pt-2 space-y-2">
           {p.text ? (
             <p className="text-base text-fg whitespace-pre-wrap max-w-prose">{p.text}</p>
@@ -62,7 +61,7 @@ function Position({ p, summary, summaryLoading }: { p: PeerPosition; summary?: P
             <FileText className="w-4 h-4 shrink-0" aria-hidden="true" /> {a.fileName}{a.pages ? ` (${a.pages} pages)` : ""}<span className="sr-only"> (opens in a new tab)</span>
           </a></li>)}
         </ul>}
-      </details>
+      </Disclosure>
       {p.transparencyId && <p className="text-xs text-subtle">Transparency Register ID {p.transparencyId}</p>}
     </article>
   );

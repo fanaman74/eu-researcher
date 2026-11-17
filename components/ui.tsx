@@ -7,7 +7,7 @@
 import React, { useCallback, useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AlertTriangle, ChevronRight, ExternalLink as ExternalIcon, Inbox, RotateCw, Search } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronRight, ExternalLink as ExternalIcon, Inbox, RotateCw, Search } from "lucide-react";
 import { activeItem } from "@/lib/navigation";
 
 // ── Data loading ──────────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ export function Page({
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10 pt-6 pb-12 lg:pt-8 lg:pb-16 space-y-8">
-      <header className="space-y-3">
+      <header className="workspace-heading space-y-3">
         {breadcrumbs && breadcrumbs.length > 0 && (
           <nav aria-label="Breadcrumb">
             <ol className="flex flex-wrap items-center gap-1 text-sm text-subtle">
@@ -91,8 +91,8 @@ export function Page({
         )}
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0 space-y-1.5">
-            <h1 className="text-[2rem] sm:text-[2.5rem] lg:text-5xl leading-[1.08] font-bold tracking-[-0.02em] text-fg">{heading}</h1>
-            {intro && <p className="text-lg text-muted max-w-[65ch] font-serif">{intro}</p>}
+            <h1 className="text-4xl leading-[0.95] font-black tracking-[-0.035em] uppercase [overflow-wrap:anywhere] sm:text-5xl lg:text-6xl">{heading}</h1>
+            {intro && <p className="mt-3 max-w-[65ch] text-base leading-relaxed sm:text-lg">{intro}</p>}
           </div>
           {actions && <div className="flex flex-wrap items-center gap-2 shrink-0">{actions}</div>}
         </div>
@@ -120,15 +120,15 @@ export function Card({
   as?: "section" | "div" | "article";
 }) {
   return (
-    <Tag className={`rule-double pt-4 ${padded ? "pb-2" : ""} ${className}`}>
+    <Tag className={`workspace-card px-4 pt-4 sm:px-6 sm:pt-6 ${padded ? "pb-5 sm:pb-6" : "pb-4"} ${className}`}>
       {(title || actions) && (
-        <div className="flex flex-wrap items-baseline justify-between gap-3 mb-4">
+        <header className="mb-4 flex flex-wrap items-baseline justify-between gap-3 border-b-2 border-line-strong pb-3">
           <div className="min-w-0">
             {title && <h2 className="text-xl font-bold tracking-[-0.01em] text-fg">{title}</h2>}
             {description && <p className="text-sm text-muted mt-1 max-w-[65ch]">{description}</p>}
           </div>
           {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
-        </div>
+        </header>
       )}
       {children}
     </Tag>
@@ -137,25 +137,26 @@ export function Card({
 
 // ── Actions ───────────────────────────────────────────────────────────────
 
-type Variant = "primary" | "secondary" | "ghost";
+type Variant = "primary" | "secondary" | "outline" | "ghost";
 type Size = "md" | "sm";
 
 const VARIANTS: Record<Variant, string> = {
-  primary: "bg-primary text-on-primary hover:bg-primary-hover border border-primary hover:border-primary-hover",
-  secondary: "bg-canvas text-fg border border-line-strong hover:bg-fg hover:text-canvas",
-  ghost: "text-link border border-transparent underline decoration-transparent hover:decoration-current",
+  primary: "bau-button bg-danger text-on-primary hover:bg-primary-hover",
+  secondary: "bau-button bg-primary text-on-primary hover:bg-primary-hover",
+  outline: "bau-button bg-surface text-fg hover:bg-marker",
+  ghost: "text-link underline decoration-transparent hover:bg-sunken hover:decoration-current",
 };
 const SIZES: Record<Size, string> = {
   md: "min-h-11 px-4 text-sm",
   sm: "min-h-9 px-3 text-sm",
 };
 
-export function buttonClass(variant: Variant = "secondary", size: Size = "md") {
-  return `inline-flex items-center justify-center gap-2 font-semibold transition-colors duration-150 disabled:opacity-50 disabled:pointer-events-none ${VARIANTS[variant]} ${SIZES[size]}`;
+export function buttonClass(variant: Variant = "outline", size: Size = "md") {
+  return `inline-flex items-center justify-center gap-2 text-center font-bold tracking-wide uppercase disabled:opacity-60 ${VARIANTS[variant]} ${SIZES[size]}`;
 }
 
 export function Button({
-  variant = "secondary",
+  variant = "outline",
   size = "md",
   loading = false,
   className = "",
@@ -172,7 +173,7 @@ export function Button({
 
 export function ButtonLink({
   href,
-  variant = "secondary",
+  variant = "outline",
   size = "md",
   external = false,
   download,
@@ -213,25 +214,45 @@ export function ExternalLink({ href, children, className = "" }: { href: string;
 
 export const linkClass = "text-link underline-offset-2 hover:underline";
 
+export function Disclosure({
+  label,
+  onToggle,
+  children,
+}: {
+  label: string;
+  onToggle?: React.ToggleEventHandler<HTMLDetailsElement>;
+  children: React.ReactNode;
+}) {
+  return (
+    <details className="document-disclosure border-2 border-line-strong bg-surface" onToggle={onToggle}>
+      <summary className="flex min-h-11 items-center justify-between gap-3 px-3 py-2 text-sm font-bold hover:bg-sunken">
+        {label}
+        <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" aria-hidden="true" />
+      </summary>
+      <div className="border-t-2 border-line-strong bg-marker/25 p-3">{children}</div>
+    </details>
+  );
+}
+
 // ── Status ────────────────────────────────────────────────────────────────
 
 export type Tone = "neutral" | "info" | "success" | "warning" | "danger";
 const TONES: Record<Tone, string> = {
-  neutral: "text-muted border-line",
-  info: "text-link border-current",
-  success: "text-success border-current",
-  warning: "text-warning border-current",
-  danger: "text-danger border-current",
+  neutral: "bg-sunken text-fg",
+  info: "bg-surface text-link",
+  success: "bg-primary text-on-primary",
+  warning: "bg-marker text-fg",
+  danger: "bg-danger text-on-primary",
 };
 
 /** A short status label. Meaning is always in the text, never in the colour alone. */
 export function Badge({ children, tone = "neutral" }: { children: React.ReactNode; tone?: Tone }) {
-  return <span className={`inline-flex items-center gap-1 px-1.5 py-px text-xs font-semibold border whitespace-nowrap ${TONES[tone]}`}>{children}</span>;
+  return <span className={`inline-block max-w-full border border-line-strong px-1.5 py-0.5 text-xs font-bold tracking-wide uppercase ${TONES[tone]}`}>{children}</span>;
 }
 
 export function Notice({ tone = "info", children }: { tone?: Tone; children: React.ReactNode }) {
   return (
-    <div role={tone === "danger" || tone === "warning" ? "alert" : "status"} className={`border px-4 py-3 text-sm ${TONES[tone]}`}>
+    <div role={tone === "danger" || tone === "warning" ? "alert" : "status"} className={`border-2 border-line-strong px-4 py-3 text-sm ${TONES[tone]}`}>
       {children}
     </div>
   );
@@ -252,7 +273,7 @@ export function Segmented<T extends string>({
   label: string;
 }) {
   return (
-    <div role="group" aria-label={label} className="inline-flex flex-wrap border border-line-strong divide-x divide-line-strong">
+    <div role="group" aria-label={label} className="inline-flex flex-wrap gap-px border-2 border-line-strong bg-fg">
       {options.map((o) => (
         <button
           key={o.value}
@@ -260,7 +281,7 @@ export function Segmented<T extends string>({
           onClick={() => onChange(o.value)}
           aria-pressed={value === o.value}
           className={`min-h-11 px-3.5 text-sm font-semibold transition-colors duration-150 ${
-            value === o.value ? "bg-fg text-canvas" : "text-fg hover:bg-sunken"
+            value === o.value ? "bg-marker text-fg" : "bg-surface text-fg hover:bg-sunken"
           }`}
         >
           {o.label}
@@ -273,7 +294,7 @@ export function Segmented<T extends string>({
 // ── Forms ─────────────────────────────────────────────────────────────────
 
 export const inputClass =
-  "w-full min-h-11 border border-line-strong bg-canvas px-3 text-base sm:text-sm text-fg placeholder:text-subtle focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/30";
+  "w-full min-h-11 border-2 border-line-strong bg-surface px-3 text-base sm:text-sm text-fg placeholder:text-fg/70 focus:border-ring";
 
 /** A labelled control with optional help text, wired for screen readers. */
 export function Field({
@@ -379,7 +400,7 @@ export function ErrorState({
   onRetry?: () => void;
 }) {
   return (
-    <div role="alert" className="border border-danger p-4 sm:p-5 flex flex-col sm:flex-row sm:items-start gap-3">
+    <div role="alert" className="flex flex-col gap-3 border-2 border-line-strong bg-surface p-4 sm:flex-row sm:items-start sm:p-5">
       <AlertTriangle className="w-5 h-5 text-danger shrink-0 mt-0.5" aria-hidden="true" />
       <div className="flex-1 space-y-1">
         <p className="font-semibold text-fg">{title}</p>
@@ -426,20 +447,6 @@ export function Loadable({
 
 // ── Data display ──────────────────────────────────────────────────────────
 
-/** One line of a contents table: label, dotted leader, figure. The whole line is the link. */
-export function ContentsLine({ label, value, hint, href }: { label: string; value: React.ReactNode; hint?: string; href: string }) {
-  return (
-    <Link href={href} className="leader-row group relative block overflow-hidden py-3 pr-14 border-b border-line text-fg">
-      <span className="font-serif text-lg sm:text-xl">
-        {label}
-        {hint && <span className="hidden sm:inline font-sans text-sm text-subtle"> — {hint}</span>}
-      </span>
-      {/* Zero-width anchor at the end of the label's last line; its leader runs on to the figure. */}
-      <span className="leader" aria-hidden="true" />
-      <span className="absolute right-0 bottom-3 pl-2 bg-canvas font-serif text-2xl sm:text-3xl leading-none font-bold tabular-nums group-hover:underline group-focus-visible:underline">{value}</span>
-    </Link>
-  );
-}
 /** Label/value pairs. */
 export function Facts({ items }: { items: { label: string; value: React.ReactNode }[] }) {
   return (
@@ -455,7 +462,7 @@ export function Facts({ items }: { items: { label: string; value: React.ReactNod
 }
 
 export const tableClass = "w-full text-left text-sm";
-export const thClass = "py-2 px-3 text-xs font-semibold uppercase tracking-[0.06em] text-subtle border-y border-line-strong";
+export const thClass = "border-y-2 border-line-strong bg-sunken px-3 py-2 text-xs font-bold tracking-[0.06em] uppercase";
 export const tdClass = "py-3 px-3 align-top border-b border-line";
 
 /** Small print: where the data comes from and what it leaves out. */

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Download } from "lucide-react";
-import { Badge, ButtonLink, Card, EmptyState, ExternalLink, Loadable, Notice, Page, Segmented, SourceNote, useApi } from "@/components/ui";
+import { Badge, ButtonLink, Card, Disclosure, EmptyState, ExternalLink, Loadable, Notice, Page, Segmented, SourceNote, useApi } from "@/components/ui";
 import type { AgendaPart } from "@/lib/calendar";
 import type { CalendarEvent } from "@/lib/types";
 
@@ -74,10 +74,9 @@ function SittingRow({ e }: { e: CalendarEvent }) {
         Plenary sitting{e.place && <> in <strong className="font-semibold">{e.place}</strong></>}
         {e.start && <span className="text-muted"> · starts {e.start}</span>}
       </p>
-      <details onToggle={(ev) => setOpen((ev.target as HTMLDetailsElement).open)}>
-        <summary className="text-sm text-link py-1 w-fit">Show agenda</summary>
-        <div className="mt-2 border-t border-line pt-3">{open && <Agenda date={e.date} />}</div>
-      </details>
+      <Disclosure label="Show agenda" onToggle={(event) => setOpen(event.currentTarget.open)}>
+        {open && <Agenda date={e.date} />}
+      </Disclosure>
     </div>
   );
 }

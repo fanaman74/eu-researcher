@@ -3,48 +3,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, Menu, Moon, Sun, X } from "lucide-react";
+import { ArrowUp, ChevronDown, Menu, X } from "lucide-react";
 import { NAV, SETTINGS, activeItem, type NavGroup } from "@/lib/navigation";
 
-function ThemeToggle({ withLabel = false }: { withLabel?: boolean }) {
-  const [dark, setDark] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    const stored = document.documentElement.dataset.theme;
-    setDark(stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches);
-  }, []);
-
-  const toggle = () => {
-    const next = !dark;
-    setDark(next);
-    document.documentElement.dataset.theme = next ? "dark" : "light";
-    try {
-      localStorage.setItem("theme", next ? "dark" : "light");
-    } catch {
-      // Storage unavailable (private mode): the choice lasts for this page only.
-    }
-  };
-
-  const label = dark ? "Switch to the light theme" : "Switch to the dark theme";
+function Wordmark({ onClick }: { onClick?: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      aria-label={withLabel ? undefined : label}
-      title={withLabel ? undefined : label}
-      className="inline-flex items-center gap-2.5 min-h-11 min-w-11 justify-center text-sm text-fg hover:bg-sunken"
-    >
-      {dark ? <Sun className="w-5 h-5" aria-hidden="true" /> : <Moon className="w-5 h-5" aria-hidden="true" />}
-      {withLabel && <span>{dark ? "Light theme" : "Dark theme"}</span>}
-    </button>
-  );
-}
-
-function Wordmark() {
-  return (
-    <Link href="/" className="block leading-none shrink-0">
-      <span className="block whitespace-nowrap font-serif text-2xl font-bold tracking-[-0.02em] text-fg">EU Researcher</span>
-      <span className="block mt-1 text-xs text-muted">Enel EU Affairs</span>
+    <Link href="/" onClick={onClick} className="flex shrink-0 items-center gap-3 leading-none">
+      <span aria-hidden="true" className="brand-geometry"><span /></span>
+      <span>
+        <span className="block whitespace-nowrap text-lg font-black uppercase tracking-[-0.035em] sm:text-xl">EU Researcher</span>
+        <span className="mt-1 block text-xs font-medium">Enel EU Affairs</span>
+      </span>
     </Link>
   );
 }
@@ -72,24 +41,22 @@ function Dropdown({
         onClick={onToggle}
         aria-expanded={open}
         aria-controls={id}
-        className={`inline-flex items-center gap-1.5 min-h-11 px-3 text-[0.9375rem] font-semibold border-b-2 ${
-          active ? "border-marker text-fg" : "border-transparent text-fg hover:border-line-strong"
-        }`}
+        data-active={active}
+        className="nav-trigger inline-flex min-h-11 items-center gap-1.5 px-2.5 text-xs font-bold uppercase tracking-wide xl:px-3 xl:text-sm"
       >
         {group.label}
         <ChevronDown className={`w-4 h-4 transition-transform duration-150 ${open ? "rotate-180" : ""}`} aria-hidden="true" />
       </button>
       {open && (
-        <ul id={id} className="absolute left-0 top-full z-40 mt-px w-80 border border-line-strong bg-canvas py-2">
+        <ul id={id} className="nav-panel absolute left-0 top-full z-40 mt-1 w-80 divide-y divide-line">
           {group.items.map((item) => (
             <li key={item.href}>
               <Link
                 href={item.href}
                 onClick={onClose}
                 aria-current={item.href === current ? "page" : undefined}
-                className="group flex gap-2.5 px-4 py-2.5 hover:bg-sunken"
+                className={`group flex gap-2.5 px-4 py-2.5 ${item.href === current ? "bg-marker" : "hover:bg-sunken"}`}
               >
-                <span aria-hidden="true" className={`mt-2 w-2 h-2 shrink-0 ${item.href === current ? "bg-marker" : "bg-transparent"}`} />
                 <span>
                   <span className={`block text-fg group-hover:underline ${item.href === current ? "font-bold" : "font-semibold"}`}>{item.label}</span>
                   <span className="block text-sm text-muted">{item.description}</span>
@@ -197,7 +164,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     const onMediaChange = (e: MediaQueryListEvent) => {
       if (e.matches) closeDrawer();
     };
-    const desktop = window.matchMedia("(min-width: 1024px)");
+    const desktop = window.matchMedia("(min-width: 768px)");
     window.addEventListener("keydown", onKey);
     document.addEventListener("focusin", onFocusIn);
     desktop.addEventListener("change", onMediaChange);
@@ -225,7 +192,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, [drawer]);
 
   return (
-    <div className="min-h-dvh">
+    <div className="flex min-h-dvh flex-col" id="top">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-on-primary"
@@ -233,16 +200,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         Skip to main content
       </a>
 
-      <header ref={barRef} className="sticky top-0 z-30 bg-canvas border-b-[3px] border-line-strong">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10 flex items-center gap-6 min-h-16">
+      <header ref={barRef} className="site-header sticky top-0 z-30">
+        <div className="mx-auto flex min-h-[4.5rem] w-full max-w-7xl items-center gap-5 px-4 sm:px-6 md:grid md:grid-cols-[1fr_auto] md:gap-y-2 md:py-2 lg:flex lg:px-10 lg:py-0 xl:gap-8">
           <Wordmark />
-          <nav aria-label="Main" className="main-nav hidden lg:block flex-1">
+          <nav aria-label="Main" className="main-nav col-span-2 row-start-2 hidden flex-1 md:block">
             <ul className="flex items-center gap-1">
               <li>
                 <Link
                   href="/"
                   aria-current={current === "/" ? "page" : undefined}
-                  className={`inline-flex items-center min-h-11 px-3 text-[0.9375rem] font-semibold border-b-2 ${current === "/" ? "border-marker" : "border-transparent hover:border-line-strong"} text-fg`}
+                  data-active={current === "/"}
+                  className="nav-trigger inline-flex min-h-11 items-center px-2.5 text-xs font-bold uppercase tracking-wide xl:px-3 xl:text-sm"
                 >
                   Today
                 </Link>
@@ -260,10 +228,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </ul>
           </nav>
           <div className="ml-auto flex items-center gap-2">
-            <Link href={SETTINGS.href} aria-current={current === SETTINGS.href ? "page" : undefined} className={`hidden lg:inline-flex items-center justify-center min-h-11 min-w-11 text-fg hover:bg-sunken ${current === SETTINGS.href ? "border-b-2 border-marker" : ""}`} aria-label="Settings" title="Settings">
+            <Link href={SETTINGS.href} aria-current={current === SETTINGS.href ? "page" : undefined} className="nav-trigger hidden min-h-11 min-w-11 items-center justify-center md:inline-flex" data-active={current === SETTINGS.href} aria-label="Settings" title="Settings">
               <SETTINGS.icon className="w-5 h-5" aria-hidden="true" />
             </Link>
-            <span className="hidden lg:block"><ThemeToggle /></span>
             <button
               type="button"
               ref={drawerTriggerRef}
@@ -273,7 +240,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               }}
               aria-expanded={drawer}
               aria-controls="mobile-nav"
-              className="lg:hidden inline-flex items-center gap-2 border border-line-strong px-3 min-h-11 text-sm font-semibold text-fg hover:bg-sunken"
+              className="bau-button inline-flex min-h-11 items-center gap-2 bg-white px-3 text-xs font-bold uppercase tracking-wide hover:bg-marker md:hidden"
             >
               <Menu className="w-5 h-5" aria-hidden="true" /> Menu
             </button>
@@ -282,36 +249,35 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       {drawer && (
-        <div ref={drawerRef} className="lg:hidden fixed inset-0 z-40 bg-canvas overflow-y-auto" role="dialog" aria-modal="true" aria-label="Menu" id="mobile-nav">
-          <div className="flex items-center justify-between px-4 sm:px-6 min-h-16 border-b-[3px] border-line-strong">
-            <Wordmark />
+        <div ref={drawerRef} className="fixed inset-0 z-40 overflow-y-auto bg-canvas md:hidden" role="dialog" aria-modal="true" aria-label="Menu" id="mobile-nav">
+          <div className="site-header flex min-h-[4.5rem] items-center justify-between px-4 sm:px-6">
+            <Wordmark onClick={() => closeDrawer(pathname === "/")} />
             <button
               type="button"
               ref={drawerCloseRef}
               onClick={() => closeDrawer()}
-              className="inline-flex items-center justify-center min-h-11 min-w-11 text-fg hover:bg-sunken"
+              className="bau-button inline-flex min-h-11 min-w-11 items-center justify-center bg-white hover:bg-marker"
               aria-label="Close menu"
             >
               <X className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
           <nav aria-label="Main" className="px-4 sm:px-6 py-5 space-y-6">
-            <Link href="/" onClick={() => closeDrawer(false)} aria-current={current === "/" ? "page" : undefined} className="block text-lg font-semibold text-fg">
+            <Link href="/" onClick={() => closeDrawer(pathname === "/")} aria-current={current === "/" ? "page" : undefined} className="block border-2 border-line-strong bg-surface px-3 py-2 text-lg font-bold aria-[current=page]:bg-marker">
               Today
             </Link>
             {NAV.map((group) => (
               <div key={group.label}>
-                <h2 className="pb-1 mb-1 border-b border-line-strong font-sans text-xs font-semibold uppercase tracking-[0.08em] text-subtle">{group.label}</h2>
-                <ul className="divide-y divide-line">
+                <h2 className="border-2 border-line-strong bg-primary px-3 py-2 text-xs font-bold uppercase tracking-widest text-white">{group.label}</h2>
+                <ul className="divide-y divide-line border-x-2 border-b-2 border-line-strong bg-surface">
                   {group.items.map((item) => (
                     <li key={item.href}>
                       <Link
                         href={item.href}
-                        onClick={() => closeDrawer(false)}
+                        onClick={() => closeDrawer(pathname === item.href)}
                         aria-current={item.href === current ? "page" : undefined}
-                        className={`flex items-center gap-2.5 min-h-11 py-2 text-fg ${item.href === current ? "font-bold" : ""}`}
+                        className={`flex min-h-11 items-center px-3 py-2 ${item.href === current ? "bg-marker font-bold" : "hover:bg-sunken"}`}
                       >
-                        <span aria-hidden="true" className={`w-2 h-2 shrink-0 ${item.href === current ? "bg-marker" : "bg-transparent"}`} />
                         {item.label}
                       </Link>
                     </li>
@@ -319,21 +285,28 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 </ul>
               </div>
             ))}
-            <Link href={SETTINGS.href} onClick={() => closeDrawer(false)} aria-current={current === SETTINGS.href ? "page" : undefined} className={`flex items-center gap-2.5 min-h-11 py-2 text-fg ${current === SETTINGS.href ? "font-bold" : ""}`}>
-              <span aria-hidden="true" className={`w-2 h-2 shrink-0 ${current === SETTINGS.href ? "bg-marker" : "bg-transparent"}`} />
+            <Link href={SETTINGS.href} onClick={() => closeDrawer(pathname === SETTINGS.href)} aria-current={current === SETTINGS.href ? "page" : undefined} className="flex min-h-11 items-center gap-2.5 border-2 border-line-strong bg-surface px-3 py-2 font-bold aria-[current=page]:bg-marker">
               <SETTINGS.icon className="w-4 h-4" aria-hidden="true" />
               Settings
             </Link>
-            <div className="border-t border-line pt-3">
-              <ThemeToggle withLabel />
-            </div>
           </nav>
         </div>
       )}
 
-      <main id="main" ref={mainRef} tabIndex={-1} className="outline-none">
+      <main id="main" ref={mainRef} tabIndex={-1} className="flex-1 outline-none">
         {children}
       </main>
+      <footer className="site-footer">
+        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-5 px-4 py-7 sm:px-6 lg:px-10">
+          <div>
+            <p className="text-lg font-black uppercase tracking-tight">EU Researcher</p>
+            <p className="text-sm">Enel EU Affairs</p>
+          </div>
+          <a href="#top" className="inline-flex min-h-11 items-center gap-2 text-sm font-bold uppercase tracking-wide hover:text-marker">
+            Back to top <ArrowUp className="h-4 w-4" aria-hidden="true" />
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }

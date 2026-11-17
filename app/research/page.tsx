@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { RotateCcw, Send, Sparkles } from "lucide-react";
-import { Badge, Button, ButtonLink, Card, Field, Page, SourceNote, inputClass } from "@/components/ui";
+import { Badge, Button, ButtonLink, Card, Disclosure, Field, Page, SourceNote, inputClass } from "@/components/ui";
 import SummarizerModal from "@/components/SummarizerModal";
 import { type EurLexHit, type Message, type SearchLog, type SummarizerConfig } from "@/lib/types";
 
@@ -28,8 +28,7 @@ function Sources({ logs, onSummarize }: { logs: SearchLog[]; onSummarize: (doc: 
   const docs = logs.flatMap((l) => (Array.isArray(l.results) ? l.results.map((d) => ({ d, ns: l.namespace })) : []));
   if (docs.length === 0) return null;
   return (
-    <details className="rounded-md border border-line bg-surface">
-      <summary className="px-4 py-3 min-h-11 text-sm font-medium text-fg">Documents consulted ({docs.length})</summary>
+    <Disclosure label={`Documents consulted (${docs.length})`}>
       <ul className="divide-y divide-line border-t border-line">
         {docs.map(({ d, ns }, i) => (
           <li key={`${d.id}-${i}`} className="p-4 space-y-2">
@@ -45,7 +44,7 @@ function Sources({ logs, onSummarize }: { logs: SearchLog[]; onSummarize: (doc: 
           </li>
         ))}
       </ul>
-    </details>
+    </Disclosure>
   );
 }
 

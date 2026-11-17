@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Badge, Card, EmptyState, Field, Loadable, Page, SearchBox, Segmented, SourceNote, formatDate, formatStamp, inputClass, useApi } from "@/components/ui";
+import { Badge, Card, Disclosure, EmptyState, Field, Loadable, Page, SearchBox, Segmented, SourceNote, formatDate, formatStamp, inputClass, useApi } from "@/components/ui";
 import type { MarketSnapshot, PressItem } from "@/lib/types";
 
 type Filter = "all" | "stateAid";
@@ -50,8 +50,7 @@ function Market() {
                     ))}
                   </div>
                   <div className="flex justify-between text-sm text-subtle"><span>{formatDate(days[0].date)}</span><span>{formatDate(latest.date)}</span></div>
-                  <details className="text-sm">
-                    <summary className="text-link">Show the numbers</summary>
+                  <Disclosure label="Show the numbers">
                     <table className="mt-2 w-full text-sm tabular-nums">
                       <thead><tr className="text-subtle text-left"><th className="py-1">Day</th><th className="py-1 text-right">Average</th><th className="py-1 text-right">Min</th><th className="py-1 text-right">Max</th></tr></thead>
                       <tbody>
@@ -60,7 +59,7 @@ function Market() {
                         ))}
                       </tbody>
                     </table>
-                  </details>
+                  </Disclosure>
                 </>
               ) : (
                 <p className="text-sm text-muted">No price data was returned for this zone.</p>
