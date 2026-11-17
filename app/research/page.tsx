@@ -18,6 +18,8 @@ const EXAMPLES = [
   "How are grid connection rules set in the electricity market regulation?",
 ];
 
+const composerFieldClass = "min-w-0 md:row-span-2 md:grid md:grid-rows-subgrid md:items-start md:space-y-0";
+
 /** Splits the assistant's "[Option: …]" follow-up suggestions from its text. */
 function parseOptions(content: string): { text: string; options: string[] } {
   const options = [...content.matchAll(/\[Option:\s*(.*?)\]/gi)].map((m) => m[1].trim());
@@ -129,13 +131,13 @@ export default function ResearchPage() {
         </div>
 
         <form
-          className="border-t border-line p-4 sm:p-5 grid grid-cols-1 md:grid-cols-[1fr_14rem_auto] gap-3 items-end"
+          className="grid grid-cols-1 gap-3 border-t border-line p-4 sm:p-5 md:grid-cols-[minmax(0,1fr)_14rem_auto] md:gap-y-1.5"
           onSubmit={(e) => {
             e.preventDefault();
             send();
           }}
         >
-          <Field label="Your question">
+          <Field label="Your question" className={composerFieldClass}>
             {(p) => (
               <textarea
                 {...p}
@@ -149,13 +151,13 @@ export default function ResearchPage() {
                 }}
                 rows={2}
                 placeholder="Ask about EU rules, directives or court cases"
-                className={`${inputClass} py-2.5 resize-y`}
+                className={`${inputClass} block resize-y py-2.5 md:min-h-16`}
               />
             )}
           </Field>
-          <Field label="Documents to consult">
+          <Field label="Documents to consult" className={composerFieldClass}>
             {(p) => (
-              <select {...p} className={inputClass} value={topK} onChange={(e) => setTopK(Number(e.target.value))}>
+              <select {...p} className={`${inputClass} block md:h-16`} value={topK} onChange={(e) => setTopK(Number(e.target.value))}>
                 <option value={3}>3 (fastest)</option>
                 <option value={5}>5 (recommended)</option>
                 <option value={10}>10</option>
@@ -163,7 +165,13 @@ export default function ResearchPage() {
               </select>
             )}
           </Field>
-          <Button type="submit" variant="primary" disabled={!input.trim()} loading={loading}>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={!input.trim()}
+            loading={loading}
+            className="md:col-start-3 md:row-start-2 md:h-16 md:self-start"
+          >
             <Send className="w-4 h-4" aria-hidden="true" /> Ask
           </Button>
         </form>

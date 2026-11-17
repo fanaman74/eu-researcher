@@ -301,17 +301,19 @@ export function Field({
   label,
   hint,
   hideLabel = false,
+  className = "",
   children,
 }: {
   label: string;
   hint?: React.ReactNode;
   hideLabel?: boolean;
+  className?: string;
   children: (props: { id: string; "aria-describedby"?: string }) => React.ReactNode;
 }) {
   const id = useId();
   const hintId = hint ? `${id}-hint` : undefined;
   return (
-    <div className="space-y-1.5">
+    <div className={`space-y-1.5 ${className}`}>
       <label htmlFor={id} className={hideLabel ? "sr-only" : "block text-sm font-semibold text-fg"}>{label}</label>
       {children({ id, "aria-describedby": hintId })}
       {hint && <p id={hintId} className="text-sm text-subtle">{hint}</p>}
