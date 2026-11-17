@@ -9,6 +9,28 @@ import { NAV } from "@/lib/navigation";
 import type { Digest } from "@/lib/digest";
 import type { CalendarEvent, Dossier } from "@/lib/types";
 
+function WindFarm() {
+  return (
+    <div className="poster-art" aria-hidden="true">
+      <div className="poster-plate">
+        <span className="wind-sun" />
+        <span className="wind-gust" />
+        <span className="wind-gust wind-gust--low" />
+        <span className="wind-field" />
+        {["far", "middle", "near"].map((position) => (
+          <div key={position} className={`wind-turbine wind-turbine--${position}`}>
+            <span className="wind-rotor">
+              <span className="wind-blade" />
+              <span className="wind-blade" />
+              <span className="wind-blade" />
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Figure({ value, label, href }: { value: number | "…" | "—"; label: string; href: string }) {
   const status = value === "…" ? "Loading" : value === "—" ? "Unavailable" : null;
   return (
@@ -76,13 +98,7 @@ export default function HomePage() {
               <ButtonLink href="/enel/calendar"><CalendarDays className="h-4 w-4" aria-hidden="true" /> Open the calendar</ButtonLink>
             </div>
           </div>
-          <div className="poster-art" aria-hidden="true">
-            <div className="poster-plate">
-              <span className="poster-circle" />
-              <span className="poster-diamond" />
-              <span className="poster-square" />
-            </div>
-          </div>
+          <WindFarm />
         </div>
 
         <ul className="home-figures mt-6 sm:mt-8" aria-label="Today in numbers">

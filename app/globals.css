@@ -286,46 +286,198 @@
   margin-block: 0.75rem;
 }
 
-.poster-circle,
-.poster-diamond,
-.poster-square {
+.wind-sun {
   position: absolute;
+  top: 7%;
+  left: 5%;
+  width: 40%;
   border: var(--rule) solid var(--ink);
   aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--yellow);
   box-shadow: var(--offset) var(--offset) 0 var(--ink);
 }
 
-.poster-circle {
-  width: 58%;
-  top: 17%;
-  left: 2%;
-  border-radius: 50%;
-  background: var(--yellow);
+.wind-field {
+  position: absolute;
+  inset: 76% 1% 2%;
+  background: var(--ink);
+  clip-path: polygon(0 52%, 100% 0, 100% 100%, 0 100%);
 }
 
-.poster-diamond {
-  width: 45%;
-  top: 10%;
-  right: 11%;
+.wind-field::after {
+  content: "";
+  position: absolute;
+  inset: var(--rule) var(--offset) var(--offset) var(--rule);
   background: var(--red);
-  transform: rotate(45deg);
+  clip-path: inherit;
 }
 
-.poster-square {
-  display: grid;
-  place-items: center;
-  width: 38%;
-  top: 49%;
-  right: 5%;
+.wind-gust {
+  position: absolute;
+  top: 17%;
+  left: 57%;
+  width: 29%;
+  height: clamp(2px, 0.3vw, 4px);
+  border-radius: 9999px;
   background: var(--surface);
 }
 
-.poster-square::before {
+.wind-gust::before,
+.wind-gust::after {
   content: "";
-  width: 68%;
-  aspect-ratio: 1.12;
+  position: absolute;
+  height: 100%;
+  border-radius: inherit;
+  background: inherit;
+}
+
+.wind-gust::before {
+  top: -260%;
+  left: 30%;
+  width: 54%;
+}
+
+.wind-gust::after {
+  top: 260%;
+  left: 12%;
+  width: 66%;
+}
+
+.wind-gust--low {
+  top: 69%;
+  left: 2%;
+  width: 15%;
+  background: var(--yellow);
+}
+
+.wind-turbine {
+  position: absolute;
+  top: var(--hub-top);
+  bottom: var(--tower-base);
+  left: var(--hub-left);
+  width: var(--rotor-size);
+  translate: -50% 0;
+}
+
+.wind-turbine--near {
+  --hub-top: 43%;
+  --hub-left: 32%;
+  --tower-base: 10%;
+  --rotor-size: 44%;
+  --blade-color: var(--red);
+  --start-angle: -16deg;
+  --turn-angle: 180deg;
+}
+
+.wind-turbine--middle {
+  --hub-top: 48%;
+  --hub-left: 64%;
+  --tower-base: 14%;
+  --rotor-size: 30%;
+  --blade-color: var(--surface);
+  --start-angle: 23deg;
+  --turn-angle: 240deg;
+}
+
+.wind-turbine--far {
+  --hub-top: 58%;
+  --hub-left: 87%;
+  --tower-base: 19%;
+  --rotor-size: 21%;
+  --blade-color: var(--yellow);
+  --start-angle: -38deg;
+  --turn-angle: 310deg;
+}
+
+.wind-turbine::before,
+.wind-turbine::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 50%;
+  width: 16%;
   background: var(--ink);
-  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  clip-path: polygon(36% 0, 64% 0, 100% 100%, 0 100%);
+  translate: -50% 0;
+}
+
+.wind-turbine::after {
+  bottom: var(--rule);
+  width: 9%;
+  background: var(--surface);
+}
+
+.wind-rotor {
+  position: absolute;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  translate: 0 -50%;
+  rotate: var(--start-angle);
+}
+
+.wind-blade {
+  position: absolute;
+  bottom: 50%;
+  left: 39%;
+  width: 22%;
+  height: 50%;
+  transform-origin: center bottom;
+}
+
+.wind-blade:nth-child(2) {
+  rotate: 120deg;
+}
+
+.wind-blade:nth-child(3) {
+  rotate: 240deg;
+}
+
+.wind-blade::before,
+.wind-blade::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  clip-path: polygon(38% 0, 65% 14%, 79% 44%, 61% 100%, 36% 100%, 27% 53%, 27% 19%);
+}
+
+.wind-blade::after {
+  inset: 2px 12%;
+  background: var(--blade-color);
+}
+
+.wind-rotor::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 15%;
+  aspect-ratio: 1;
+  border: max(1px, calc(var(--rule) / 2)) solid var(--ink);
+  border-radius: 50%;
+  background: var(--surface);
+  translate: -50% -50%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wind-rotor {
+    animation: wind-turn 4.6s cubic-bezier(0.24, 0.5, 0.45, 1) both;
+  }
+
+  .wind-gust {
+    animation: wind-drift 4.6s ease-out both;
+  }
+}
+
+@keyframes wind-turn {
+  to { rotate: calc(var(--start-angle) + var(--turn-angle)); }
+}
+
+@keyframes wind-drift {
+  from { translate: -22% 0; }
+  to { translate: 18% 0; }
 }
 
 .home-figures {

@@ -17,10 +17,10 @@ Scope covers Today, the shared shell and shared workspace surfaces. Visitor mode
 
 **Visitor path.** Read the Brussels date and what the app tracks, open What changed or the calendar, then scan linked counts and cards. Keep official sources and coverage gaps in view. Counts distinguish real zeroes, loading and unavailable data. Preserve the navigation groups and text-only Enel EU Affairs attribution.
 
-**First viewport.** On desktop a sticky wordmark and grouped navigation sit above an asymmetric poster. The date, two-line “EU energy policy” headline and actions are on the left. A yellow circle, red diamond and white square with an ink triangle overlap on the dotted blue panel to the right. The yellow counts sit immediately below. On phones the copy comes first, followed by compact blue art and stacked count rows. The art shifts beside the copy from 48rem, and the count strip moves from one to two to four columns at 36rem and 64rem.
+**First viewport.** On desktop a sticky wordmark and grouped navigation sit above an asymmetric poster. The date, two-line “EU energy policy” headline and actions are on the left. Three geometric wind turbines, a yellow sun and a sloped red field fill the dotted blue panel on the right. The yellow counts sit immediately below. On phones the copy comes first, followed by compact blue art and stacked count rows. The art shifts beside the copy from 48rem, and the count strip moves from one to two to four columns at 36rem and 64rem.
 
 **Signature interaction.** A filled or outlined button moves down and right into its hard shadow on press. Opening a document disclosure turns its header red, rotates the chevron and reveals a pale yellow panel. Preserve visible focus and reduced motion.
 
-**Form.** Bauhaus, pinned by the redesign brief. The poster geometry is built in CSS. Outfit is self-hosted.
+**Form.** Bauhaus, pinned by the redesign brief. The poster geometry is built in CSS. One brief gust moves the wind lines and turns the three rotors at different speeds. Reduced-motion mode shows the same scene as a still. Outfit is self-hosted.
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
